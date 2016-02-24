@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 'use strict';
 
 global.SERVER = true;

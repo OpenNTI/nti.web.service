@@ -16,7 +16,7 @@ reporting:
     reports:
         - lcov
         - cobertura
-    dir: ./reports
+    dir: ./reports/coverage
     watermarks:
         statements: [50, 80]
         lines: [50, 80]

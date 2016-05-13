@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 'use strict';
+require('core-js'); //add polyfills and shims
 
 global.SERVER = true;
 

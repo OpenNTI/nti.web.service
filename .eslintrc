@@ -6,4 +6,8 @@
 	"env": {
 		"browser": false
 	}
+
+	"rules": {
+		"strict": 0
+	}
 }

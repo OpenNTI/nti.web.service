@@ -1,6 +1,6 @@
 verbose: false
 instrumentation:
-    root: ./lib
+    root: ./src
     extensions:
         - .js
     embed-source: false

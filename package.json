@@ -7,6 +7,7 @@
     "web-service": "src/index.js"
   },
   "scripts": {
+    "start": "node ./src --config ./config/env.json.example",
     "test": "istanbul cover ./node_modules/.bin/_mocha -- ./test/ --recursive --reporter mocha-junit-reporter --reporter-options mochaFile=./reports/test-results/index.xml",
     "bump": "npm version",
     "postbump": "git push --all && npm publish"

@@ -10,6 +10,7 @@ const common = require('./common');
 const clientConfig = common.clientConfig;
 const nodeConfigAsClientConfig = common.nodeConfigAsClientConfig;
 
+const Session = require('./session');
 const logger = require('./logger');
 const setupCORS = require('./cors');
 const setupCompression = require('./compress');
@@ -26,7 +27,7 @@ exports.setupApplication = (app, config) => {
 	const port = config.port = (config.port || 9000);
 	//config.silent = true;
 	const dsi = dataserver(config);
-	const session = dsi.session;
+	const session = new Session(dsi.interface);
 	const datacache = dsi.datacache;
 
 	logger.info('DataServer end-point: %s', config.server);

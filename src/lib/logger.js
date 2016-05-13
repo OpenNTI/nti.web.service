@@ -8,6 +8,10 @@ const logger = Logger.get('NodeService');
 
 module.exports = Object.assign(morgan, {
 
+	get (name) {
+		return Logger.get('NodeService:' + name);
+	},
+
 	attachToExpress: expressApp => {
 		expressApp.use(responseTime());
 		expressApp.use(cookieParser());

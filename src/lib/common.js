@@ -73,7 +73,7 @@ exports.loadConfig = function loadConfig () {
 				logger.error('Config not found at: %s', uri);
 				p = path.resolve(__dirname, uri);
 				if (!fs.existsSync(p)) {
-					p = path.resolve(__dirname, '../config/env.json.example');
+					p = path.resolve(__dirname, '../../config/env.json.example');
 					logger.warn('Using example config: %s', uri);
 				}
 			}

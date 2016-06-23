@@ -2,7 +2,7 @@
 'use strict';
 require('core-js'); //add polyfills and shims
 
-global.SERVER = true;
+global.fetch = global.fetch || require('node-fetch');
 
 const http = require('http');
 const proxiedHttp = require('findhit-proxywrap').proxy(http);

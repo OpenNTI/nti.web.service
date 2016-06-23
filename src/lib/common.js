@@ -2,7 +2,6 @@
 const fs = require('fs');
 const url = require('url');
 const path = require('path');
-const request = require('request');
 const uuid = require('node-uuid');
 
 const dsi = require('nti-lib-interfaces');
@@ -82,19 +81,17 @@ exports.loadConfig = function loadConfig () {
 			return pass(exports.config());
 		}
 
-		request(opt.config, function (error, response, body) {
-			if (!error && response.statusCode === 200) {
-				try {
-					env = JSON.parse(body);
-					pass(exports.config());
-				} catch (e) {
-					logger.error(e);
-					fail(e);
-				}
-			} else {
-				fail(error || response);
-			}
-		});
+		fetch(opt.config)
+		 	.then(response => response.ok ? response.json() : Promise.reject(response.statusText))
+			.then(config => {
+				env = body;
+				pass(exports.config());
+			})
+			.catch(e => {
+				logger.error(e);
+				fail(e)
+			});
+
 	});
 };
 

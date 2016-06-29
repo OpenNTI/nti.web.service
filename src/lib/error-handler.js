@@ -30,6 +30,9 @@ module.exports = function setupErrorHandler (express/*, config*/) {
 		else if (err === 'aborted') {
 			return res.status(204).end();
 		}
+		else if (err.statusCode === 503 || err.message === 'Service Unavailable') {
+			return res.status(503).send(err.message);
+		}
 		else if (err.toJSON) {
 			err = err.toJSON();
 		}

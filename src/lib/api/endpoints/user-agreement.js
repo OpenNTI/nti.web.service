@@ -1,6 +1,5 @@
 'use strict';
-const getLink = require('nti-lib-interfaces/lib/utils/getlink').default;
-const TOS_NOT_ACCEPTED = require('nti-lib-interfaces').TOS_NOT_ACCEPTED;
+const {TOS_NOT_ACCEPTED, getLink} = require('nti-lib-interfaces');
 
 const tagPattern = tag => new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)</' + tag + '>', 'ig');
 const BODY_REGEX = /<body[^>]*>([\s\S]*)<\/body/i;//no g

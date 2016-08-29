@@ -34,7 +34,7 @@
     "morgan": "^1.5.2",
     "node-fetch": "^1.5.3",
     "node-uuid": "^1.4.3",
-    "nti-lib-interfaces": "^1.8.0",
+    "nti-lib-interfaces": "^1.9.4",
     "nti-util-logger": "^1.0.0",
     "response-time": "^2.2.0",
     "yargs": "^4.1.0",

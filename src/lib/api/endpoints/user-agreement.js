@@ -39,7 +39,7 @@ class ServeUserAgreement {
 					return;
 				}
 
-				return this.server.get(url, SERVER_CONTEXT).then(raw => {
+				return this.server.get({url, headers:{host: null}}, SERVER_CONTEXT).then(raw => {
 
 					let filtered = raw
 							.replace(tagPattern('script'), '')

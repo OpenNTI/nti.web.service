@@ -1,9 +1,22 @@
 'use strict';
+const Url = require('url');
 const {TOS_NOT_ACCEPTED, getLink} = require('nti-lib-interfaces');
 
 const tagPattern = tag => new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)</' + tag + '>', 'ig');
 const BODY_REGEX = /<body[^>]*>([\s\S]*)<\/body/i;//no g
 const SHOULD_REDIRECT = RegExp.prototype.test.bind(/\/view/);
+
+
+function copyRequestHeaders (req) {
+	const blacklist = ['accept-encoding', 'content-length', 'content-type', 'referer'];
+
+	const headers = Object.assign({}, req.headers || {});
+	for (let header of blacklist) {
+		delete headers[header];
+	}
+
+	return headers;
+}
 
 
 class ServeUserAgreement {
@@ -16,7 +29,50 @@ class ServeUserAgreement {
 	}
 
 	handle (req, res) {
-		let SERVER_CONTEXT = req;
+		const SERVER_CONTEXT = req;
+
+		function handleFetchResponse (res) {
+			if (!res.ok) {
+				if (res.status >= 300 && res.status < 400) {
+					const redirectURL = res.headers.get('location');
+					return fetch(redirectURL).then(handleFetchResponse);
+				}
+
+				return Promise.reject(new Error(res.statusText));
+			}
+
+			return res.text();
+		}
+
+
+		function processAndRespond (raw) {
+
+			let filtered = raw
+					.replace(tagPattern('script'), '')
+					.replace(tagPattern('style'), '');
+
+
+			let body = BODY_REGEX.exec(filtered);
+			let styles = [];
+			let m;
+
+			let stylePattern = tagPattern('style');
+			while ((m = stylePattern.exec(raw))) {
+				styles.push(m[1]);
+			}
+
+			let data = {
+				// html: response,
+				body: body && body[1],
+				styles: styles.join('\n\n')
+			};
+
+			res.status(raw.statusCode || 200);
+			res.json(data);
+			res.end();
+		}
+
+
 		this.server.get('logon.ping', SERVER_CONTEXT)
 			.then(pong => getLink(pong, TOS_NOT_ACCEPTED))
 
@@ -27,7 +83,7 @@ class ServeUserAgreement {
 					SERVER_CONTEXT = {};
 					url = this.url;
 				}
-				return url;
+				return Url.parse(this.host).resolve(url || '');
 			})
 
 			.then(url => url || Promise.reject(new Error('No user-agreement url set')))
@@ -39,32 +95,9 @@ class ServeUserAgreement {
 					return;
 				}
 
-				return this.server.get({url, headers:{host: null}}, SERVER_CONTEXT).then(raw => {
-
-					let filtered = raw
-							.replace(tagPattern('script'), '')
-							.replace(tagPattern('style'), '');
-
-
-					let body = BODY_REGEX.exec(filtered);//don't reuse stylePattern (its been consumed)
-					let styles = [];
-					let m;
-
-					let stylePattern = tagPattern('style');
-					while ((m = stylePattern.exec(raw))) {
-						styles.push(m[1]);
-					}
-
-					let data = {
-						// html: response,
-						body: body && body[1],
-						styles: styles.join('\n\n')
-					};
-
-					res.status(raw.statusCode || 200);
-					res.json(data);
-					res.end();
-				});
+				return fetch(url, {headers: copyRequestHeaders(req), redirect: 'manual'})
+					.then(handleFetchResponse)
+					.then(processAndRespond);
 
 			})
 

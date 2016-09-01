@@ -80,7 +80,6 @@ class ServeUserAgreement {
 			//if its an external link like docs.google... blank out context.
 			.then(url => {
 				if (!url) {
-					SERVER_CONTEXT = {};
 					url = this.url;
 				}
 				return Url.parse(this.host).resolve(url || '');

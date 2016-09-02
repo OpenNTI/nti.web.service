@@ -98,7 +98,7 @@ class ServeUserAgreement {
 					return;
 				}
 
-				return fetch(url, )
+				return fetch(url, fetchContext);
 			})
 
 			.then(handleFetchResponse)

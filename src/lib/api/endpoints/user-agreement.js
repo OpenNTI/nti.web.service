@@ -22,14 +22,16 @@ function copyRequestHeaders (req) {
 class ServeUserAgreement {
 	constructor (config, server) {
 		Object.assign(this, {
-			host: config.server,
 			server,
+			host: config.server,
 			url: config['user-agreement']
 		});
 	}
 
 	handle (req, res) {
 		const SERVER_CONTEXT = req;
+
+		let fetchContext = {headers: copyRequestHeaders(req), redirect: 'manual'};
 
 		function handleFetchResponse (res) {
 			if (!res.ok) {
@@ -76,12 +78,14 @@ class ServeUserAgreement {
 		this.server.get('logon.ping', SERVER_CONTEXT)
 			.then(pong => getLink(pong, TOS_NOT_ACCEPTED))
 
-			//If there is a @NamedLink we have to pass request context,
-			//if its an external link like docs.google... blank out context.
 			.then(url => {
+				//If there is a @NamedLink we have to pass request context,
+				//if its an external link like docs.google... blank out context.
 				if (!url) {
 					url = this.url;
+					fetchContext = void 0;
 				}
+
 				return Url.parse(this.host).resolve(url || '');
 			})
 
@@ -94,11 +98,12 @@ class ServeUserAgreement {
 					return;
 				}
 
-				return fetch(url, {headers: copyRequestHeaders(req), redirect: 'manual'})
-					.then(handleFetchResponse)
-					.then(processAndRespond);
-
+				return fetch(url, )
 			})
+
+			.then(handleFetchResponse)
+
+			.then(processAndRespond)
 
 			.catch(e => {
 				res.status(500);

@@ -37,7 +37,7 @@
     "nti-lib-interfaces": "^1.9.4",
     "nti-util-logger": "^1.0.0",
     "response-time": "^2.2.0",
-    "yargs": "^4.1.0",
+    "yargs": "^6.0.0",
     "zpad": "^0.5.0"
   },
   "devDependencies": {
@@ -45,7 +45,7 @@
     "eslint-config-nti-codestyle-js": "^1.1.0",
     "glob": "^7.0.3",
     "istanbul": "^0.4.2",
-    "mocha": "^2.4.5",
+    "mocha": "^3.0.0",
     "mocha-junit-reporter": "^1.9.1"
   }
 }

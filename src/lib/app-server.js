@@ -23,32 +23,32 @@ function contextualize (root, app) {
 	return contextWapper;
 }
 
-exports.setupApplication = (app, config) => {
+exports.setupApplication = (server, config) => {
 	const port = config.port = (config.port || 9000);
 	//config.silent = true;
 	const dsi = dataserver(config);
-	const session = new Session(dsi.interface);
 	const datacache = dsi.datacache;
 
 	logger.info('DataServer end-point: %s', config.server);
-	logger.attachToExpress(app);
-	app.use(cacheBuster);
-	setupCORS(app);
+	logger.attachToExpress(server);
+	server.use(cacheBuster);
+	setupCORS(server);
 
 	for (let client of config.apps) {
 		logger.info('Setting up app:');
-		let flatConfig = Object.assign({}, config, client);  //flattened config
-		let register = require.main.require(client.package).register;
-		let basepath = client.basepath;
-		let appId = client.appId;
+		const flatConfig = Object.assign({}, config, client);  //flattened config
+		const register = require.main.require(client.package).register;
+		const basepath = client.basepath;
+		const appId = client.appId;
 
-		let clientRoute = contextualize(basepath, app);
+		const clientRoute = contextualize(basepath, server);
 		logger.info('mount-point: %s', basepath);
 
-		let reg = register(clientRoute, flatConfig);
-		let assets = reg.assets;
-		let render = reg.render;
-		let devmode = reg.devmode;
+		const reg = register(clientRoute, flatConfig);
+		const session = new Session(dsi.interface, reg.sessionSetup);
+		const assets = reg.assets;
+		const render = reg.render;
+		const devmode = reg.devmode;
 
 		setupCompression(clientRoute, assets);
 		logger.info('Static Assets: %s', assets);

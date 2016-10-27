@@ -1,18 +1,16 @@
 const Logger = require('../logger');
 const {ServiceStash} = require('nti-lib-interfaces');
-
-const {sessionSetup} = require('./setup');
-
 const logger = Logger.get('SessionManager');
 
 
 module.exports = exports = class SessionManager {
-	constructor (server) {
+	constructor (server, sessionSetup) {
 		if (!server) {
 			throw new Error('No server interface!');
 		}
 		this.server = server;
 		this.config = server.config;
+		this.sessionSetup = sessionSetup;
 	}
 
 
@@ -47,7 +45,7 @@ module.exports = exports = class SessionManager {
 		return this.server.getServiceDocument(context)
 			.then(service => (
 				context[ServiceStash] = service,
-				sessionSetup(service)
+				this.sessionSetup && this.sessionSetup(service)
 			));
 	}
 

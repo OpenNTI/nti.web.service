@@ -23,7 +23,6 @@ const opt = require('yargs')
 			.options({
 				'l': {
 					alias: 'listen',
-					default: '0.0.0.0',
 					desc: 'Force server to liston on address'
 				},
 				'p': {
@@ -129,7 +128,7 @@ exports.config = function config () {
 	let c = Object.assign(
 		{webpack: opt.webpack}, envFlat, {
 			protocol: opt.protocol,
-			address: opt.l,
+			address: opt.l || envFlat.address || '0.0.0.0',
 			port: opt.p || envFlat.port
 		});
 

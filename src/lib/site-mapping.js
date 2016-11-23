@@ -3,6 +3,8 @@ const logger = require('./logger');
 
 const unknown = {name: 'default', title: 'nextthought'};
 
+const warned = {};
+
 module.exports = function getSite (map, site) {
 	let s = map[site] || unknown;
 
@@ -10,7 +12,8 @@ module.exports = function getSite (map, site) {
 		return getSite(map, s);
 	}
 
-	if (s === unknown) {
+	if (s === unknown && !warned[site]) {
+		warned[site] = true;
 		logger.warn('No site-mapping entry found for %s.', site);
 	}
 	return s;

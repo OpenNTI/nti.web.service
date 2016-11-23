@@ -29,13 +29,13 @@ module.exports = exports = class SessionManager {
 
 
 	getServiceDocument (context) {
-		let server = this.server;
+		const {server} = this;
 		return server.ping(context)
 			.then(pong => server.getServiceDocument(context)
-				.then(service => {
-					service.setLogoutURL(pong.links['logon.logout']);
-					return service;
-				}));
+				.then(service => (
+					service.setLogoutURL(pong.links['logon.logout']),
+					service
+				)));
 	}
 
 
@@ -78,8 +78,10 @@ module.exports = exports = class SessionManager {
 			} catch (e) {
 				logger.warn('Could not set headers because: %s (headers: %o)', e.message, req.responseHeaders);
 			}
+
 			logger.info('SESSION [END] %s %s (User: %s, %dms)',
 				req.method, url, req.username, Date.now() - start);
+
 			next();
 		}
 
@@ -89,6 +91,8 @@ module.exports = exports = class SessionManager {
 			.then(()=> !req.dead && this.setupIntitalData(req))
 			.then(finish)
 			.catch(reason => {
+				if (req.dead) {return;}
+
 				if ((reason || {}).hasOwnProperty('statusCode')) {
 					reason = reason.statusCode;
 				}
@@ -97,7 +101,12 @@ module.exports = exports = class SessionManager {
 					return next(reason);
 				}
 
-				if (reason != null && reason.isLoginAction) {
+				const returnTo = (
+					//Only set the return url if the url is NOT the basepath
+					(req.originalUrl !== basepath) ? '?return=' + encodeURIComponent(req.originalUrl) : ''
+				);
+
+				if (reason && reason.isLoginAction) {
 					if(scope.startsWith(reason.route)) {
 						return next();
 					}
@@ -105,23 +114,24 @@ module.exports = exports = class SessionManager {
 					logger.info('SESSION [LOGIN ACTION REQUIRED] %s %s REDIRECT %s%s (User: %s, %dms)',
 						req.method, url, basepath, reason.route, req.username, Date.now() - start);
 
-					res.redirect(`${basepath}${reason.route}?return=${encodeURIComponent(req.originalUrl)}`);
+					return res.redirect(`${basepath}${reason.route}${returnTo}`);
 				}
-				else if (!/^(api|login)/.test(scope)) {
+
+				if (!/^(api|login)/.test(scope)) {
 					logger.info('SESSION [INVALID] %s %s REDIRECT %slogin/ (User: annonymous, %dms)',
 						req.method, url, basepath, Date.now() - start);
 
-					res.redirect(basepath + 'login/' + (
-						//Only set the return url if the url is NOT the basepath
-						(req.originalUrl !== basepath) ? '?return=' + encodeURIComponent(req.originalUrl) : ''
-					));
+					return res.redirect(`${basepath}login/${returnTo}`);
 				}
-				else {
-					logger.error('SESSION [ERROR] %s %s (%s, %dms)',
-						req.method, url, reason, Date.now() - start);
 
-					next(reason);
-				}
+
+				return Promise.reject(reason);
+			})
+			.catch(er => {
+				logger.error('SESSION [ERROR] %s %s (%s, %dms)',
+					req.method, url, er, Date.now() - start);
+
+				next(er);
 			});
 	}
 

@@ -111,7 +111,10 @@ module.exports = exports = class SessionManager {
 					logger.info('SESSION [INVALID] %s %s REDIRECT %slogin/ (User: annonymous, %dms)',
 						req.method, url, basepath, Date.now() - start);
 
-					res.redirect(basepath + 'login/?return=' + encodeURIComponent(req.originalUrl));
+					res.redirect(basepath + 'login/' + (
+						//Only set the return url if the url is NOT the basepath
+						(req.originalUrl !== basepath) ? '?return=' + encodeURIComponent(req.originalUrl) : ''
+					));
 				}
 				else {
 					logger.error('SESSION [ERROR] %s %s (%s, %dms)',

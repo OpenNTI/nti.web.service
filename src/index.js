@@ -42,6 +42,6 @@ common.loadConfig()
 	})
 
 	.catch(function (error) {
-		logger.error('Failed to start: ', error);
+		logger.error('Failed to start: %o', error.stack || error.message || error);
 		process.kill();//just in case dev server is already up.
 	});

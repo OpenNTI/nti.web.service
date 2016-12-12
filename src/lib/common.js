@@ -134,7 +134,11 @@ exports.config = function config () {
 
 	if (!Array.isArray(c.apps)) {
 		logger.error('No apps configured!');
-		return null;
+		return Promise.reject({
+			reason: 'No apps key in config.',
+			NODE_ENV: process.env.NODE_ENV,
+			config: c
+		});
 	}
 
 	for(let a of c.apps) {

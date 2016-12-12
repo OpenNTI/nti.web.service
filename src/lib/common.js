@@ -138,15 +138,19 @@ exports.config = function config () {
 	}
 
 	for(let a of c.apps) {
+		try {
+			const pkg = require.main.require(a.package + '/package.json');
+
+			a.appId = a.appId || a.basepath || pkg.name;
+			a.appName = a.appName || pkg.name;
+			a.appVersion = a.appVersion || pkg.version;
+
+		} catch (e) {
+			logger.warn('Could not fill in package values for app %s, because: %s', a.package, e.message);
+		}
+
 		if (!a.appId) {
 			a.appId = a.basepath || uuid.v4();
-		}
-		if (!a.appVersion) {
-			try {
-				a.appVersion = require.main.require(a.package + '/package.json').version;
-			} catch (e) {
-				logger.warn('Could not fill in appVersion for app %s, because: %s', a.package, e.message);
-			}
 		}
 	}
 

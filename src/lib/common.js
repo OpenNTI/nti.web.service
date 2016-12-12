@@ -103,7 +103,7 @@ exports.showFlags = function showFlags (config) {
 	}
 
 	for (let flag of Object.keys(config.flags)) {
-		let	value = config.flags[flag];
+		let value = config.flags[flag];
 
 		if (typeof value === 'object') {
 			for (let siteFlag of Object.keys(value)) {
@@ -140,6 +140,13 @@ exports.config = function config () {
 	for(let a of c.apps) {
 		if (!a.appId) {
 			a.appId = a.basepath || uuid.v4();
+		}
+		if (!a.appVersion) {
+			try {
+				a.appVersion = require.main.require(a.package + '/package.json').version;
+			} catch (e) {
+				logger.warn('Could not fill in appVersion for app %s, because: %s', a.package, e.message);
+			}
 		}
 	}
 

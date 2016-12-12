@@ -35,7 +35,7 @@ exports.setupApplication = (server, config) => {
 	setupCORS(server);
 
 	for (let client of config.apps) {
-		logger.info('Setting up app:');
+		logger.info('Setting up app (version: %s):', client.appVersion || 'Unknown');
 		const flatConfig = Object.assign({}, config, client);  //flattened config
 		const register = require.main.require(client.package).register;
 		const basepath = client.basepath;

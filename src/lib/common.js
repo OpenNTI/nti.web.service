@@ -66,18 +66,24 @@ exports.loadConfig = function loadConfig () {
 		if (uri.protocol == null || uri.protocol === 'file:') {
 			uri = opt.config.replace(/^file:\/\//i, '');
 
-			let p = path.resolve(process.cwd(), uri);
-			if (!fs.existsSync(p)) {
-				logger.error('Config not found at: %s', uri);
-				p = path.resolve(__dirname, uri);
-				if (!fs.existsSync(p)) {
-					p = path.resolve(__dirname, '../../config/env.json.example');
-					logger.warn('Using example config: %s', uri);
+			const resolveOrder = [
+				path.resolve(process.cwd(), uri),
+				path.resolve(__dirname, uri),
+				path.resolve(__dirname, '../../config/env.json.example')
+			]
+
+			logger.debug('Attempting to resolve & load config with path: %s', uri);
+			for (let p of resolveOrder) {
+				try {
+					logger.debug('Attempting Config at: %s', p);
+					env = JSON.parse(fs.readFileSync(p));
+					return pass(exports.config());
+				} catch (e) {
+					logger.debug('Config not available at: %s\n\t%s', p, e.message);
 				}
 			}
 
-			env = JSON.parse(fs.readFileSync(p));
-			return pass(exports.config());
+			return fail('Config Failed to load');
 		}
 
 		fetch(opt.config)

@@ -92,27 +92,32 @@ exports.setupApplication = (server, config) => {
 			global.pageRenderSetPageNotFound = ()=>isErrorPage = true;
 
 			//Pre-flight (if any widget makes a request, we will cache its result and send its result to the client)
-			render(basepath, req, nodeConfigAsClientConfig(config, appId, req));
+			const renderPass = render(basepath, req, nodeConfigAsClientConfig(config, appId, req));
 
-			if (isErrorPage) {
-				res.status(404);
-			}
+			const prefetch = Promise.all([
+					renderPass,
+					req.waitForPending ?
+						req.waitForPending(5 * 60000/* 5 minutes*/) :
+						Promise.resolve()
+				]);
 
-			const prefetch = req.waitForPending ?
-					req.waitForPending(5 * 60000/* 5 minutes*/) :
-					Promise.resolve();
 
+			prefetch
+				.then(()=> {
+					if (isErrorPage) {
+						res.status(404);
+					}
 
-			prefetch.then(
-				()=> {
 					let configForClient = clientConfig(req.username, appId, req);
 					configForClient.html += datacache.getForContext(req).serialize();
 					//Final render
-					logger.info('Flushing Render to client: %s %s', req.url, req.username);
-					res.send(render(basepath, req, configForClient));
-				},
-
-				error => {
+					return Promise.resolve(render(basepath, req, configForClient))
+					.then(content => {
+						logger.info('Flushing Render to client: %s %s', req.url, req.username);
+						res.send(content)
+					});
+				})
+				.catch(error => {
 					logger.error(error.stack || error.message || error);
 					res.end(error);
 				});

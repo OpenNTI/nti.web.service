@@ -12,9 +12,7 @@ const getSiteFrom = require('./site-mapping');
 const logger = require('./logger');
 
 
-let env = null; //until this loads, calling config() should blow up.
-
-const getSite = x => getSiteFrom(env['site-mappings'] || {}, x);
+const getSite = (env, x) => getSiteFrom((env || {})['site-mappings'] || {}, x);
 
 
 //Use native node require() for optimist since it defines a 'default' property on the exports.
@@ -60,7 +58,6 @@ const opt = require('yargs')
 
 
 exports.loadConfig = function loadConfig () {
-	env = null;
 	if (!opt.config) {
 		return Promise.reject('No config file specified');
 	}
@@ -81,8 +78,7 @@ exports.loadConfig = function loadConfig () {
 			for (let p of resolveOrder) {
 				try {
 					logger.debug('Attempting Config at: %s', p);
-					env = JSON.parse(fs.readFileSync(p));
-					return pass(exports.config());
+					return pass(exports.config(JSON.parse(fs.readFileSync(p))));
 				} catch (e) {
 					logger.debug('Config not available at: %s\n\t%s', p, e.message);
 				}
@@ -94,8 +90,7 @@ exports.loadConfig = function loadConfig () {
 		fetch(opt.config)
 		 	.then(response => response.ok ? response.json() : Promise.reject(response.statusText))
 			.then(body => {
-				env = body;
-				pass(exports.config());
+				pass(exports.config(body));
 			})
 			.catch(e => {
 				logger.error(e);
@@ -128,7 +123,7 @@ exports.showFlags = function showFlags (config) {
 };
 
 
-exports.config = function config () {
+exports.config = function config (env) {
 	const base = 'development';
 
 	const serverHost = opt['dataserver-host'];
@@ -216,12 +211,11 @@ function noServiceAndThereShouldBe () {
 }
 
 
-exports.clientConfig = function clientConfig (username, appId, context) {
+exports.clientConfig = function clientConfig (baseConfig, username, appId, context) {
 	//unsafe to send to client raw... lets reduce it to essentials
-	const base = exports.config();
-	const app = (base.apps || []).reduce((r, o) => r || o.appId === appId && o, null) || {};
-	const site = getSite(context[SiteName]);
-	const cfg = Object.assign({}, base, app, {
+	const app = (baseConfig.apps || []).reduce((r, o) => r || o.appId === appId && o, null) || {};
+	const site = getSite(baseConfig, context[SiteName]);
+	const cfg = Object.assign({}, baseConfig, app, {
 		siteName: site.name,
 		siteTitle: site.title,
 		username
@@ -262,7 +256,7 @@ exports.nodeConfigAsClientConfig = function nodeConfigAsClientConfig (cfg, appId
 		html: '',
 		config: Object.assign({}, cfg, app, {
 			username: context.username,
-			siteName: getSite(context[SiteName]),
+			siteName: getSite(cfg, context[SiteName]),
 			nodeInterface: dontUseMe,
 			nodeService: context[ServiceStash] || noServiceAndThereShouldBe
 		})

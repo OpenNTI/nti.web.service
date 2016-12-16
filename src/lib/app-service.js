@@ -108,7 +108,7 @@ exports.setupApplication = (server, config) => {
 						res.status(404);
 					}
 
-					let configForClient = clientConfig(req.username, appId, req);
+					let configForClient = clientConfig(config, req.username, appId, req);
 					configForClient.html += datacache.getForContext(req).serialize();
 					//Final render
 					return Promise.resolve(render(basepath, req, configForClient))

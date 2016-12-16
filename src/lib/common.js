@@ -60,6 +60,7 @@ const opt = require('yargs')
 
 
 exports.loadConfig = function loadConfig () {
+	env = null;
 	if (!opt.config) {
 		return Promise.reject('No config file specified');
 	}
@@ -92,7 +93,7 @@ exports.loadConfig = function loadConfig () {
 
 		fetch(opt.config)
 		 	.then(response => response.ok ? response.json() : Promise.reject(response.statusText))
-			.then(config => {
+			.then(body => {
 				env = body;
 				pass(exports.config());
 			})

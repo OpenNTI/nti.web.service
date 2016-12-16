@@ -1,10 +1,13 @@
 'use strict';
+const cluster = require('cluster');
 const morgan = require('morgan');
 const responseTime = require('response-time');
 const cookieParser = require('cookie-parser');
 
-const Logger = require('nti-util-logger').default;
-const logger = Logger.get('NodeService');
+const {default: Logger} = require('nti-util-logger');
+const logger = Logger.get('NodeService:' + (cluster.isMaster ? 'master' : ('worker:' + cluster.worker.id)));
+
+
 
 module.exports = Object.assign(morgan, {
 

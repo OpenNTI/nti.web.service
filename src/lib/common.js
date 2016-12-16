@@ -49,6 +49,10 @@ const opt = require('yargs')
 					demand: true,
 					default: '../config/env.json',
 					desc: 'URI/path to config file (http/https/file/path)'
+				},
+				'env': {
+					default: process.env.NODE_ENV,
+					desc: 'Specify env config key'
 				}
 			})
 			.help('help', 'Usage').alias('help', '?')
@@ -124,14 +128,23 @@ exports.showFlags = function showFlags (config) {
 
 
 exports.config = function config () {
-	let base = 'development';
+	const base = 'development';
 
-	let serverHost = opt['dataserver-host'];
-	let serverPort = opt['dataserver-port'];
+	const serverHost = opt['dataserver-host'];
+	const serverPort = opt['dataserver-port'];
 
-	let envFlat = Object.assign({}, env[base], env[process.env.NODE_ENV] || {});
+	if (opt.env && env[opt.env] == null) {
+		logger.error('Environment specified does not exist in config: %s', opt.env);
+		return Promise.reject({
+			reason: 'Missing Environment key',
+			ENV: opt.env,
+			config: env
+		});
+	}
 
-	let c = Object.assign(
+	const envFlat = Object.assign({}, env[base], env[opt.env]);
+
+	const c = Object.assign(
 		{webpack: opt.webpack}, envFlat, {
 			protocol: opt.protocol,
 			address: opt.l || envFlat.address || '0.0.0.0',
@@ -142,7 +155,7 @@ exports.config = function config () {
 		logger.error('No apps configured!');
 		return Promise.reject({
 			reason: 'No apps key in config.',
-			NODE_ENV: process.env.NODE_ENV,
+			ENV: opt.env,
 			config: c
 		});
 	}
@@ -166,10 +179,10 @@ exports.config = function config () {
 
 	if (!config.printed) {
 		config.printed = true;
-		if (env[process.env.NODE_ENV] != null) {
-			logger.info(`In ${process.env.NODE_ENV} mode`);
+		if (env[opt.env] != null) {
+			logger.info(`In ${opt.env} mode`);
 		} else {
-			logger.warn('In default "development" mode. Consider setting NODE_ENV="production"');
+			logger.warn('In default "development" mode. Consider --env "production" or setting NODE_ENV="production"');
 		}
 	}
 

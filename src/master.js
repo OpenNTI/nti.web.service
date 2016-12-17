@@ -35,11 +35,21 @@ function load () {
 }
 
 
+function getWorkerCount (config) {
+	const isValid = x => isNaN(x) || x <= 0;
+
+	let x = parseInt(config.workers, 10);
+
+	return isValid(x) ? x : 1;
+}
+
+
 function init (config) {
 
 	logger.info('Config loaded.');
 	common.showFlags(config);
-	const workers = config.workers || 1;
+
+	const workers = getWorkerCount(config);
 
 	startWorker = () => void cluster.fork().send({cmd: 'init', config});
 

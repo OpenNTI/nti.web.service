@@ -22,13 +22,14 @@ const MESSAGE_HANDLERS = {
 	close () {
 		if (!this.server) {
 			logger.error('No server, exiting...');
-			return process.kill();
+			// process.exit();
+			return;
 		}
 
 		this.server.close(() => {
 			logger.info('Closed connection');
 			cluster.worker.disconnect();
-			process.exit();
+			// process.exit();
 		});
 	}
 
@@ -57,7 +58,7 @@ function init (config) {
 	//Errors
 	setupErrorHandler(app, config);
 
-	server = protocol.createServer(app);
+	const server = protocol.createServer(app);
 
 	//Go!
 	server.listen(port, address, () => {

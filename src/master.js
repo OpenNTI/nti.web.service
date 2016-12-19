@@ -30,7 +30,6 @@ function load () {
 		.then(init)
 		.catch(error => {
 			logger.error('Failed to start: %s', error.stack || error.message || JSON.stringify(error));
-			process.kill();//just in case dev server is already up.
 		});
 }
 

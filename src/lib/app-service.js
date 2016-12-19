@@ -1,6 +1,7 @@
 'use strict';
 global.SERVER = true;
 
+const semver = require('semver');
 const express = require('express');
 const dataserver = require('nti-lib-interfaces').default;
 
@@ -26,6 +27,12 @@ exports.setupApplication = (server, config) => {
 	const {port} = config;
 	const {datacache, interface: _interface} = dataserver(config);
 
+	const versionMatches = (vspec) => {
+		if (!semver.satisfies(config.versions.service, vspec)) {
+			throw new Error(`${config.versions.service} does not satisfy ${vspec}. Aborting.`);
+		}
+	};
+
 	logger.info('DataServer end-point: %s', config.server);
 	logger.attachToExpress(server);
 	server.use(cacheBuster);
@@ -41,7 +48,7 @@ exports.setupApplication = (server, config) => {
 		const clientRoute = contextualize(basepath, server);
 		logger.info('mount-point: %s', basepath);
 
-		const {assets, render, devmode, sessionSetup} = register(clientRoute, flatConfig);
+		const {assets, render, devmode, sessionSetup} = register(clientRoute, flatConfig, versionMatches);
 
 		const session = new Session(_interface, sessionSetup);
 

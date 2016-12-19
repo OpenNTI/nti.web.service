@@ -2,7 +2,9 @@
 
 exports = module.exports = {
 
-	register (/*expressApp*/) {
+	register (/*expressApp*/_, __, checkVersion) {
+
+		checkVersion('~1.3.0');
 
 		return {
 			devmode: null,

@@ -95,11 +95,11 @@ exports.setupApplication = (server, config) => {
 			const renderPass = render(basepath, req, nodeConfigAsClientConfig(config, appId, req));
 
 			const prefetch = Promise.all([
-					renderPass,
-					req.waitForPending ?
-						req.waitForPending(5 * 60000/* 5 minutes*/) :
-						Promise.resolve()
-				]);
+				renderPass,
+				req.waitForPending ?
+					req.waitForPending(5 * 60000/* 5 minutes*/) :
+					Promise.resolve()
+			]);
 
 
 			prefetch
@@ -114,7 +114,7 @@ exports.setupApplication = (server, config) => {
 					return Promise.resolve(render(basepath, req, configForClient))
 					.then(content => {
 						logger.info('Flushing Render to client: %s %s', req.url, req.username);
-						res.send(content)
+						res.send(content);
 					});
 				})
 				.catch(error => {

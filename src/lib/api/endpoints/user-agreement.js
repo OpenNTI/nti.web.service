@@ -33,17 +33,17 @@ class ServeUserAgreement {
 
 		let fetchContext = {headers: copyRequestHeaders(req), redirect: 'manual'};
 
-		function handleFetchResponse (res) {
-			if (!res.ok) {
-				if (res.status >= 300 && res.status < 400) {
-					const redirectURL = res.headers.get('location');
+		function handleFetchResponse (response) {
+			if (!response.ok) {
+				if (response.status >= 300 && response.status < 400) {
+					const redirectURL = response.headers.get('location');
 					return fetch(redirectURL).then(handleFetchResponse);
 				}
 
-				return Promise.reject(new Error(res.statusText));
+				return Promise.reject(new Error(response.statusText));
 			}
 
-			return res.text();
+			return response.text();
 		}
 
 

@@ -11,6 +11,13 @@ const ServiceStash = dsi.ServiceStash;
 const getSiteFrom = require('./site-mapping');
 const logger = require('./logger');
 
+Object.assign(exports, {
+	clientConfig,
+	config,
+	loadConfig,
+	nodeConfigAsClientConfig,
+	showFlags
+});
 
 const getSite = (env, x) => getSiteFrom((env || {})['site-mappings'] || {}, x);
 
@@ -57,7 +64,7 @@ const opt = require('yargs')
 			.argv;
 
 
-exports.loadConfig = function loadConfig () {
+function loadConfig () {
 	if (!opt.config) {
 		return Promise.reject('No config file specified');
 	}
@@ -72,7 +79,7 @@ exports.loadConfig = function loadConfig () {
 				path.resolve(process.cwd(), uri),
 				path.resolve(__dirname, uri),
 				path.resolve(__dirname, '../../config/env.json.example')
-			]
+			];
 
 			logger.debug('Attempting to resolve & load config with path: %s', uri);
 			for (let p of resolveOrder) {
@@ -88,20 +95,20 @@ exports.loadConfig = function loadConfig () {
 		}
 
 		fetch(opt.config)
-		 	.then(response => response.ok ? response.json() : Promise.reject(response.statusText))
+			.then(response => response.ok ? response.json() : Promise.reject(response.statusText))
 			.then(body => {
 				pass(exports.config(body));
 			})
 			.catch(e => {
 				logger.error(e);
-				fail(e)
+				fail(e);
 			});
 
 	});
-};
+}
 
 
-exports.showFlags = function showFlags (config) {
+function showFlags (config) {
 
 	if (!config.flags) {
 		logger.info('No flags configured.');
@@ -120,10 +127,10 @@ exports.showFlags = function showFlags (config) {
 
 		logger.info('Resolved Flag: (Global) %s = %s', flag, value);
 	}
-};
+}
 
 
-exports.config = function config (env) {
+function config (env) {
 	const base = 'development';
 
 	const serverHost = opt['dataserver-host'];
@@ -195,7 +202,7 @@ exports.config = function config (env) {
 	}
 
 	return c;
-};
+}
 
 
 function dontUseMe () {
@@ -211,7 +218,7 @@ function noServiceAndThereShouldBe () {
 }
 
 
-exports.clientConfig = function clientConfig (baseConfig, username, appId, context) {
+function clientConfig (baseConfig, username, appId, context) {
 	//unsafe to send to client raw... lets reduce it to essentials
 	const app = (baseConfig.apps || []).reduce((r, o) => r || o.appId === appId && o, null) || {};
 	const site = getSite(baseConfig, context[SiteName]);
@@ -247,10 +254,10 @@ exports.clientConfig = function clientConfig (baseConfig, username, appId, conte
 			'window.$AppConfig = ' + JSON.stringify(cfg) +
 			'\n</script>\n'
 	};
-};
+}
 
 
-exports.nodeConfigAsClientConfig = function nodeConfigAsClientConfig (cfg, appId, context) {
+function nodeConfigAsClientConfig (cfg, appId, context) {
 	const app = (cfg.apps || []).reduce((r, o) => r || o.appId === appId && o, null) || {};
 	return {
 		html: '',
@@ -261,4 +268,4 @@ exports.nodeConfigAsClientConfig = function nodeConfigAsClientConfig (cfg, appId
 			nodeService: context[ServiceStash] || noServiceAndThereShouldBe
 		})
 	};
-};
+}

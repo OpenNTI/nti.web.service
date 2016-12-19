@@ -119,6 +119,7 @@ exports.setupApplication = (server, config) => {
 		});
 
 		if (devmode) {
+			process.send({cmd: 'NOTIFY_DEVMODE'});
 			devmode.start();
 		}
 	}

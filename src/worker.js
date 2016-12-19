@@ -1,3 +1,4 @@
+const pkg = require('../package.json');
 const cluster = require('cluster');
 const http = require('http');
 const proxiedHttp = require('findhit-proxywrap').proxy(http);
@@ -20,6 +21,7 @@ const MESSAGE_HANDLERS = {
 
 
 	close () {
+		logger.info('Asked to close...');
 		if (!this.server) {
 			logger.error('No server, exiting...');
 			// process.exit();
@@ -38,7 +40,7 @@ const MESSAGE_HANDLERS = {
 
 
 function start ()  {
-	logger.info('Staring up. process: %d', process.pid);
+	logger.info('Staring up. (version: %s, process: %d)', pkg.version, process.pid);
 	process.on('message', messageHandler);
 }
 

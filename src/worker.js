@@ -9,6 +9,8 @@ const appService = require('./lib/app-service');
 const logger = require('./lib/logger');
 const setupErrorHandler = require('./lib/error-handler');
 
+const sendErrorMessage = e => process.send({cmd: 'FATAL_ERROR', error: e});
+
 Object.assign(exports, {
 	start
 });
@@ -16,7 +18,14 @@ Object.assign(exports, {
 const MESSAGE_HANDLERS = {
 
 	init (msg) {
-		this.server = init(msg.config);
+		try {
+			this.server = init(msg.config);
+		} catch (e) {
+			process.exitCode = 1;
+			logger.error(e.message || e);
+			sendErrorMessage(e);
+			this.close();
+		}
 	},
 
 
@@ -24,6 +33,7 @@ const MESSAGE_HANDLERS = {
 		logger.info('Asked to close...');
 		if (!this.server) {
 			logger.error('No server, exiting...');
+			cluster.worker.disconnect();
 			// process.exit();
 			return;
 		}

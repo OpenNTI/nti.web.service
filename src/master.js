@@ -18,6 +18,18 @@ const setConfiguredWorkerCount = n => {getConfig().workers = n;};
 const getActiveWorkers = () => Object.values(cluster.workers).filter(x => !x.isDead());
 
 
+const MESSAGE_HANDLERS = {
+	NOTIFY_DEVMODE () {
+		logger.warn('Restricting workers, because devmode.');
+		setConfiguredWorkerCount(1);
+	},
+
+	FATAL_ERROR () {
+		logger.error('Recieved a FATAL_ERROR code from a worker.');
+	}
+};
+
+
 function start () {
 	logger.info('Staring up. (version: %s, process: %d)', pkg.version, process.pid);
 	process.on('SIGHUP', load);
@@ -68,9 +80,21 @@ function startWorker () {
 
 
 function maintainWorkerCount () {
-	const {port} = getConfig();
-	const unsubscribe = () => cluster.removeListener('listening', startAnother);
+	// Prevent memory leaks...
+	// If a worker exists while we're already processing, drop the previous handlers and start over
+	const listeners = cluster.listeners('listening') || [];
+	if (listeners.length > 0) {
+		//free the previous handler and its closure stack references. (being careful, not to remove OTHER listeners)
+		listeners.forEach(x => x.name === startAnother.name && cluster.removeListener('listening', x));
+	}
+
 	cluster.on('listening', startAnother);
+	const {port} = getConfig();
+	const unsubscribe = () => {
+		maintainWorkerCount.processing = false;
+		cluster.removeListener('listening', startAnother);
+	};
+
 
 	let pendingWorker = null;
 	startAnother();
@@ -125,15 +149,20 @@ function restartWorkers () {
 
 
 function onWorkerExit (worker, code, signal) {
-	logger.info('worker %d exited (%s). restarting...', worker.process.pid, signal || code);
-	maintainWorkerCount();
+	logger.info('worker %d exited (%s)', worker.process.pid, signal || code);
+	if (!code) {
+		maintainWorkerCount();
+	}
 }
 
 
-function handleMessage (worker, message) {
-	logger.debug('From Worker %d: %o', worker.id, message);
-	if ((message || {}).cmd === 'NOTIFY_DEVMODE') {
-		logger.warn('Restricting workers, because devmode.');
-		setConfiguredWorkerCount(1);
+function handleMessage (worker, msg) {
+	logger.debug('From Worker %d: %o', worker.id, msg);
+	try {
+		MESSAGE_HANDLERS[msg.cmd](msg);
+		return;
+	} catch (e) {
+		logger.error('Could not handle message. %o', e.message || e.stack || e);
+		return;
 	}
 }

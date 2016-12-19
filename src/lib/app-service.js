@@ -22,10 +22,9 @@ function contextualize (root, app) {
 }
 
 exports.setupApplication = (server, config) => {
-	const port = config.port = (config.port || 9000);
 	//config.silent = true;
-	const dsi = dataserver(config);
-	const datacache = dsi.datacache;
+	const {port} = config;
+	const {datacache, interface: _interface} = dataserver(config);
 
 	logger.info('DataServer end-point: %s', config.server);
 	logger.attachToExpress(server);
@@ -42,11 +41,9 @@ exports.setupApplication = (server, config) => {
 		const clientRoute = contextualize(basepath, server);
 		logger.info('mount-point: %s', basepath);
 
-		const reg = register(clientRoute, flatConfig);
-		const session = new Session(dsi.interface, reg.sessionSetup);
-		const assets = reg.assets;
-		const render = reg.render;
-		const devmode = reg.devmode;
+		const {assets, render, devmode, sessionSetup} = register(clientRoute, flatConfig);
+
+		const session = new Session(_interface, sessionSetup);
 
 		setupCompression(clientRoute, assets);
 		logger.info('Static Assets: %s', assets);
@@ -75,7 +72,7 @@ exports.setupApplication = (server, config) => {
 		registerEndPoints(
 			clientRoute, //express instance
 			flatConfig,
-			dsi.interface); //interface
+			_interface); //interface
 
 		clientRoute.use(/^\/login/i, (r, q, n) => session.anonymousMiddleware(basepath, r, q, n));
 

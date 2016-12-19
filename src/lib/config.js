@@ -151,7 +151,7 @@ function config (env) {
 		{webpack: opt.webpack}, envFlat, {
 			protocol: opt.protocol,
 			address: opt.l || envFlat.address || '0.0.0.0',
-			port: opt.p || envFlat.port
+			port: parseInt(opt.p || envFlat.port, 10) //ensure port is 'number'
 		});
 
 	if (!Array.isArray(c.apps)) {
@@ -159,6 +159,14 @@ function config (env) {
 		return Promise.reject({
 			reason: 'No apps key in config.',
 			ENV: opt.env,
+			config: c
+		});
+	}
+
+	if (typeof c.port !== 'number' || !isFinite(c.port)) {
+		logger.error('Invalid port number!', c.port);
+		return Promise.reject({
+			reason: 'Bad Port',
 			config: c
 		});
 	}

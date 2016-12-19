@@ -6,9 +6,7 @@ const dataserver = require('nti-lib-interfaces').default;
 
 const registerEndPoints = require('./api');
 const cacheBuster = require('./no-cache');
-const common = require('./common');
-const clientConfig = common.clientConfig;
-const nodeConfigAsClientConfig = common.nodeConfigAsClientConfig;
+const {clientConfig, nodeConfigAsClientConfig} = require('./config');
 
 const Session = require('./session');
 const logger = require('./logger');

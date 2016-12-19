@@ -1,5 +1,5 @@
 const cluster = require('cluster');
-const common = require('./lib/common');
+const {loadConfig, showFlags} = require('./lib/config');
 const logger = require('./lib/logger');
 
 Object.assign(exports, {
@@ -26,7 +26,7 @@ function start () {
 
 function load () {
 	logger.info('Loading config.');
-	common.loadConfig()
+	loadConfig()
 		.then(init)
 		.catch(error => {
 			logger.error('Failed to start: %s', error.stack || error.message || JSON.stringify(error));
@@ -47,7 +47,7 @@ function getWorkerCount (config) {
 function init (config) {
 
 	logger.info('Config loaded.');
-	common.showFlags(config);
+	showFlags(config);
 
 	const workers = getWorkerCount(config);
 

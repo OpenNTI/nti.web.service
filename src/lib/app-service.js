@@ -21,7 +21,7 @@ function contextualize (root, app) {
 	return contextWapper;
 }
 
-exports.setupApplication = (server, config) => {
+exports.setupApplication = (server, config, restartRequest) => {
 	//config.silent = true;
 	const {port} = config;
 	const {datacache, interface: _interface} = dataserver(config);
@@ -41,7 +41,7 @@ exports.setupApplication = (server, config) => {
 		const clientRoute = contextualize(basepath, server);
 		logger.info('mount-point: %s', basepath);
 
-		const {assets, render, devmode, sessionSetup} = register(clientRoute, flatConfig);
+		const {assets, render, devmode, sessionSetup} = register(clientRoute, flatConfig, restartRequest);
 
 		const session = new Session(_interface, sessionSetup);
 

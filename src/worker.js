@@ -1,5 +1,5 @@
 const pkg = require('../package.json');
-const cluster = require('cluster');
+const {worker} = require('cluster');
 const http = require('http');
 const proxiedHttp = require('findhit-proxywrap').proxy(http);
 
@@ -33,14 +33,14 @@ const MESSAGE_HANDLERS = {
 		logger.info('Asked to close...');
 		if (!this.server) {
 			logger.error('No server, exiting...');
-			cluster.worker.disconnect();
+			worker.disconnect();
 			// process.exit();
 			return;
 		}
 
 		this.server.close(() => {
 			logger.info('Closed connection');
-			cluster.worker.disconnect();
+			worker.disconnect();
 			// process.exit();
 		});
 	}
@@ -55,6 +55,10 @@ function start ()  {
 }
 
 
+function restart () {
+	process.send({cmd: 'UPDATED_PACKAGE_DETECTED'});
+}
+
 
 function init (config) {
 	const protocol = config.protocol === 'proxy' ? proxiedHttp : http;
@@ -65,7 +69,7 @@ function init (config) {
 
 	app.set('trust proxy', 1); // trust first proxy
 
-	const port = appService.setupApplication(app, config);
+	const port = appService.setupApplication(app, config, restart);
 
 	//Errors
 	setupErrorHandler(app, config);

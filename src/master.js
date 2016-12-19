@@ -24,6 +24,10 @@ const MESSAGE_HANDLERS = {
 		setConfiguredWorkerCount(1);
 	},
 
+	UPDATED_PACKAGE_DETECTED () {
+		restartWorkers();
+	},
+
 	FATAL_ERROR () {
 		logger.error('Recieved a FATAL_ERROR code from a worker.');
 	}

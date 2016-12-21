@@ -2,17 +2,15 @@
 
 exports = module.exports = {
 
-	register (/*expressApp*/_, __, checkVersion) {
-
-		checkVersion('~1.3.0');
+	register (/*expressApp , config, requestRestart*/) {
 
 		return {
 			devmode: null,
 
 			assets: __dirname,
 
-			render (base, req, config) {
-				return 'Page! at ' + base + config.html;
+			render (base, req, clientConfig) {
+				return 'Page! at ' + base + clientConfig.html;
 			}
 		};
 

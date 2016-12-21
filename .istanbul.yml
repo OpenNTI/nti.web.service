@@ -3,6 +3,9 @@ instrumentation:
     root: ./src
     extensions:
         - .js
+    default-excludes: true
+    excludes:
+        - '**/__test__/**'
     embed-source: false
     compact: true
     preserve-comments: false

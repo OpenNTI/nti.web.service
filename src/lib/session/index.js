@@ -30,8 +30,10 @@ module.exports = exports = class SessionManager {
 
 	getServiceDocument (context) {
 		const {server} = this;
-		return server.ping(context)
+		return server.ping(context)	// server.getServiceDocument() pings as well...
+									// if we didn't need the logon.logout url, we could omit this step here.
 			.then(pong => server.getServiceDocument(context)
+				//This seems dirty and out of place...
 				.then(service => (
 					service.setLogoutURL(pong.links['logon.logout']),
 					service
@@ -52,10 +54,10 @@ module.exports = exports = class SessionManager {
 
 	middleware (basepath, req, res, next) {
 		const start = Date.now();
-		const url = req.originalUrl || req.url;
+		const url = req.originalUrl;
 		const scope = url.substr(0, basepath.length) === basepath ? url.substr(basepath.length) : url;
 
-		req.responseHeaders = {};
+		req.responseHeaders = req.responseHeaders || {};
 
 		req.setMaxListeners(1000);
 		req.socket.setKeepAlive(true, 1000);
@@ -85,48 +87,12 @@ module.exports = exports = class SessionManager {
 			next();
 		}
 
-		this.getUser(req)
+		return this.getUser(req)
 			.then(user => req.username = user)
 			.then(()=> logger.info('SESSION [VALID] %s %s', req.method, url))
 			.then(()=> !req.dead && this.setupIntitalData(req))
 			.then(finish)
-			.catch(reason => {
-				if (req.dead) {return;}
-
-				if ((reason || {}).hasOwnProperty('statusCode')) {
-					reason = reason.statusCode;
-				}
-
-				if (reason instanceof Error) {
-					return next(reason);
-				}
-
-				const returnTo = (
-					//Only set the return url if the url is NOT the basepath
-					(req.originalUrl !== basepath) ? '?return=' + encodeURIComponent(req.originalUrl) : ''
-				);
-
-				if (reason && reason.isLoginAction) {
-					if(scope.startsWith(reason.route)) {
-						return next();
-					}
-
-					logger.info('SESSION [LOGIN ACTION REQUIRED] %s %s REDIRECT %s%s (User: %s, %dms)',
-						req.method, url, basepath, reason.route, req.username, Date.now() - start);
-
-					return res.redirect(`${basepath}${reason.route}${returnTo}`);
-				}
-
-				if (!/^(api|login)/.test(scope)) {
-					logger.info('SESSION [INVALID] %s %s REDIRECT %slogin/ (User: annonymous, %dms)',
-						req.method, url, basepath, Date.now() - start);
-
-					return res.redirect(`${basepath}login/${returnTo}`);
-				}
-
-
-				return Promise.reject(reason);
-			})
+			.catch(this.maybeRedircect(basepath, scope, start, req, res, next))
 			.catch(er => {
 				logger.error('SESSION [ERROR] %s %s (%s, %dms)',
 					req.method, url, er, Date.now() - start);
@@ -136,16 +102,51 @@ module.exports = exports = class SessionManager {
 	}
 
 
-	anonymousMiddleware (basepath, context, res, next) {
-		this.server.ping(context)
-			.then(() => next())
-			.catch(err => {
-				if (typeof err === 'string' || (err && err.reason)) {
-					next();
-				} else {
-					next(err);
+	maybeRedircect (basepath, scope, start, req, res, next) {
+		const url = req.originalUrl;
+
+		return reason => {
+			if (req.dead) {return;}
+
+			if ((reason || {}).hasOwnProperty('statusCode')) {
+				reason = reason.statusCode;
+			}
+
+			if (reason instanceof Error) {
+				return next(reason);
+			}
+
+			const returnTo = (
+				//Only set the return url if the url is NOT the basepath
+				(req.originalUrl !== basepath) ? '?return=' + encodeURIComponent(req.originalUrl) : ''
+			);
+
+			if (reason && reason.isLoginAction) {
+				if(scope.startsWith(reason.route)) {
+					return next();
 				}
-			});
+
+				logger.info('SESSION [LOGIN ACTION REQUIRED] %s %s REDIRECT %s%s (User: %s, %dms)',
+					req.method, url, basepath, reason.route, req.username, Date.now() - start);
+
+				return res.redirect(`${basepath}${reason.route}${returnTo}`);
+			}
+
+			if (!/^(api|login)/.test(scope)) {
+				logger.info('SESSION [INVALID] %s %s REDIRECT %slogin/ (User: annonymous, %dms)',
+					req.method, url, basepath, Date.now() - start);
+
+				return res.redirect(`${basepath}login/${returnTo}`);
+			}
+
+
+			return Promise.reject(reason);
+		};
+	}
+
+
+	anonymousMiddleware (basepath, context, res, next) {
+		next();
 	}
 
 };

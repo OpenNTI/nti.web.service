@@ -1,24 +1,47 @@
 'use strict';
-const WantsCompressed = /gzip/i;
+const wantsCompressed = RegExp.prototype.test.bind(/gzip/i);
 
 const mimes = require('mime-types');
-const compressible = require('compressible');
 const compression = require('compression');
 
 const path = require('path');
-const Url = require('url');
+const url = require('url');
 const fs = require('fs');
 
-module.exports = function attachToExpress (expressApp, assetPath) {
+const self = Object.assign(exports, {
+	attachToExpress,
+	precompressed,
+	compressionFilter
+});
 
-	expressApp.all('*', function (req, res, next) {
-		let ext = path.extname(Url.parse(req.url).pathname);
-		let gz = req.url + '.gz';
 
-		let type = mimes.lookup(ext);
+function attachToExpress (expressApp, assetPath) {
 
-		let compress = WantsCompressed.test(req.header('accept-encoding') || '');
-		if (!compress) {
+	expressApp.use(self.precompressed(assetPath));
+
+	expressApp.use(compression({filter: self.compressionFilter}));
+}
+
+
+function compressionFilter (req, res) {
+	const isGz = path.extname(url.parse(req.url).pathname) === '.gz';
+	const blocked = !!req.get('x-no-compression');
+
+	if (blocked || isGz) {
+		return false;
+	}
+
+	return compression.filter(req, res);
+}
+
+
+function precompressed (assetPath) {
+	return function (req, res, next) {
+		const gz = req.url + '.gz';
+		const blocked = !!req.get('x-no-compression');
+		const compress = wantsCompressed(req.get('accept-encoding') || '');
+
+		if (blocked || !compress) {
 			return next();
 		}
 
@@ -26,6 +49,9 @@ module.exports = function attachToExpress (expressApp, assetPath) {
 			if (err) {
 				return next();
 			}
+
+			const ext = path.extname(url.parse(req.url).pathname);
+			const type = mimes.lookup(ext);
 
 			req.url = gz;
 			res.set('Content-Encoding', 'gzip');
@@ -35,20 +61,5 @@ module.exports = function attachToExpress (expressApp, assetPath) {
 
 			next();
 		});
-	});
-
-
-	expressApp.use(compression({
-		filter (req, res) {
-			let type = res.getHeader('Content-Type');
-			let isGz = path.extname(Url.parse(req.url).pathname) === '.gz';
-
-			if (isGz || (type !== undefined && !compressible(type))) {
-				//logger.debug('Not compressing: %s %s ', req.url, type);
-				return false;
-			}
-
-			return true;
-		}
-	}));
-};
+	};
+}

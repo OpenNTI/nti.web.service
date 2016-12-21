@@ -4,25 +4,23 @@ const url = require('url');
 const path = require('path');
 const uuid = require('node-uuid');
 
-const dsi = require('nti-lib-interfaces');
-const SiteName = dsi.SiteName;
-const ServiceStash = dsi.ServiceStash;
+const {SiteName, ServiceStash} = require('nti-lib-interfaces');
 
 const getSiteFrom = require('./site-mapping');
 const logger = require('./logger');
 
-Object.assign(exports, {
+const getSite = (env, x) => getSiteFrom(env['site-mappings'] || {}, x);
+
+const self = Object.assign(exports, {
 	clientConfig,
 	config,
 	loadConfig,
 	nodeConfigAsClientConfig,
-	showFlags
+	showFlags,
+	getSite
 });
 
-const getSite = (env, x) => getSiteFrom((env || {})['site-mappings'] || {}, x);
 
-
-//Use native node require() for optimist since it defines a 'default' property on the exports.
 const opt = require('yargs')
 		.usage('WebApp Instance')
 			.options({
@@ -60,7 +58,8 @@ const opt = require('yargs')
 					desc: 'Specify env config key'
 				}
 			})
-			.help('help', 'Usage').alias('help', '?')
+			.help('help', 'Usage')
+			.alias('help', '?')
 			.argv;
 
 
@@ -85,7 +84,7 @@ function loadConfig () {
 			for (let p of resolveOrder) {
 				try {
 					logger.debug('Attempting Config at: %s', p);
-					return pass(exports.config(JSON.parse(fs.readFileSync(p))));
+					return pass(self.config(JSON.parse(fs.readFileSync(p))));
 				} catch (e) {
 					logger.debug('Config not available at: %s\n\t%s', p, e.message);
 				}
@@ -97,7 +96,7 @@ function loadConfig () {
 		fetch(opt.config)
 			.then(response => response.ok ? response.json() : Promise.reject(response.statusText))
 			.then(body => {
-				pass(exports.config(body));
+				pass(self.config(body));
 			})
 			.catch(e => {
 				logger.error(e);
@@ -154,7 +153,7 @@ function config (env) {
 			port: parseInt(opt.p || envFlat.port, 10) //ensure port is 'number'
 		});
 
-	if (!Array.isArray(c.apps)) {
+	if (!Array.isArray(c.apps) || c.apps.length === 0) {
 		logger.error('No apps configured!');
 		return Promise.reject({
 			reason: 'No apps key in config.',
@@ -213,14 +212,6 @@ function config (env) {
 }
 
 
-function dontUseMe () {
-	throw new Error(
-		'Use the Service to make your requests. ' +
-		'The interface is not meant to be used directly ' +
-		'anymore. (So we can centrally manage request contexts.)');
-}
-
-
 function noServiceAndThereShouldBe () {
 	throw new Error('No Service.');
 }
@@ -229,7 +220,7 @@ function noServiceAndThereShouldBe () {
 function clientConfig (baseConfig, username, appId, context) {
 	//unsafe to send to client raw... lets reduce it to essentials
 	const app = (baseConfig.apps || []).reduce((r, o) => r || o.appId === appId && o, null) || {};
-	const site = getSite(baseConfig, context[SiteName]);
+	const site = self.getSite(baseConfig, context[SiteName]);
 	const cfg = Object.assign({}, baseConfig, app, {
 		siteName: site.name,
 		siteTitle: site.title,
@@ -254,8 +245,7 @@ function clientConfig (baseConfig, username, appId, context) {
 	return {
 		//used only on server
 		config: Object.assign({}, cfg, {
-			nodeInterface: dontUseMe,
-			nodeService: context[ServiceStash] || noServiceAndThereShouldBe
+			nodeService: context[ServiceStash] || noServiceAndThereShouldBe()
 		}),
 		html:
 			'\n<script type="text/javascript">\n' +
@@ -267,13 +257,14 @@ function clientConfig (baseConfig, username, appId, context) {
 
 function nodeConfigAsClientConfig (cfg, appId, context) {
 	const app = (cfg.apps || []).reduce((r, o) => r || o.appId === appId && o, null) || {};
+	const site = self.getSite(cfg, context[SiteName]);
 	return {
 		html: '',
 		config: Object.assign({}, cfg, app, {
 			username: context.username,
-			siteName: getSite(cfg, context[SiteName]),
-			nodeInterface: dontUseMe,
-			nodeService: context[ServiceStash] || noServiceAndThereShouldBe
+			siteName: site.name,
+			siteTitle: site.title,
+			nodeService: context[ServiceStash] || noServiceAndThereShouldBe()
 		})
 	};
 }

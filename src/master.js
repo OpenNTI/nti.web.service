@@ -3,19 +3,26 @@ const cluster = require('cluster');
 const {loadConfig, showFlags} = require('./lib/config');
 const logger = require('./lib/logger');
 
-const STORE = {};
+const {
+	getConfig,
+	setConfig,
+	getConfiguredWorkerCount,
+	setConfiguredWorkerCount,
+	getActiveWorkers
+} = require('./lib/master-utils');
 
-Object.assign(exports, {
-	start
+const self = Object.assign(exports, {
+	start,
+
+	//testing
+	load,
+	init,
+	startWorker,
+	maintainWorkerCount,
+	restartWorkers,
+	onWorkerExit,
+	handleMessage
 });
-
-
-const getConfig = () => STORE.config;
-const setConfig = x => STORE.config = x;
-const isValidWorkerCount = x => !isNaN(x) && x > 0;
-const getConfiguredWorkerCount = x => (x = parseInt(getConfig().workers, 10), isValidWorkerCount(x) ? x : 1);
-const setConfiguredWorkerCount = n => {getConfig().workers = n;};
-const getActiveWorkers = () => Object.values(cluster.workers).filter(x => !x.isDead());
 
 
 const MESSAGE_HANDLERS = {
@@ -24,8 +31,8 @@ const MESSAGE_HANDLERS = {
 		setConfiguredWorkerCount(1);
 	},
 
-	UPDATED_PACKAGE_DETECTED () {
-		restartWorkers();
+	WORKER_WANTS_TO_RESTART_THE_POOL () {
+		self.restartWorkers();
 	},
 
 	FATAL_ERROR () {
@@ -36,20 +43,21 @@ const MESSAGE_HANDLERS = {
 
 function start () {
 	logger.info('Staring up. (version: %s, process: %d)', pkg.version, process.pid);
-	process.on('SIGHUP', load);
-	cluster.on('message', handleMessage);
-	cluster.on('exit', onWorkerExit);
+	process.on('SIGHUP', self.load);
+	cluster.on('message', self.handleMessage);
+	cluster.on('exit', self.onWorkerExit);
 
-	load();
+	self.load();
 }
 
 
 function load () {
 	logger.info('Loading config.');
-	loadConfig()
-		.then(init)
+	return loadConfig()//return for testing
+		.then(self.init)
 		.catch(error => {
-			logger.error('Failed to start: %s', error.stack || error.message || JSON.stringify(error));
+			/* istanbul ignore next */
+			logger.error('Failed to start: %s', (error && (error.stack || error.message)) || JSON.stringify(error));
 		});
 }
 
@@ -67,9 +75,9 @@ function init (config) {
 	setConfig(config);
 
 	if (getActiveWorkers().length === 0) {
-		maintainWorkerCount();
+		self.maintainWorkerCount();
 	} else {
-		restartWorkers();
+		self.restartWorkers();
 	}
 }
 
@@ -95,7 +103,6 @@ function maintainWorkerCount () {
 	cluster.on('listening', startAnother);
 	const {port} = getConfig();
 	const unsubscribe = () => {
-		maintainWorkerCount.processing = false;
 		cluster.removeListener('listening', startAnother);
 	};
 
@@ -123,7 +130,7 @@ function maintainWorkerCount () {
 		logger.info('Workers: active: %d, configured: %d', workersRunning, workers);
 
 		if (workersRunning < workers) {
-			pendingWorker = startWorker();
+			pendingWorker = self.startWorker();
 		} else {
 			unsubscribe();
 		}
@@ -155,7 +162,7 @@ function restartWorkers () {
 function onWorkerExit (worker, code, signal) {
 	logger.info('worker %d exited (%s)', worker.process.pid, signal || code);
 	if (!code) {
-		maintainWorkerCount();
+		self.maintainWorkerCount();
 	}
 }
 
@@ -166,6 +173,7 @@ function handleMessage (worker, msg) {
 		MESSAGE_HANDLERS[msg.cmd](msg);
 		return;
 	} catch (e) {
+		/* istanbul ignore next */
 		logger.error('Could not handle message. %o', e.message || e.stack || e);
 		return;
 	}

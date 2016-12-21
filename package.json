@@ -7,9 +7,10 @@
     "web-service": "src/index.js"
   },
   "scripts": {
-    "start": "node ./src --config ./config/env.json.example",
+    "start": "node ./src --protocol http --config ./config/env.json.example",
     "test": "istanbul cover ./node_modules/.bin/_mocha -- ./test/ --recursive --reporter mocha-junit-reporter --reporter-options mochaFile=./reports/test-results/index.xml",
     "bump": "npm version",
+    "preversion": "eslint --ext .js ./src/ && mocha ./test/",
     "postversion": "git push && git push --tags && npm publish"
   },
   "repository": {
@@ -23,7 +24,6 @@
   "author": "nextthought",
   "license": "UNLICENSED",
   "dependencies": {
-    "compressible": "^2.0.1",
     "compression": "^1.4.3",
     "cookie-parser": "^1.3.3",
     "core-js": "^2.4.0",
@@ -42,10 +42,14 @@
   },
   "devDependencies": {
     "assert": "^1.3.0",
+    "chai": "^3.5.0",
     "eslint-config-nti-codestyle-js": "^1.1.0",
     "glob": "^7.0.3",
     "istanbul": "^0.4.2",
     "mocha": "^3.0.0",
-    "mocha-junit-reporter": "^1.9.1"
+    "mocha-junit-reporter": "^1.9.1",
+    "mock-require": "^2.0.0",
+    "sinon": "^1.17.6",
+    "sinon-chai": "^2.8.0"
   }
 }

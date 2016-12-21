@@ -1,9 +1,6 @@
 #!/usr/bin/env node
 'use strict';
-
-//add polyfills and shims
-require('core-js');
-global.fetch = global.fetch || require('node-fetch');
+require('./polyfills');
 
 const cluster = require('cluster');
 

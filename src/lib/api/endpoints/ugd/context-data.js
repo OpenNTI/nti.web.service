@@ -1,6 +1,7 @@
 'use strict';
-const getModel = require('nti-lib-interfaces').getModel;
+const {getModel} = require('nti-lib-interfaces');
 const PageInfo = getModel('pageinfo');
+
 
 class GetContextData {
 	constructor (config, server) {
@@ -8,11 +9,11 @@ class GetContextData {
 	}
 
 	handle (req, res, error) {
-		const ntiidObject = req.ntiidObject;
+		const {ntiidObject, ntiService} = req;
 
 		const container = ntiidObject.getContainerID();
 
-		req.ntiService.getParsedObject(container)
+		ntiService.getParsedObject(container)
 			.then(obj => obj instanceof PageInfo ? this.getContext(req, obj) : obj)
 			.then(o => res.json(o))
 			.catch(error);
@@ -32,8 +33,13 @@ class GetContextData {
 	}
 }
 
-
-module.exports = function register (api, config, dataserver) {
+function register (api, config, dataserver) {
 	const handler = new GetContextData(config, dataserver);
 	api.get('/ugd/context-data/:ntiid', (req, res, error) => handler.handle(req, res, error));
-};
+}
+
+
+Object.assign(exports, {
+	default: register,
+	GetContextData
+});

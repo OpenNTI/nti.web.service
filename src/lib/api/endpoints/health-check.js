@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = function register (api, config, server) {
+exports.default = function register (api, config, server) {
 
 	api.get(/^\/_ops\/ping/, (SERVER_CONTEXT, res) => {
 

@@ -4,7 +4,9 @@
 	],
 
 	"env": {
-		"browser": false
+		"browser": false,
+		"mocha": true,
+		"node": true
 	},
 
 	"globals": {

@@ -1,10 +1,10 @@
 'use strict';
-const HealthCheck = require('./health-check');
-const UserAgreement = require('./user-agreement');
+const {default: HealthCheck} = require('./health-check');
+const {default: UserAgreement} = require('./user-agreement');
 
-const UGDContextData = require('./ugd/context-data');
+const {default: UGDContextData} = require('./ugd/context-data');
 
-let HANDLERS = [
+const HANDLERS = [
 	HealthCheck,
 	UserAgreement,
 	UGDContextData

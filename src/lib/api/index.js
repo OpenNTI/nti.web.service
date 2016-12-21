@@ -5,7 +5,7 @@ const endpoints = require('./endpoints');
 const logger = require('../logger');
 
 module.exports = function registerEndPoints (app, config, dataserver) {
-	let api = express();
+	const api = express();
 	app.use(/^\/api/i, api);
 
 	function getService (req) {

@@ -6,15 +6,23 @@ const unknown = {name: 'default', title: 'nextthought'};
 const warned = {};
 
 module.exports = function getSite (map, site) {
-	let s = map[site] || unknown;
+	map = map || {};
+	const visited = [];
+	let s = site;
 
-	if (typeof s === 'string') {
-		return getSite(map, s);
-	}
+	do {
+		visited.push(s);
+		s = map[s] || unknown;
+		if (typeof s === 'string' && visited.includes(s)) {
+			logger.warn('Cycle in alias: %s -x-> %s <=', visited.join(' -> '), s);
+			s = unknown;
+		}
+	} while (typeof s === 'string');
 
 	if (s === unknown && !warned[site]) {
 		warned[site] = true;
 		logger.warn('No site-mapping entry found for %s.', site);
 	}
+
 	return s;
 };

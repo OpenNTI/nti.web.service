@@ -3,7 +3,7 @@ const mock = require('mock-require');
 const sinon = require('sinon');
 const {SiteName, ServiceStash} = require('nti-lib-interfaces');
 
-describe('lib/config', () => {
+describe ('lib/config', () => {
 	let logger;
 	let sandbox;
 	let yargs;
@@ -415,7 +415,15 @@ describe('lib/config', () => {
 		const context = {};
 		const config = {};
 
-		expect(() => clientConfig(config, context.username, 'abc', context)).to.throw('No Service');
+		let out;
+		expect(() => out = clientConfig(config, context.username, 'abc', context)).to.not.throw();
+
+		return Promise.resolve(out.config.nodeService)
+			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
+			.catch(e => {
+				e.should.be.an.instanceOf(Error);
+				e.message.should.equal('No Service.');
+			});
 	});
 
 
@@ -460,6 +468,14 @@ describe('lib/config', () => {
 		const context = {};
 		const config = {};
 
-		expect(() => nodeConfigAsClientConfig(config, 'abc', context)).to.throw('No Service');
+		let out;
+		expect(() => out = nodeConfigAsClientConfig(config, 'abc', context)).to.not.throw();
+
+		return Promise.resolve(out.config.nodeService)
+			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
+			.catch(e => {
+				e.should.be.an.instanceOf(Error);
+				e.message.should.equal('No Service.');
+			});
 	});
 });

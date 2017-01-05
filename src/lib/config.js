@@ -213,7 +213,10 @@ function config (env) {
 
 
 function noServiceAndThereShouldBe () {
-	throw new Error('No Service.');
+	//mock Thenable. When this is passed to a Promise.resolve() it should reject
+	return {
+		then: () => {throw new Error('No Service.');}
+	};
 }
 
 

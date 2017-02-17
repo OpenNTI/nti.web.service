@@ -8,6 +8,7 @@ describe('lib/app-service', () => {
 
 	let compressionMock;
 	let expressMock;
+	let staticMock;
 	let getPageRenderer;
 	let logger;
 	let registerEndPoints;
@@ -38,11 +39,12 @@ describe('lib/app-service', () => {
 
 		setupDataserver = sandbox.stub().returns({mockServer: true});
 
+		staticMock = sandbox.stub().returns('staticMiddleware');
 		expressMock = Object.assign(
 			() => Object.create(expressMock, {
 				use: {value: sandbox.stub()},
 				get: {value: sandbox.stub()}
-			}), { static: sandbox.stub().returns('staticMiddleware') });
+			}), { static: staticMock });
 
 		server = Object.freeze(expressMock());
 
@@ -51,6 +53,7 @@ describe('lib/app-service', () => {
 
 		mock('../logger', logger);
 		mock('express', expressMock);
+		mock('serve-static', staticMock);
 		mock('nti-lib-interfaces', {default: setupDataserver});
 		mock('../api', registerEndPoints);
 		mock('../compress', {attachToExpress: compressionMock});
@@ -176,14 +179,13 @@ describe('lib/app-service', () => {
 		service.setupClient.should.have.been.calledWith(config.apps[0]);
 		service.setupClient.should.have.been.calledWith(config.apps[1]);
 
-		server.use.should.have.been.calledTwice;
-		server.use.should.have.been.calledWith(cacheBusterMiddleware);
+		server.use.should.have.been.calledOnce;
 		server.use.should.have.been.calledWith(corsMiddleware);
 	});
 
 
 	it ('setupClient(): expectations (production)', () => {
-		const ONE_HOUR = 3600000;
+		const ONE_HOUR = '1 hour';
 		const mockReg = {
 			assets: 'mock/assets/path',
 			devmode: false,
@@ -221,9 +223,9 @@ describe('lib/app-service', () => {
 		compressionMock.should.have.been.calledOnce;
 		compressionMock.should.have.been.calledWith(clientApp, mockReg.assets);
 
-		expressMock.static.should.have.been.calledOnce;
-		expressMock.static.should.have.been.calledWith(mockReg.assets);
-		expressMock.static.should.have.been.calledWith(mockReg.assets, sinon.match({maxage: ONE_HOUR}));
+		staticMock.should.have.been.calledOnce;
+		staticMock.should.have.been.calledWith(mockReg.assets);
+		staticMock.should.have.been.calledWith(mockReg.assets, sinon.match({maxAge: ONE_HOUR}));
 
 		clientApp.get.should.have.been.calledTwice;
 		clientApp.get.should.have.been.calledWith(sinon.match.regexp, service.resourceNotFound);
@@ -236,8 +238,9 @@ describe('lib/app-service', () => {
 			params.interface
 		);
 
-		clientApp.use.callCount.should.be.equal(4);
+		clientApp.use.callCount.should.be.equal(5);
 		clientApp.use.should.have.been.calledWith('staticMiddleware');
+		clientApp.use.should.have.been.calledWith(cacheBusterMiddleware);
 		clientApp.use.should.have.been.calledWith(service.FORCE_ERROR_ROUTE, service.forceError);
 		clientApp.use.should.have.been.calledWith(service.ANONYMOUS_ROUTES, sinon.match.func);
 		clientApp.use.should.have.been.calledWith(service.AUTHENTICATED_ROUTES, sinon.match.func);
@@ -264,7 +267,7 @@ describe('lib/app-service', () => {
 
 
 	it ('setupClient(): expectations (devmode)', () => {
-		const ONE_HOUR = 3600000;
+		const ONE_HOUR = '1 hour';
 		const mockReg = {
 			assets: 'mock/assets/path',
 			devmode: { start: sandbox.stub() },
@@ -302,9 +305,9 @@ describe('lib/app-service', () => {
 		compressionMock.should.have.been.calledOnce;
 		compressionMock.should.have.been.calledWith(clientApp, mockReg.assets);
 
-		expressMock.static.should.have.been.calledOnce;
-		expressMock.static.should.have.been.calledWith(mockReg.assets);
-		expressMock.static.should.have.been.calledWith(mockReg.assets, sinon.match({maxage: ONE_HOUR}));
+		staticMock.should.have.been.calledOnce;
+		staticMock.should.have.been.calledWith(mockReg.assets);
+		staticMock.should.have.been.calledWith(mockReg.assets, sinon.match({maxAge: ONE_HOUR}));
 
 		clientApp.get.should.have.been.calledTwice;
 		clientApp.get.should.have.been.calledWith(sinon.match.regexp, service.resourceNotFound);
@@ -317,8 +320,9 @@ describe('lib/app-service', () => {
 			params.interface
 		);
 
-		clientApp.use.callCount.should.be.equal(4);
+		clientApp.use.callCount.should.be.equal(5);
 		clientApp.use.should.have.been.calledWith('staticMiddleware');
+		clientApp.use.should.have.been.calledWith(cacheBusterMiddleware);
 		clientApp.use.should.have.been.calledWith(service.FORCE_ERROR_ROUTE, service.forceError);
 		clientApp.use.should.have.been.calledWith(service.ANONYMOUS_ROUTES, sinon.match.func);
 		clientApp.use.should.have.been.calledWith(service.AUTHENTICATED_ROUTES, sinon.match.func);

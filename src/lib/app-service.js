@@ -2,6 +2,7 @@
 global.SERVER = true;
 
 const express = require('express');
+const staticFiles = require('serve-static');
 const {default: dataserver} = require('nti-lib-interfaces');
 
 const registerEndPoints = require('./api');
@@ -65,7 +66,7 @@ function setupApplication (server, config, restartRequest) {
 
 	logger.info('DataServer end-point: %s', config.server);
 	logger.attachToExpress(server);
-	server.use(cacheBuster);
+	// server.use(cacheBuster);
 	server.use(cors);
 
 	for (let client of config.apps) {
@@ -94,14 +95,15 @@ function setupClient (client, {config, server, datacache, interface: _interface,
 	logger.info('Static Assets: %s', assets);
 
 	//Static files...
-	clientRoute.use(express.static(assets, {
-		maxage: 3600000, //1hour
+	clientRoute.use(staticFiles(assets, {
+		maxAge: '1 hour',
 		setHeaders: self.neverCacheManifestFiles
 	}));//static files
 
 	//Do not let requests for static assets (that are not found) fall through to page rendering.
 	clientRoute.get(/^\/(js|resources)\//i, self.resourceNotFound);
 
+	clientRoute.use(cacheBuster);
 
 	clientRoute.use(FORCE_ERROR_ROUTE, self.forceError);
 

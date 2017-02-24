@@ -145,6 +145,8 @@ function config (env) {
 	}
 
 	const envFlat = Object.assign({}, env[base], env[opt.env]);
+	//Cary over environment mappings.
+	envFlat['site-mappings'] = env['site-mappings'];
 
 	const c = Object.assign(
 		{webpack: opt.webpack}, envFlat, {
@@ -230,7 +232,7 @@ function clientConfig (baseConfig, username, appId, context) {
 		username
 	});
 
-	const blacklist = [/webpack.*/i, 'port', 'protocol', 'address', 'apps'];
+	const blacklist = [/webpack.*/i, 'port', 'protocol', 'address', 'apps', 'site-mappings'];
 
 	for (let blocked of blacklist) {
 		if (typeof blocked === 'string') {

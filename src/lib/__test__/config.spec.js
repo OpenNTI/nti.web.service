@@ -248,6 +248,7 @@ describe ('lib/config', () => {
 					{ package: 'bar' }
 				]
 			},
+			'site-mappings': {}
 		};
 
 		return Promise.resolve(config(env))
@@ -258,6 +259,7 @@ describe ('lib/config', () => {
 				c.apps[0].appVersion.should.equal('123');
 
 				c.apps[1].appId.should.be.ok;
+				c['site-mappings'].should.be.ok;
 
 				logger.warn.should.have.been.calledWith('Could not fill in package values for app %s, because: %s', 'bar');
 			});
@@ -404,6 +406,7 @@ describe ('lib/config', () => {
 		res.config.should.not.have.property('protocol');
 		res.config.should.not.have.property('address');
 		res.config.should.not.have.property('apps');
+		res.config.should.not.have.property('site-mappings');
 		res.config.nodeService.should.be.ok;
 		res.config.nodeService.should.equal(context[ServiceStash]);
 	});

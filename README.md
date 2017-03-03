@@ -50,7 +50,7 @@ Optional:
 ## Quickstart
 
 ```bash
-git clone ssh://repos.nextthought.com/nti.web.service
+git clone git@github.com:NextThought/nti.web.service
 cd nti.web.service
 npm install
 ```

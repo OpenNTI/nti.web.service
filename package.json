@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://repos.nextthought.com/git/nti.web.service"
+    "url": "https://github.com/NextThought/nti.web.service.git"
   },
   "engines": {
     "node": ">=5.0.0",

@@ -1,7 +1,9 @@
 'use strict';
 global.SERVER = true;
 
+const cookieParser = require('cookie-parser');
 const express = require('express');
+const requestLanguage = require('express-request-language');
 const staticFiles = require('serve-static');
 const {default: dataserver} = require('nti-lib-interfaces');
 
@@ -63,10 +65,12 @@ function setupApplication (server, config, restartRequest) {
 
 	const params = Object.assign({server, config, restartRequest}, dataserver(config));
 
+	server.use(cookieParser());
+	server.use(cors);
+	// server.use(cacheBuster);
+
 	logger.info('DataServer end-point: %s', config.server);
 	logger.attachToExpress(server);
-	// server.use(cacheBuster);
-	server.use(cors);
 
 	for (let client of config.apps) {
 		self.setupClient(client, params);
@@ -89,6 +93,17 @@ function setupClient (client, {config, server, datacache, interface: _interface,
 	const {assets, render, devmode, sessionSetup} = register(clientRoute, flatConfig, restartRequest);
 
 	const session = new Session(_interface, sessionSetup);
+
+	clientRoute.use(requestLanguage({
+		languages: [...(client.locales || ['en'])],
+		queryName: 'locale', // ?locale=zh-CN will set the language to 'zh-CN'
+		cookie: {
+			name: 'language',
+			options: {
+				maxAge: 24 * 3600 * 1000
+			}
+		}
+	}));
 
 	setupCompression(clientRoute, assets);
 	logger.info('Static Assets: %s', assets);

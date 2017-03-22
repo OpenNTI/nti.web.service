@@ -230,7 +230,8 @@ function clientConfig (baseConfig, username, appId, context) {
 	const cfg = Object.assign({}, baseConfig, app, {
 		siteName: site.name,
 		siteTitle: site.title,
-		username
+		username,
+		locale: getLocale(context)
 	});
 
 	const blacklist = [/webpack.*/i, 'port', 'protocol', 'address', 'apps', 'site-mappings'];
@@ -267,10 +268,16 @@ function nodeConfigAsClientConfig (cfg, appId, context) {
 	return {
 		html: '',
 		config: Object.assign({}, cfg, app, {
+			locale: getLocale(context),
 			username: context.username,
 			siteName: site.name,
 			siteTitle: site.title,
 			nodeService: context[ServiceStash] || noServiceAndThereShouldBe()
 		})
 	};
+}
+
+
+function getLocale (context) {
+	return context.language || 'en';
 }

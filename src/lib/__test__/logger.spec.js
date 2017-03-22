@@ -6,7 +6,6 @@ describe('lib/logger (middleware)', () => {
 	let loggerBackend,
 		sandbox,
 		morganConstructor,
-		cookieParserConstructor,
 		responseTimeConstructor,
 		LoggerFactory;
 
@@ -19,7 +18,6 @@ describe('lib/logger (middleware)', () => {
 			warn: sandbox.stub(),
 		};
 		responseTimeConstructor = sandbox.stub().returns('response-time-middleware');
-		cookieParserConstructor = sandbox.stub().returns('cookie-parser-middleware');
 		morganConstructor = function () { return 'morgan-middleware'; };
 
 		LoggerFactory = {get: sandbox.stub().returns(loggerBackend)};
@@ -27,7 +25,6 @@ describe('lib/logger (middleware)', () => {
 		mock('cluster', {isMaster: true});
 		mock('morgan', morganConstructor);
 		mock('response-time', responseTimeConstructor);
-		mock('cookie-parser', cookieParserConstructor);
 		mock('nti-util-logger', {default: LoggerFactory});
 	});
 
@@ -83,9 +80,8 @@ describe('lib/logger (middleware)', () => {
 			.not.to.throw()
 			.and.to.be.undefined;
 
-		use.should.have.been.calledThrice
+		use.should.have.been.calledTwice
 			.and.have.been.calledWith('response-time-middleware')
-			.and.have.been.calledWith('cookie-parser-middleware')
 			.and.have.been.calledWith('morgan-middleware');
 	});
 

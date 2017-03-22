@@ -6,8 +6,10 @@ describe('lib/app-service', () => {
 	const cacheBusterMiddleware = Object.freeze({});
 	const corsMiddleware = Object.freeze({});
 
+	let cookieParserConstructor;
 	let compressionMock;
 	let expressMock;
+	let expressRequestLanguageMock;
 	let staticMock;
 	let getPageRenderer;
 	let logger;
@@ -28,6 +30,8 @@ describe('lib/app-service', () => {
 			warn: sandbox.stub(),
 		};
 
+		cookieParserConstructor = sandbox.stub().returns('cookie-parser-middleware');
+		expressRequestLanguageMock = sandbox.stub().returns('express-request-language-middleware');
 		compressionMock = sandbox.stub();
 
 		sessionMockInstance = {
@@ -51,6 +55,8 @@ describe('lib/app-service', () => {
 		getPageRenderer = sandbox.stub().returns('page-renderer');
 		registerEndPoints = sandbox.stub();
 
+		mock('cookie-parser', cookieParserConstructor);
+		mock('express-request-language', expressRequestLanguageMock);
 		mock('../logger', logger);
 		mock('express', expressMock);
 		mock('serve-static', staticMock);
@@ -179,8 +185,9 @@ describe('lib/app-service', () => {
 		service.setupClient.should.have.been.calledWith(config.apps[0]);
 		service.setupClient.should.have.been.calledWith(config.apps[1]);
 
-		server.use.should.have.been.calledOnce;
-		server.use.should.have.been.calledWith(corsMiddleware);
+		server.use.should.have.been.calledTwice
+			.and.have.been.calledWith('cookie-parser-middleware')
+			.and.have.been.calledWith(corsMiddleware);
 	});
 
 
@@ -238,8 +245,9 @@ describe('lib/app-service', () => {
 			params.interface
 		);
 
-		clientApp.use.callCount.should.be.equal(5);
+		clientApp.use.callCount.should.be.equal(6);
 		clientApp.use.should.have.been.calledWith('staticMiddleware');
+		clientApp.use.should.have.been.calledWith('express-request-language-middleware');
 		clientApp.use.should.have.been.calledWith(cacheBusterMiddleware);
 		clientApp.use.should.have.been.calledWith(service.FORCE_ERROR_ROUTE, service.forceError);
 		clientApp.use.should.have.been.calledWith(service.ANONYMOUS_ROUTES, sinon.match.func);
@@ -320,8 +328,9 @@ describe('lib/app-service', () => {
 			params.interface
 		);
 
-		clientApp.use.callCount.should.be.equal(5);
+		clientApp.use.callCount.should.be.equal(6);
 		clientApp.use.should.have.been.calledWith('staticMiddleware');
+		clientApp.use.should.have.been.calledWith('express-request-language-middleware');
 		clientApp.use.should.have.been.calledWith(cacheBusterMiddleware);
 		clientApp.use.should.have.been.calledWith(service.FORCE_ERROR_ROUTE, service.forceError);
 		clientApp.use.should.have.been.calledWith(service.ANONYMOUS_ROUTES, sinon.match.func);

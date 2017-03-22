@@ -90,12 +90,12 @@ function setupClient (client, {config, server, datacache, interface: _interface,
 	const clientRoute = self.contextualize(basepath, server);
 	logger.info('mount-point: %s', basepath);
 
-	const {assets, render, devmode, sessionSetup} = register(clientRoute, flatConfig, restartRequest);
+	const {locales, assets, render, devmode, sessionSetup} = register(clientRoute, flatConfig, restartRequest);
 
 	const session = new Session(_interface, sessionSetup);
 
 	clientRoute.use(requestLanguage({
-		languages: [...(client.locales || ['en'])],
+		languages: [...(locales || ['en'])],
 		queryName: 'locale', // ?locale=zh-CN will set the language to 'zh-CN'
 		cookie: {
 			name: 'language',

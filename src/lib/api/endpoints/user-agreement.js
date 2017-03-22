@@ -1,5 +1,6 @@
 'use strict';
 const Url = require('url');
+
 const {TOS_NOT_ACCEPTED, getLink} = require('nti-lib-interfaces');
 
 const tagPattern = tag => new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)</' + tag + '>', 'ig');

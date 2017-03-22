@@ -1,8 +1,9 @@
-const pkg = require('../package.json');
 const cluster = require('cluster');
+
+const pkg = require('../package.json');
+
 const {loadConfig, showFlags} = require('./lib/config');
 const logger = require('./lib/logger');
-
 const {
 	getConfig,
 	setConfig,

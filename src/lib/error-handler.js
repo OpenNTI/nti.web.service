@@ -1,7 +1,8 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const uuid = require('node-uuid');
+
+const uuid = require('uuid/v4');
 
 const logger = require('./logger');
 
@@ -52,7 +53,7 @@ function middleware (err, req, res, next) { // eslint-disable-line no-unused-var
 		err = err.stack;
 	}
 
-	let errorid = uuid.v4();
+	let errorid = uuid();
 	logger.error(errorid, err);
 
 	let body;

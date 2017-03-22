@@ -1,5 +1,7 @@
-const Logger = require('../logger');
 const {ServiceStash} = require('nti-lib-interfaces');
+
+const Logger = require('../logger');
+
 const logger = Logger.get('SessionManager');
 
 

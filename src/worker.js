@@ -1,11 +1,12 @@
-const pkg = require('../package.json');
 const {worker} = require('cluster');
-const express = require('express');
 const http = require('http');
+
+const express = require('express');
 const {proxy: createProxy} = require('findhit-proxywrap');
 
-const logger = require('./lib/logger');
+const pkg = require('../package.json');
 
+const logger = require('./lib/logger');
 const {setupApplication} = require('./lib/app-service');
 const {setupErrorHandler} = require('./lib/error-handler');
 

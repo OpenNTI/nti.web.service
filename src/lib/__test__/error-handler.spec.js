@@ -1,7 +1,8 @@
 'use strict';
+const fs = require('fs');
+
 const mock = require('mock-require');
 const sinon = require('sinon');
-const fs = require('fs');
 
 describe('lib/error-handler (middleware)', () => {
 	let logger, sandbox;
@@ -16,7 +17,7 @@ describe('lib/error-handler (middleware)', () => {
 		};
 
 		mock('../logger', logger);
-		mock('node-uuid', {v4: () => 'some-guid'});
+		mock('uuid/v4', () => 'some-guid');
 	});
 
 	afterEach(() => {

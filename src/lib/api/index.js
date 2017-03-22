@@ -1,8 +1,9 @@
 'use strict';
 const express = require('express');
-const endpoints = require('./endpoints');
 
 const logger = require('../logger');
+
+const endpoints = require('./endpoints');
 
 module.exports = function registerEndPoints (app, config, dataserver) {
 	const api = express();

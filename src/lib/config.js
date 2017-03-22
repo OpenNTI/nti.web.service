@@ -2,8 +2,9 @@
 const fs = require('fs');
 const url = require('url');
 const path = require('path');
-const uuid = require('node-uuid');
 
+const yargs = require('yargs');
+const uuid = require('uuid/v4');
 const {SiteName, ServiceStash} = require('nti-lib-interfaces');
 
 const getSiteFrom = require('./site-mapping');
@@ -21,7 +22,7 @@ const self = Object.assign(exports, {
 });
 
 
-const opt = require('yargs')
+const opt = yargs
 		.usage('WebApp Instance')
 			.options({
 				'l': {
@@ -185,7 +186,7 @@ function config (env) {
 		}
 
 		if (!a.appId) {
-			a.appId = a.basepath || uuid.v4();
+			a.appId = a.basepath || uuid();
 		}
 	}
 

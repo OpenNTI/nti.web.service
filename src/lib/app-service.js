@@ -6,7 +6,6 @@ const staticFiles = require('serve-static');
 const {default: dataserver} = require('nti-lib-interfaces');
 
 const registerEndPoints = require('./api');
-
 const {attachToExpress: setupCompression} = require('./compress');
 const cacheBuster = require('./no-cache');
 const Session = require('./session');

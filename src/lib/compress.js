@@ -1,12 +1,13 @@
 'use strict';
 const wantsCompressed = RegExp.prototype.test.bind(/gzip/i);
 
-const mimes = require('mime-types');
-const compression = require('compression');
-
 const path = require('path');
 const url = require('url');
 const fs = require('fs');
+
+const mimes = require('mime-types');
+const compression = require('compression');
+
 
 const self = Object.assign(exports, {
 	attachToExpress,

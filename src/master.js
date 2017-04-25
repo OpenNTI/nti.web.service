@@ -143,13 +143,17 @@ function restartWorkers () {
 	const queue = getActiveWorkers();
 	const targetWorkerCount = getConfiguredWorkerCount();
 
+	logger.info('Restarting %d workers...', queue.length);
+
+
 
 	function rollingRestart () {
 		const worker = queue.shift();
 		const triggerEvent = targetWorkerCount <= queue.length ? 'exit' : 'listening';
-		logger.info('using "%s" event as the restart-continuation', triggerEvent);
+
 		if (worker) {
-			logger.info('Restarting (close & respawn) worker...');
+			logger.info('using "%s" event as the restart-continuation', triggerEvent);
+			logger.info('Restarting (close & respawn) worker..., (%d remain)', queue.length);
 			cluster.once(triggerEvent, rollingRestart);
 			// cluster.once('online', rollingRestart);
 			try {

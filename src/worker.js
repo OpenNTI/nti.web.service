@@ -48,7 +48,7 @@ const MESSAGE_HANDLERS = {
 		this.server.close(() => {
 			logger.info('Closed connection');
 			worker.disconnect();
-			// process.exit();
+			process.exit();
 		});
 	}
 

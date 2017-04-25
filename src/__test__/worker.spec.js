@@ -273,10 +273,10 @@ describe('Worker', () => {
 
 		assert(exitCode === process.exitCode);
 
-		process.exit.should.not.have.been.called;
 		worker.init.should.have.been.called;
 		server.close.should.have.been.called;
 		disconnect.should.have.been.called;
+		process.exit.should.have.been.called;
 	});
 
 

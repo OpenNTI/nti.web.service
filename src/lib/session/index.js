@@ -45,7 +45,7 @@ module.exports = exports = class SessionManager {
 
 	setupIntitalData (context) {
 		let url = context.originalUrl || context.url;
-		logger.info('SESSION [PRE-FETCHING DATA] %s %s (User: %s)', context.method, url, context.username);
+		logger.debug('SESSION [PRE-FETCHING DATA] %s %s (User: %s)', context.method, url, context.username);
 		return this.server.getServiceDocument(context)
 			.then(service => (
 				context[ServiceStash] = service,
@@ -70,7 +70,7 @@ module.exports = exports = class SessionManager {
 		});
 
 
-		logger.info('SESSION [BEGIN] %s %s', req.method, url);
+		logger.debug('SESSION [BEGIN] %s %s', req.method, url);
 
 		function finish () {
 			if (req.dead) {
@@ -83,7 +83,7 @@ module.exports = exports = class SessionManager {
 				logger.warn('Could not set headers because: %s (headers: %o)', e.message, req.responseHeaders);
 			}
 
-			logger.info('SESSION [END] %s %s (User: %s, %dms)',
+			logger.debug('SESSION [END] %s %s (User: %s, %dms)',
 				req.method, url, req.username, Date.now() - start);
 
 			next();
@@ -91,7 +91,7 @@ module.exports = exports = class SessionManager {
 
 		return this.getUser(req)
 			.then(user => req.username = user)
-			.then(()=> logger.info('SESSION [VALID] %s %s', req.method, url))
+			.then(()=> logger.debug('SESSION [VALID] %s %s', req.method, url))
 			.then(()=> !req.dead && this.setupIntitalData(req))
 			.then(finish)
 			.catch(this.maybeRedircect(basepath, scope, start, req, res, next))
@@ -128,14 +128,14 @@ module.exports = exports = class SessionManager {
 					return next();
 				}
 
-				logger.info('SESSION [LOGIN ACTION REQUIRED] %s %s REDIRECT %s%s (User: %s, %dms)',
+				logger.debug('SESSION [LOGIN ACTION REQUIRED] %s %s REDIRECT %s%s (User: %s, %dms)',
 					req.method, url, basepath, reason.route, req.username, Date.now() - start);
 
 				return res.redirect(`${basepath}${reason.route}${returnTo}`);
 			}
 
 			if (!/^(api|login)/.test(scope)) {
-				logger.info('SESSION [INVALID] %s %s REDIRECT %slogin/ (User: annonymous, %dms)',
+				logger.debug('SESSION [INVALID] %s %s REDIRECT %slogin/ (User: annonymous, %dms)',
 					req.method, url, basepath, Date.now() - start);
 
 				return res.redirect(`${basepath}login/${returnTo}`);

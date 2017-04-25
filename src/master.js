@@ -140,7 +140,12 @@ function maintainWorkerCount () {
 
 
 function restartWorkers () {
-	const queue = getActiveWorkers();
+	if ((x => x && x.length > 0)(restartWorkers.queue)) {
+		logger.warn('\n\n\nIgnoring restartWorkers() request while in the middle of restarting workers.');
+		return;
+	}
+
+	const queue = restartWorkers.queue = [...getActiveWorkers()];
 	const targetWorkerCount = getConfiguredWorkerCount();
 
 	logger.info('Restarting %d workers...', queue.length);

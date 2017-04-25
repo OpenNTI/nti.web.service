@@ -497,6 +497,7 @@ describe('Master', () => {
 	it ('restartWorkers() should send all curent workers the close message, but only one at a time', () => {
 		const once = sandbox.stub();
 		const fakeWorkers = Array.from({length: 2}).map(() => ({
+			isConnected: () => true,
 			send: sandbox.mock().once().withArgs({cmd: 'close'})
 		}));
 		const utils = {

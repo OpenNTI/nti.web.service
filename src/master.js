@@ -152,7 +152,13 @@ function restartWorkers () {
 			logger.info('Restarting (close & respawn) worker...');
 			cluster.once(triggerEvent, rollingRestart);
 			// cluster.once('online', rollingRestart);
-			worker.send({cmd: 'close'});
+			try {
+				if (worker.isConnected()) {
+					worker.send({cmd: 'close'});
+				}
+			} catch (e) {
+				logger.error(e.stack || e.message || e);
+			}
 		}
 	}
 

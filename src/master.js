@@ -43,7 +43,7 @@ const MESSAGE_HANDLERS = {
 
 
 function start () {
-	logger.info('Staring up. (version: %s, process: %d)', pkg.version, process.pid);
+	logger.info('Starting up. (version: %s, process: %d)', pkg.version, process.pid);
 	process.on('SIGHUP', self.load);
 	cluster.on('message', self.handleMessage);
 	cluster.on('exit', self.onWorkerExit);
@@ -84,7 +84,7 @@ function init (config) {
 
 
 function startWorker () {
-	logger.info('Staring Worker...');
+	logger.info('Starting Worker...');
 	const config = getConfig();
 	const worker = cluster.fork();
 	worker.send({cmd: 'init', config});
@@ -149,7 +149,7 @@ function restartWorkers () {
 		const triggerEvent = targetWorkerCount <= queue.length ? 'exit' : 'listening';
 		logger.info('using "%s" event as the restart-continuation', triggerEvent);
 		if (worker) {
-			logger.info('Restaring (close & respawn) worker...');
+			logger.info('Restarting (close & respawn) worker...');
 			cluster.once(triggerEvent, rollingRestart);
 			// cluster.once('online', rollingRestart);
 			worker.send({cmd: 'close'});

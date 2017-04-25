@@ -57,7 +57,7 @@ const MESSAGE_HANDLERS = {
 
 
 function start ()  {
-	logger.info('Staring up. (version: %s, process: %d)', pkg.version, process.pid);
+	logger.info('Starting up. (version: %s, process: %d)', pkg.version, process.pid);
 	process.on('message', self.messageHandler);
 	process.on('SIGHUP', self.restart);
 }

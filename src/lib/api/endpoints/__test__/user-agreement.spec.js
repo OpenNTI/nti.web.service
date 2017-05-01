@@ -21,7 +21,7 @@ describe ('lib/api/endpoints/user-agreement', () => {
 	it ('registers user-agreement', () => {
 		const UA = mock.reRequire('../user-agreement');
 		const handler = sandbox.stub();
-		sandbox.stub(UA, 'getServeUserAgreement', () => handler);
+		sandbox.stub(UA, 'getServeUserAgreement').callsFake(() => handler);
 		const {default: register} = UA;
 		const api = {get: sandbox.stub()};
 
@@ -53,11 +53,11 @@ describe ('lib/api/endpoints/user-agreement', () => {
 	it ('getServeUserAgreement(): handler behavior', () => {
 		const context = {context: 1};
 		const UA = mock.reRequire('../user-agreement');
-		sandbox.stub(UA, 'resolveUrl', () => Promise.resolve({url: '...', context}));
-		sandbox.stub(UA, 'handleFetch', () => () => Promise.resolve({fetch: 1}));
-		sandbox.stub(UA, 'handleFetchResponse', () => Promise.resolve({fetchResponse: 1}));
-		sandbox.stub(UA, 'processAndRespond', () => () => Promise.resolve({processed: 1}));
-		sandbox.stub(UA, 'handleError', () => {});
+		sandbox.stub(UA, 'resolveUrl').callsFake(() => Promise.resolve({url: '...', context}));
+		sandbox.stub(UA, 'handleFetch').callsFake(() => () => Promise.resolve({fetch: 1}));
+		sandbox.stub(UA, 'handleFetchResponse').callsFake(() => Promise.resolve({fetchResponse: 1}));
+		sandbox.stub(UA, 'processAndRespond').callsFake(() => () => Promise.resolve({processed: 1}));
+		sandbox.stub(UA, 'handleError').callsFake(() => {});
 
 		const config = {config: 1};
 		const server = {server: 1};
@@ -89,11 +89,11 @@ describe ('lib/api/endpoints/user-agreement', () => {
 	it ('getServeUserAgreement(): handler rejects if no url', () => {
 		const UA = mock.reRequire('../user-agreement');
 		const errorHandler = sandbox.stub();
-		sandbox.stub(UA, 'resolveUrl', () => Promise.resolve());
-		sandbox.stub(UA, 'handleFetch', () => () => Promise.resolve({fetch: 1}));
-		sandbox.stub(UA, 'handleFetchResponse', () => Promise.resolve({fetchResponse: 1}));
-		sandbox.stub(UA, 'processAndRespond', () => () => Promise.resolve({processed: 1}));
-		sandbox.stub(UA, 'handleError', () => errorHandler);
+		sandbox.stub(UA, 'resolveUrl').callsFake(() => Promise.resolve());
+		sandbox.stub(UA, 'handleFetch').callsFake(() => () => Promise.resolve({fetch: 1}));
+		sandbox.stub(UA, 'handleFetchResponse').callsFake(() => Promise.resolve({fetchResponse: 1}));
+		sandbox.stub(UA, 'processAndRespond').callsFake(() => () => Promise.resolve({processed: 1}));
+		sandbox.stub(UA, 'handleError').callsFake(() => errorHandler);
 
 		const config = {config: 1};
 		const server = {server: 1};

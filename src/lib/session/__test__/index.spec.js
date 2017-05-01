@@ -64,12 +64,8 @@ describe('lib/session', () => {
 		const test = (context) => session.getUser(context)
 			.then(name => {
 				name.should.be.equal(workspace.Title);
-				session.getServiceDocument.should.have.been.calledOnce;
 				session.getServiceDocument.should.have.been.calledWithExactly(context);
-				session.getServiceDocument.reset();
-				doc.getUserWorkspace.should.have.been.calledOnce;
 				doc.getUserWorkspace.should.have.been.calledWithExactly();
-				doc.getUserWorkspace.reset();
 			});
 
 		return Promise.resolve()//sequential not parallel!
@@ -88,13 +84,8 @@ describe('lib/session', () => {
 			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
 			.catch(error => {
 				expect(error).to.equal('No user workspace');
-				session.getServiceDocument.should.have.been.calledOnce;
 				session.getServiceDocument.should.have.been.calledWithExactly(context);
-				session.getServiceDocument.reset();
-
-				doc.getUserWorkspace.should.have.been.calledOnce;
 				doc.getUserWorkspace.should.have.been.calledWithExactly();
-				doc.getUserWorkspace.reset();
 			});
 
 		return Promise.resolve()//sequential not parallel!
@@ -159,10 +150,10 @@ describe('lib/session', () => {
 	it ('Session::middleware() - gets the user, assigns it to the request context, and setups up intital data', () => {
 		const Session = mock.reRequire('../index');
 		const session = new Session({});
-		sandbox.stub(session, 'getUser', () => Promise.resolve('testuser'));
+		sandbox.stub(session, 'getUser').callsFake(() => Promise.resolve('testuser'));
 		sandbox.stub(session, 'setupIntitalData');
 		//Continue the rejections...we will test this function by itself.
-		sandbox.stub(session, 'maybeRedircect', () => (e => Promise.reject(e)));
+		sandbox.stub(session, 'maybeRedircect').callsFake(() => (e => Promise.reject(e)));
 
 		const next = sandbox.stub();
 		const basepath = '';
@@ -236,10 +227,10 @@ describe('lib/session', () => {
 			setMaxListeners: sandbox.stub(),
 		};
 
-		sandbox.stub(session, 'getUser', () => (req['____forceClose'](), Promise.resolve('testuser')));
+		sandbox.stub(session, 'getUser').callsFake(() => (req['____forceClose'](), Promise.resolve('testuser')));
 		sandbox.stub(session, 'setupIntitalData');
 		//Continue the rejections...we will test this function by itself.
-		sandbox.stub(session, 'maybeRedircect', () => (e => Promise.reject(e)));
+		sandbox.stub(session, 'maybeRedircect').callsFake(() => (e => Promise.reject(e)));
 
 		return session.middleware(basepath, req, resp, next)
 			.then(() => {
@@ -281,10 +272,10 @@ describe('lib/session', () => {
 			setMaxListeners: sandbox.stub(),
 		};
 
-		sandbox.stub(session, 'getUser', () => Promise.reject('Test'));
+		sandbox.stub(session, 'getUser').callsFake(() => Promise.reject('Test'));
 		sandbox.stub(session, 'setupIntitalData');
 		//Continue the rejections...we will test this function by itself.
-		sandbox.stub(session, 'maybeRedircect', () => (e => Promise.reject(e)));
+		sandbox.stub(session, 'maybeRedircect').callsFake(() => (e => Promise.reject(e)));
 
 		return session.middleware(basepath, req, resp, next)
 			.then(() => {
@@ -328,10 +319,10 @@ describe('lib/session', () => {
 			setMaxListeners: sandbox.stub(),
 		};
 
-		sandbox.stub(session, 'getUser', () => Promise.resolve('testuser'));
-		sandbox.stub(session, 'setupIntitalData', () => Promise.reject('Ooops'));
+		sandbox.stub(session, 'getUser').callsFake(() => Promise.resolve('testuser'));
+		sandbox.stub(session, 'setupIntitalData').callsFake(() => Promise.reject('Ooops'));
 		//Continue the rejections...we will test this function by itself.
-		sandbox.stub(session, 'maybeRedircect', () => (e => Promise.reject(e)));
+		sandbox.stub(session, 'maybeRedircect').callsFake(() => (e => Promise.reject(e)));
 
 		return session.middleware(basepath, req, resp, next)
 			.then(() => {
@@ -374,10 +365,10 @@ describe('lib/session', () => {
 			setMaxListeners: sandbox.stub(),
 		};
 
-		sandbox.stub(session, 'getUser', () => Promise.resolve('testuser'));
+		sandbox.stub(session, 'getUser').callsFake(() => Promise.resolve('testuser'));
 		sandbox.stub(session, 'setupIntitalData');
 		//Continue the rejections...we will test this function by itself.
-		sandbox.stub(session, 'maybeRedircect', () => (e => Promise.reject(e)));
+		sandbox.stub(session, 'maybeRedircect').callsFake(() => (e => Promise.reject(e)));
 
 		return session.middleware(basepath, req, resp, next)
 			.then(() => {

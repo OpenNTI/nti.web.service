@@ -60,7 +60,6 @@ describe('lib/logger (middleware)', () => {
 
 	it ('get(name) returns a new logger with its name prefixed with NodeService', () => {
 		const {get} = mock.reRequire('../logger');
-		LoggerFactory.get.reset();
 
 		const logger = get('SomeTest');
 		LoggerFactory.get.should.have.been.calledWithExactly('NodeService:SomeTest');

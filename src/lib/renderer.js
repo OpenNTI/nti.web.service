@@ -51,8 +51,12 @@ function getPageRenderer ({appId, basepath} = {}, config, datacache, render) {
 			.catch(error => {
 				/* istanbul ignore next */
 				logger.error(error.stack || error.message || error);
-				res.status(500);
-				res.end(error);
+				try {
+					res.status(500);
+					res.end(error);
+				} catch (e) {
+					logger.error('Error setting status to 500', e.stack || e.message || e);
+				}
 			});
 	};
 }

@@ -49,4 +49,15 @@ describe('lib/no-cache (middleware)', () => {
 			.and.calledWithExactly('Pragma', 'no-cache');
 	});
 
+
+	it ('does not call setHeader if headers already sent.', () => {
+		const next = () => ({});
+		const fn = mock.reRequire('../no-cache');
+		const res = {headersSent: true, setHeader: sandbox.stub()};
+
+		expect(() => fn(null, res, next)).to.not.throw().and.to.equal(void 0);
+
+		res.setHeader.should.not.have.been.called;
+	});
+
 });

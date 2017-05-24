@@ -34,6 +34,7 @@
     "mime-types": "^2.1.0",
     "morgan": "^1.5.2",
     "node-fetch": "^1.5.3",
+    "nti-commons": "^2.5.1",
     "nti-lib-interfaces": "^1.40.0",
     "nti-util-logger": "^1.0.0",
     "response-time": "^2.2.0",

@@ -2,6 +2,8 @@
 'use strict';
 const url = require('url');
 
+const {URL: {join: urlJoin}} = require('nti-commons');
+
 const logger = require('../logger');
 
 const {resolveTemplateFile, getModules, getTemplate} = require('./utils');
@@ -11,11 +13,14 @@ Object.assign(exports, {
 });
 
 
-const isRootPath = /^\/(?!\/).*/;
+const isRootPath = RegExp.prototype.test.bind(/^\/(?!\/).*/);
+const isSiteAssets = RegExp.prototype.test.bind(/^\/site\-assets/);
+const isFavicon = RegExp.prototype.test.bind(/^\/favicon\.ico/);
+const shouldPrefixBasePath = val => isRootPath(val) && !isSiteAssets(val) && !isFavicon(val);
+
 const basepathreplace = /(manifest|src|href)="(.*?)"/igm;
 const configValues = /<\[cfg\:([^\]]*)\]>/igm;
 const injectConfig = (cfg, orginal, prop) => cfg[prop] || 'MissingConfigValue';
-
 
 function getRenderer (assets, renderContent) {
 	const templateFile = resolveTemplateFile(assets);
@@ -46,15 +51,12 @@ function getRenderer (assets, renderContent) {
 
 				const cfg = Object.assign({}, clientConfig.config || {});
 
-				const basePathFix = (original, attr, val) => {
-					const part = `${attr}="`;
-
-					if (!isRootPath.test(val) || val.startsWith(basePath)) {
-						return `${part}${val}"`;
-					}
-
-					return `${part}${(basePath || '/')}${val.substr(1)}"`;
-				};
+				const basePathFix = (original, attr, val) =>
+										attr + `="${
+											shouldPrefixBasePath(val)
+												? urlJoin(basePath, val)
+												: val
+										}"`;
 
 				let rendererdContent = '';
 				try {

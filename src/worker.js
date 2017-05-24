@@ -7,6 +7,7 @@ const {proxy: createProxy} = require('findhit-proxywrap');
 const pkg = require('../package.json');
 
 const logger = require('./lib/logger');
+const {restart} = require('./lib/restart');
 const {setupApplication} = require('./lib/app-service');
 const {setupErrorHandler} = require('./lib/error-handler');
 
@@ -16,7 +17,6 @@ const self = Object.assign(exports, {
 	start,
 
 	//for tests
-	restart,
 	init,
 	messageHandler
 });
@@ -59,12 +59,7 @@ const MESSAGE_HANDLERS = {
 function start ()  {
 	logger.info('Starting up. (version: %s, process: %d)', pkg.version, process.pid);
 	process.on('message', self.messageHandler);
-	process.on('SIGHUP', self.restart);
-}
-
-
-function restart () {
-	process.send({cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL'});
+	process.on('SIGHUP', restart);
 }
 
 
@@ -77,7 +72,7 @@ function init (config) {
 
 	app.set('trust proxy', 1); // trust first proxy
 
-	const port = setupApplication(app, config, self.restart);
+	const port = setupApplication(app, config, restart);
 
 	//Errors
 	setupErrorHandler(app, config);

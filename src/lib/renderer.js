@@ -1,5 +1,6 @@
 const logger = require('./logger');
 const {clientConfig, nodeConfigAsClientConfig} = require('./config');
+const {getRenderer} = require('./page-renderer');
 
 Object.assign(exports, {
 	getPageRenderer
@@ -13,7 +14,11 @@ function asPromise (cb) {
 	}
 }
 
-function getPageRenderer ({appId, basepath} = {}, config, datacache, render) {
+function getPageRenderer ({appId, basepath, assets} = {}, config, datacache, render, renderContent) {
+
+	if (!render) {
+		render = getRenderer(assets, renderContent);
+	}
 
 	return function renderPage (req, res) {
 		logger.info('Rendering Inital View: %s %s', req.url, req.username);
@@ -55,6 +60,7 @@ function getPageRenderer ({appId, basepath} = {}, config, datacache, render) {
 					res.status(500);
 					res.end(error);
 				} catch (e) {
+					/* istanbul ignore next */
 					logger.error('Error setting status to 500', e.stack || e.message || e);
 				}
 			});

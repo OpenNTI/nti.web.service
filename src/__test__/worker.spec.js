@@ -4,6 +4,7 @@ const assert = require('assert');
 const mock = require('mock-require');
 const sinon = require('sinon');
 
+const {restart} = require('../lib/restart');
 
 describe('Worker', () => {
 	let logger, sandbox;
@@ -36,27 +37,8 @@ describe('Worker', () => {
 
 		process.on.should.have.been.calledTwice;
 		process.on.should.have.been.calledWith('message', worker.messageHandler);
-		process.on.should.have.been.calledWith('SIGHUP', worker.restart);
+		process.on.should.have.been.calledWith('SIGHUP', restart);
 
-	});
-
-
-	it ('restart() sends WORKER_WANTS_TO_RESTART_THE_POOL', () => {
-		const stubby = sandbox.stub();
-		const send = process.send
-			? (sandbox.stub(process, 'send'), process.send)
-			: (process.send = stubby);
-
-		const worker = mock.reRequire('../worker');
-
-		worker.restart();
-
-		if (send === stubby) {
-			delete process.send;
-		}
-
-		send.should.have.been.calledOnce;
-		send.should.have.been.calledWith({cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL'});
 	});
 
 
@@ -88,7 +70,7 @@ describe('Worker', () => {
 		proxy.should.not.have.been.called;
 		express.should.have.been.calledOnce;
 		setupApplication.should.have.been.calledOnce;
-		setupApplication.should.have.been.calledWith(app, config, worker.restart);
+		setupApplication.should.have.been.calledWith(app, config, restart);
 		setupErrorHandler.should.have.been.calledOnce;
 
 		createServer.should.have.been.calledOnce;
@@ -129,7 +111,7 @@ describe('Worker', () => {
 		proxy.should.have.been.called;
 		express.should.have.been.calledOnce;
 		setupApplication.should.have.been.calledOnce;
-		setupApplication.should.have.been.calledWith(app, config, worker.restart);
+		setupApplication.should.have.been.calledWith(app, config, restart);
 		setupErrorHandler.should.have.been.calledOnce;
 
 		createServer.should.have.been.calledOnce;

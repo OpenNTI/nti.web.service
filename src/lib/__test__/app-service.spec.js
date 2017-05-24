@@ -115,6 +115,7 @@ describe('lib/app-service', () => {
 		expect(() => service.forceError()).to.throw();
 	});
 
+
 	it ('resourceNotFound(): sets 404', () => {
 		const service = mock.reRequire('../app-service');
 
@@ -212,6 +213,8 @@ describe('lib/app-service', () => {
 			package: 'test-app'
 		});
 
+		const clientConfigWithAssets = Object.assign({assets: mockReg.assets}, clientConfig);
+
 		const params = {
 			server,
 			config: Object.freeze({mockConfig: true}),
@@ -268,7 +271,7 @@ describe('lib/app-service', () => {
 		sessionMockInstance.middleware.should.have.been.calledWithExactly(clientConfig.basepath, args[0], args[1], args[2]);
 
 		getPageRenderer.should.have.been.calledOnce;
-		getPageRenderer.should.have.been.calledWith(clientConfig, params.config, params.datacache, mockReg.render);
+		getPageRenderer.should.have.been.calledWith(clientConfigWithAssets, params.config, params.datacache, mockReg.render);
 
 		process.send.should.not.have.been.called;
 	});
@@ -295,6 +298,8 @@ describe('lib/app-service', () => {
 			package: 'test-app'
 		});
 
+		const clientConfigWithAssets = Object.assign({assets: mockReg.assets}, clientConfig);
+
 		const params = {
 			server,
 			config: Object.freeze({mockConfig: true}),
@@ -351,7 +356,7 @@ describe('lib/app-service', () => {
 		sessionMockInstance.middleware.should.have.been.calledWithExactly(clientConfig.basepath, args[0], args[1], args[2]);
 
 		getPageRenderer.should.have.been.calledOnce;
-		getPageRenderer.should.have.been.calledWith(clientConfig, params.config, params.datacache, mockReg.render);
+		getPageRenderer.should.have.been.calledWith(clientConfigWithAssets, params.config, params.datacache, mockReg.render);
 
 		process.send.should.have.been.calledOnce;
 		process.send.should.have.been.calledWith(sinon.match({cmd: 'NOTIFY_DEVMODE'}));

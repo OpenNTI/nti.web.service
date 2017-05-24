@@ -166,6 +166,7 @@ function restartWorkers () {
 					worker.send({cmd: 'close'});
 				}
 			} catch (e) {
+				/* istanbul ignore next */
 				logger.error(e.stack || e.message || e);
 			}
 		}

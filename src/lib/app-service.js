@@ -90,7 +90,16 @@ function setupClient (client, {config, server, datacache, interface: _interface,
 	const clientRoute = self.contextualize(basepath, server);
 	logger.info('mount-point: %s', basepath);
 
-	const {locales, assets, render, devmode, sessionSetup} = register(clientRoute, flatConfig, restartRequest);
+	const {
+		assets,
+		devmode,
+		locales,
+		render,
+		renderContent,
+		sessionSetup
+	} = register(clientRoute, flatConfig, restartRequest);
+
+	client = Object.assign({}, client, {assets});//add the assets path to the client object (keep it out of the config)
 
 	const session = new Session(_interface, sessionSetup);
 
@@ -133,7 +142,7 @@ function setupClient (client, {config, server, datacache, interface: _interface,
 	clientRoute.use(AUTHENTICATED_ROUTES, (r, q, n) => void session.middleware(basepath, r, q, n));
 
 	//HTML Renderer...
-	clientRoute.get('*', getPageRenderer(client, config, datacache, render));
+	clientRoute.get('*', getPageRenderer(client, config, datacache, render, renderContent));
 
 	if (devmode) {
 		process.send({cmd: 'NOTIFY_DEVMODE'});

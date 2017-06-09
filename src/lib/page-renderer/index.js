@@ -15,8 +15,9 @@ Object.assign(exports, {
 
 const isRootPath = RegExp.prototype.test.bind(/^\/(?!\/).*/);
 const isSiteAssets = RegExp.prototype.test.bind(/^\/site\-assets/);
+const isVendoredAssets = RegExp.prototype.test.bind(/^\/vendor/);
 const isFavicon = RegExp.prototype.test.bind(/^\/favicon\.ico/);
-const shouldPrefixBasePath = val => isRootPath(val) && !isSiteAssets(val) && !isFavicon(val);
+const shouldPrefixBasePath = val => isRootPath(val) && !isSiteAssets(val) && !isVendoredAssets(val) && !isFavicon(val);
 
 const basepathreplace = /(manifest|src|href)="(.*?)"/igm;
 const configValues = /<\[cfg\:([^\]]*)\]>/igm;

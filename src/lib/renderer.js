@@ -21,7 +21,7 @@ function getPageRenderer ({appId, basepath, assets} = {}, config, datacache, ren
 	}
 
 	return function renderPage (req, res) {
-		logger.info('Rendering Inital View: %s %s', req.url, req.username);
+		logger.debug('Rendering Inital View: %s %s', req.url, req.username);
 		let isErrorPage = false;
 
 		const pageRenderSetPageNotFound = ()=> isErrorPage = true;
@@ -49,7 +49,7 @@ function getPageRenderer ({appId, basepath, assets} = {}, config, datacache, ren
 				//Final render
 				return Promise.resolve(render(basepath, req, configForClient))
 					.then(content => {
-						logger.info('Flushing Render to client: %s %s', req.url, req.username);
+						logger.debug('Flushing Render to client: %s %s', req.url, req.username);
 						res.send(content);
 					});
 			})

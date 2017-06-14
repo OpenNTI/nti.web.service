@@ -70,7 +70,9 @@ function setupApplication (server, config, restartRequest) {
 	// server.use(cacheBuster);
 
 	logger.info('DataServer end-point: %s', config.server);
-	logger.attachToExpress(server);
+	if (config.mode !== 'development') {
+		logger.attachToExpress(server);
+	}
 
 	for (let client of config.apps) {
 		self.setupClient(client, params);

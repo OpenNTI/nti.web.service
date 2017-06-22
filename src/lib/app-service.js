@@ -140,7 +140,7 @@ function setupClient (client, {config, server, datacache, interface: _interface,
 
 	clientRoute.use(ANONYMOUS_ROUTES, (r, q, n) => void session.anonymousMiddleware(basepath, r, q, n));
 
-	if (config.public !== true) {
+	if (flatConfig.public !== true) {
 		//Session manager...
 		clientRoute.use(AUTHENTICATED_ROUTES, (r, q, n) => void session.middleware(basepath, r, q, n));
 	}

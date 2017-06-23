@@ -37,7 +37,7 @@ module.exports = exports = class SessionManager {
 			.then(pong => server.getServiceDocument(context)
 				//This seems dirty and out of place...
 				.then(service => (
-					service.setLogoutURL(pong.links['logon.logout']),
+					service.setLogoutURL(pong.getLink('logon.logout')),
 					service
 				)));
 	}

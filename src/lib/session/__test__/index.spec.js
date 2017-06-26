@@ -97,8 +97,7 @@ describe('lib/session', () => {
 	it ('Session::getServiceDocument() - resolve the service document through a ping/handshake. Stash the logout-url.', () => {
 		const Session = mock.reRequire('../index');
 		const context = Object.create(null);
-		const handler = {get: sandbox.stub().withArgs(sinon.match.object, 'logon.logout').returns('lala')};
-		const pong = {links: new Proxy({}, handler)};
+		const pong = {getLink: sandbox.stub().withArgs('logon.logout').returns('lala')};
 		const ping = sandbox.stub().returns(Promise.resolve(pong));
 		const doc = {setLogoutURL: sandbox.stub()};
 		const getServiceDocument = sandbox.stub().returns(Promise.resolve(doc));
@@ -115,8 +114,8 @@ describe('lib/session', () => {
 				getServiceDocument.should.have.been.calledOnce;
 				getServiceDocument.should.have.been.calledWithExactly(context);
 
-				handler.get.should.have.been.calledOnce;
-				handler.get.should.have.been.calledWith(sinon.match.object, 'logon.logout');
+				pong.getLink.should.have.been.calledOnce;
+				pong.getLink.should.have.been.calledWith('logon.logout');
 			});
 	});
 

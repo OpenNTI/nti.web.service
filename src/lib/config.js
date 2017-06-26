@@ -234,7 +234,7 @@ function clientConfig (baseConfig, username, appId, context) {
 		locale: getLocale(context)
 	});
 
-	const blacklist = [/webpack.*/i, 'port', 'protocol', 'address', 'apps', 'site-mappings'];
+	const blacklist = [/webpack.*/i, 'port', 'protocol', 'address', 'apps', 'site-mappings', 'package'];
 
 	for (let blocked of blacklist) {
 		if (typeof blocked === 'string') {

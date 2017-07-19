@@ -1,6 +1,6 @@
 {
   "name": "nti-web-service",
-  "version": "1.5.6",
+  "version": "1.6.0-alpha",
   "description": "Service to serve and manage client UIs",
   "main": "src/index.js",
   "bin": {
@@ -9,17 +9,11 @@
   "scripts": {
     "start": "node ./src --protocol http --config ./config/env.json.example",
     "test": "istanbul cover ./node_modules/.bin/_mocha -- ./test/ --recursive --reporter mocha-junit-reporter --reporter-options mochaFile=./reports/test-results/index.xml",
-    "bump": "npm version",
-    "preversion": "eslint --ext .js ./src/ && mocha ./test/",
-    "postversion": "git push && git push --tags && npm publish --tag alpha"
+    "prepack": "eslint --ext .js ./src/ && mocha ./test/ && npm test"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/NextThought/nti.web.service.git"
-  },
-  "engines": {
-    "node": ">=5.0.0",
-    "npm": ">=3.3.0"
   },
   "author": "nextthought",
   "license": "UNLICENSED",

@@ -1,3 +1,4 @@
+/*eslint-env mocha*/
 'use strict';
 const mock = require('mock-require');
 const sinon = require('sinon');
@@ -56,12 +57,12 @@ describe('Master', () => {
 		sandbox.stub(master, 'init');
 
 		master.load()
-		.then(() => {
-			config.loadConfig.should.have.been.calledOnce;
-			master.init.should.have.been.calledOnce;
-			done();
-		})
-		.catch(done);
+			.then(() => {
+				config.loadConfig.should.have.been.calledOnce;
+				master.init.should.have.been.calledOnce;
+				done();
+			})
+			.catch(done);
 	});
 
 
@@ -75,12 +76,12 @@ describe('Master', () => {
 		sandbox.stub(master, 'init');
 
 		master.load()
-		.then(() => {
-			config.loadConfig.should.have.been.calledOnce;
-			master.init.should.not.have.been.called;
-			done();
-		})
-		.catch(done);
+			.then(() => {
+				config.loadConfig.should.have.been.calledOnce;
+				master.init.should.not.have.been.called;
+				done();
+			})
+			.catch(done);
 	});
 
 

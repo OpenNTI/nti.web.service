@@ -27,8 +27,8 @@ function setupErrorHandler (express/*, config*/) {
 	let file = path.resolve(__dirname, '..', 'templates', 'error.html');
 
 	template = fs.readFileSync(file, 'utf8')
-						.replace(basepathreplace, (original, attr, val) =>
-							attr + '="' + (isRootPath(val) ? (basePath + val.substr(1)) : val) + '"');
+		.replace(basepathreplace, (original, attr, val) =>
+			attr + '="' + (isRootPath(val) ? (basePath + val.substr(1)) : val) + '"');
 
 	// We need the signature to be 4 args long
 	// for express to treat it as a error handler

@@ -1,3 +1,5 @@
+/*globals expect*/
+/*eslint-env mocha*/
 'use strict';
 const mock = require('mock-require');
 const sinon = require('sinon');

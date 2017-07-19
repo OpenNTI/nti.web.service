@@ -1,3 +1,5 @@
+/*globals expect*/
+/*eslint-env mocha*/
 'use strict';
 const fs = require('fs');
 

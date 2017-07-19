@@ -14,13 +14,13 @@ Object.assign(exports, {
 
 
 const isRootPath = RegExp.prototype.test.bind(/^\/(?!\/).*/);
-const isSiteAssets = RegExp.prototype.test.bind(/^\/site\-assets/);
+const isSiteAssets = RegExp.prototype.test.bind(/^\/site-assets/);
 const isVendoredAssets = RegExp.prototype.test.bind(/^\/vendor/);
 const isFavicon = RegExp.prototype.test.bind(/^\/favicon\.ico/);
 const shouldPrefixBasePath = val => isRootPath(val) && !isSiteAssets(val) && !isVendoredAssets(val) && !isFavicon(val);
 
 const basepathreplace = /(manifest|src|href)="(.*?)"/igm;
-const configValues = /<\[cfg\:([^\]]*)\]>/igm;
+const configValues = /<\[cfg:([^\]]*)\]>/igm;
 const injectConfig = (cfg, orginal, prop) => cfg[prop] || 'MissingConfigValue';
 
 function getRenderer (assets, renderContent) {
@@ -53,11 +53,11 @@ function getRenderer (assets, renderContent) {
 				const cfg = Object.assign({}, clientConfig.config || {});
 
 				const basePathFix = (original, attr, val) =>
-										attr + `="${
-											shouldPrefixBasePath(val)
-												? urlJoin(basePath, val)
-												: val
-										}"`;
+					attr + `="${
+						shouldPrefixBasePath(val)
+							? urlJoin(basePath, val)
+							: val
+					}"`;
 
 				let rendererdContent = '';
 				try {
@@ -71,11 +71,11 @@ function getRenderer (assets, renderContent) {
 				const html = rendererdContent + clientConfig.html;
 
 				let out = template
-						.replace(/<html/, manifest)
-						.replace(configValues, injectConfig.bind(this, cfg))
-						.replace(basepathreplace, basePathFix)
-						.replace(/<!--html:server-values-->/i, html)
-						.replace(/resources\/styles\.css/, 'resources/styles.css?rel=' + encodeURIComponent(ScriptFilenameMap.index));
+					.replace(/<html/, manifest)
+					.replace(configValues, injectConfig.bind(this, cfg))
+					.replace(basepathreplace, basePathFix)
+					.replace(/<!--html:server-values-->/i, html)
+					.replace(/resources\/styles\.css/, 'resources/styles.css?rel=' + encodeURIComponent(ScriptFilenameMap.index));
 
 				for (let script of Object.keys(ScriptFilenameMap)) {
 					out = out.replace(new RegExp(`js\\/${script}\\.js`), ScriptFilenameMap[script]);

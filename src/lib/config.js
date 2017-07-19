@@ -23,45 +23,45 @@ const self = Object.assign(exports, {
 
 
 const opt = yargs
-		.usage('WebApp Instance')
-			.options({
-				'l': {
-					alias: 'listen',
-					desc: 'Force server to liston on address'
-				},
-				'p': {
-					alias: 'port',
-					desc: 'Liston on port'
-				},
-				'protocol': {
-					demand: true,
-					default: 'proxy',
-					desc: 'Protocol to use (proxy or http)'
-				},
-				'dataserver-host': {
-					desc: 'Override DataServer host (this trumps the config)'
-				},
-				'dataserver-port': {
-					desc: 'Override DataServer port (this trumps the config)'
-				},
-				'webpack': {
-					desc: 'Prefix with "no-" to force the dev-server off.',
-					type: 'boolean',
-					default: true
-				},
-				'config': {
-					demand: true,
-					default: '../config/env.json',
-					desc: 'URI/path to config file (http/https/file/path)'
-				},
-				'env': {
-					default: process.env.NODE_ENV,
-					desc: 'Specify env config key'
-				}
-			})
-			.help('help', 'Usage')
-			.alias('help', '?')
-			.argv;
+	.usage('WebApp Instance')
+	.options({
+		'l': {
+			alias: 'listen',
+			desc: 'Force server to liston on address'
+		},
+		'p': {
+			alias: 'port',
+			desc: 'Liston on port'
+		},
+		'protocol': {
+			demand: true,
+			default: 'proxy',
+			desc: 'Protocol to use (proxy or http)'
+		},
+		'dataserver-host': {
+			desc: 'Override DataServer host (this trumps the config)'
+		},
+		'dataserver-port': {
+			desc: 'Override DataServer port (this trumps the config)'
+		},
+		'webpack': {
+			desc: 'Prefix with "no-" to force the dev-server off.',
+			type: 'boolean',
+			default: true
+		},
+		'config': {
+			demand: true,
+			default: '../config/env.json',
+			desc: 'URI/path to config file (http/https/file/path)'
+		},
+		'env': {
+			default: process.env.NODE_ENV,
+			desc: 'Specify env config key'
+		}
+	})
+	.help('help', 'Usage')
+	.alias('help', '?')
+	.argv;
 
 
 function loadConfig () {

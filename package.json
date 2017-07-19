@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node ./src --protocol http --config ./config/env.json.example",
     "test": "istanbul cover ./node_modules/.bin/_mocha -- ./test/ --recursive --reporter mocha-junit-reporter --reporter-options mochaFile=./reports/test-results/index.xml",
-    "prepack": "eslint --ext .js ./src/ && mocha ./test/ && npm test"
+    "prepack": "eslint --ext .js ./src/ && npm test"
   },
   "repository": {
     "type": "git",

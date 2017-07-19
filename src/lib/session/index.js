@@ -33,7 +33,7 @@ module.exports = exports = class SessionManager {
 	getServiceDocument (context) {
 		const {server} = this;
 		return server.ping(context)	// server.getServiceDocument() pings as well...
-									// if we didn't need the logon.logout url, we could omit this step here.
+		// if we didn't need the logon.logout url, we could omit this step here.
 			.then(pong => server.getServiceDocument(context)
 				//This seems dirty and out of place...
 				.then(service => (

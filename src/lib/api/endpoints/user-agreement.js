@@ -120,8 +120,8 @@ function handleFetchResponse (response) {
 function processAndRespond (response) {
 	return (raw) => {
 		const filtered = raw
-				.replace(tagPattern('script'), '')
-				.replace(tagPattern('style'), '');
+			.replace(tagPattern('script'), '')
+			.replace(tagPattern('style'), '');
 
 
 		const body = BODY_REGEX.exec(filtered);

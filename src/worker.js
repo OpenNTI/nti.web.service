@@ -1,5 +1,7 @@
+'use strict';
 const {worker} = require('cluster');
 const http = require('http');
+const path = require('path');
 
 const express = require('express');
 const {proxy: createProxy} = require('findhit-proxywrap');
@@ -7,6 +9,7 @@ const {proxy: createProxy} = require('findhit-proxywrap');
 const pkg = require('../package.json');
 
 const logger = require('./lib/logger');
+const htmlTemplates = require('./lib/htmlTemplates');
 const {restart} = require('./lib/restart');
 const {setupApplication} = require('./lib/app-service');
 const {setupErrorHandler} = require('./lib/error-handler');
@@ -69,8 +72,11 @@ function init (config) {
 
 	//WWW Server
 	const app = express();
+	app.engine('html', htmlTemplates);
 
 	app.set('trust proxy', 1); // trust first proxy
+	app.set('views', path.resolve(__dirname, 'templates'));
+	app.set('view engine', 'html');
 
 	const port = setupApplication(app, config, restart);
 

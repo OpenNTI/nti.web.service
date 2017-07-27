@@ -41,6 +41,10 @@ function middleware (err, req, res, next) { // eslint-disable-line no-unused-var
 		err = 'Unknown Error';
 	}
 	else if (err === 'aborted') {
+		if (res.headersSent) {
+			return;
+		}
+
 		return res.status(204).end();
 	}
 	else if (err.statusCode === 503 || err.message === 'Service Unavailable') {

@@ -107,6 +107,16 @@ module.exports = exports = class SessionManager {
 	maybeRedircect (basepath, scope, start, req, res, next) {
 		const url = req.originalUrl;
 
+		function redirect (uri) {
+			try {
+				return res.redirect(uri);
+			} catch (e) {
+				logger.debug('Could not redirect because: %s, rendering client-side redirect...', e.message);
+				res.render('redirect', {uri}).end();
+				next('aborted');
+			}
+		}
+
 		return reason => {
 			if (req.dead) {return;}
 
@@ -131,14 +141,14 @@ module.exports = exports = class SessionManager {
 				logger.debug('SESSION [LOGIN ACTION REQUIRED] %s %s REDIRECT %s%s (User: %s, %dms)',
 					req.method, url, basepath, reason.route, req.username, Date.now() - start);
 
-				return res.redirect(`${basepath}${reason.route}${returnTo}`);
+				return redirect(`${basepath}${reason.route}${returnTo}`);
 			}
 
 			if (!/^(api|login)/.test(scope)) {
 				logger.debug('SESSION [INVALID] %s %s REDIRECT %slogin/ (User: annonymous, %dms)',
 					req.method, url, basepath, Date.now() - start);
 
-				return res.redirect(`${basepath}login/${returnTo}`);
+				return redirect(`${basepath}login/${returnTo}`);
 			}
 
 

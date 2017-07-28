@@ -15,6 +15,7 @@ if ! git diff-index --quiet --cached HEAD; then
 	exit 1
 fi
 
+eslint --max-warnings 0 ./src || (echo "There are lint failures!" && exit 1)
 mocha || (echo "There are test failures!" && exit 1)
 
 NEW=`npm version minor`

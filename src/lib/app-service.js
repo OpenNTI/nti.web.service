@@ -45,6 +45,7 @@ function neverCacheManifestFiles (res, requsestPath) {
 
 function contextualize (root, app) {
 	const contextWapper = express();
+	contextWapper.set('views', app.get('views'));
 	app.use(root, contextWapper);
 	return contextWapper;
 }

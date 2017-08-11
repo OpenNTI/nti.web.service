@@ -24,10 +24,10 @@ function getPageRenderer ({appId, basepath, assets} = {}, config, datacache, ren
 		logger.debug('Rendering Inital View: %s %s', req.url, req.username);
 		let isErrorPage = false;
 
-		const pageRenderSetPageNotFound = ()=> isErrorPage = true;
+		const pageRenderSetErrorCode = (code)=> isErrorPage = code || true;
 
 		//Pre-flight (if any widget makes a request, we will cache its result and send its result to the client)
-		const renderPass = asPromise(() => render(basepath, req, nodeConfigAsClientConfig(config, appId, req), pageRenderSetPageNotFound));
+		const renderPass = asPromise(() => render(basepath, req, nodeConfigAsClientConfig(config, appId, req), pageRenderSetErrorCode));
 
 		const prefetch = Promise.all([
 			renderPass,
@@ -40,7 +40,11 @@ function getPageRenderer ({appId, basepath, assets} = {}, config, datacache, ren
 		return prefetch
 			.then(()=> {
 				if (isErrorPage) {
-					res.status(404);
+					if (typeof isErrorPage === 'number') {
+						res.status(isErrorPage);
+					} else {
+						res.status(404);
+					}
 				}
 
 				const configForClient = clientConfig(config, req.username, appId, req);

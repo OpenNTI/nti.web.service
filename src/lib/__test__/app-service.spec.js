@@ -49,6 +49,7 @@ describe('lib/app-service', () => {
 		expressMock = Object.assign(
 			() => Object.create(expressMock, {
 				use: {value: sandbox.stub()},
+				set: {value: sandbox.stub()},
 				get: {value: sandbox.stub()}
 			}), { static: staticMock });
 

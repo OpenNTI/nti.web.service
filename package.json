@@ -32,6 +32,7 @@
     "nti-commons": "^2.5.1",
     "nti-lib-interfaces": "^1.40.0",
     "nti-util-logger": "^1.0.0",
+    "regenerator-runtime": "^0.11.0",
     "response-time": "^2.2.0",
     "serve-static": "^1.11.2",
     "uuid": "^3.0.1",

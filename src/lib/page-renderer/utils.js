@@ -44,19 +44,21 @@ function getModules (assets) {
 	logger.debug('Checking for compile data: %s', file);
 	return stat(file)
 		.then(({mtime}) => {
+			const cache = statCache[file] || (statCache[file] = {});
+
 			logger.debug('compile data mtime:', mtime);
-			if (statCache.mtime === mtime.getTime()) {
+			if (cache.mtime === mtime.getTime()) {
 				logger.debug('compile data not modified');
-				return statCache.chunks;
+				return cache.chunks;
 			}
 
 			logger.debug('new compile data, loading...');
 
-			if (statCache.mtime) {
+			if (cache.mtime) {
 				askToRestart(); //allow the current process to finish, then cleanly restart.
 			}
 
-			statCache.mtime = mtime.getTime();
+			cache.mtime = mtime.getTime();
 
 			return read(file)
 				.then(JSON.parse)
@@ -69,7 +71,7 @@ function getModules (assets) {
 					}
 
 					logger.debug('updated module data: %o', chunks);
-					statCache.chunks = chunks;
+					cache.chunks = chunks;
 					return chunks;
 				});
 		});

@@ -30,6 +30,13 @@ const read = wrapfs('readFile', 'utf8');
 const unwrap = x => Array.isArray(x) ? x[0] : x;
 
 
+let askToRestartOnce = () => {
+	askToRestart();
+	askToRestartOnce = () => {};
+};
+
+
+
 function resolveTemplateFile (assets) {
 	return assets ? path.resolve(assets, TEMPLATE) : null;
 }
@@ -55,10 +62,14 @@ function getModules (assets) {
 			logger.debug('new compile data, loading...');
 
 			if (cache.mtime) {
-				askToRestart(); //allow the current process to finish, then cleanly restart.
+				if (cache.watcher) {
+					cache.watcher.close();
+				}
+				askToRestartOnce(); //allow the current process to finish, then cleanly restart.
 			}
 
 			cache.mtime = mtime.getTime();
+			cache.watcher = cache.watcher || fs.watch(file, {persistent: false}, askToRestartOnce);
 
 			return read(file)
 				.then(JSON.parse)

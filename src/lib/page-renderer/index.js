@@ -27,6 +27,8 @@ function getRenderer (assets, renderContent) {
 	const templateFile = resolveTemplateFile(assets);
 	let warnedAboutChunks = false;
 
+	getModules(assets);//prewarm
+
 	function warnAboutChunks (e) {
 		if (!warnedAboutChunks) {
 			warnedAboutChunks = true;

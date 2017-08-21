@@ -21,13 +21,15 @@ describe ('lib/api/endpoints/index', () => {
 
 	it ('endpoint index registers all the endpoints', () => {
 		const registerEndpoint = sandbox.stub();
-		mock('../health-check', {default: registerEndpoint});
-		mock('../user-agreement', {default: registerEndpoint});
-		mock('../ugd/context-data', {default: registerEndpoint});
+		const m = {default: registerEndpoint};
+		mock('../health-check', m);
+		mock('../user-agreement', m);
+		mock('../redirect-resolver', m);
+		mock('../ugd/context-data', m);
 		const register = mock.reRequire('../index');
 
 		expect(() => register(1, 2, 3)).to.not.throw();
-		registerEndpoint.should.have.been.calledThrice;
+		registerEndpoint.should.have.been.callCount(4);
 		registerEndpoint.should.always.have.been.calledWithExactly(1, 2, 3);
 	});
 });

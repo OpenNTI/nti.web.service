@@ -24,12 +24,10 @@ describe ('lib/api/endpoints/index', () => {
 		const m = {default: registerEndpoint};
 		mock('../health-check', m);
 		mock('../user-agreement', m);
-		mock('../redirect-resolver', m);
 		mock('../ugd/context-data', m);
 		const register = mock.reRequire('../index');
 
 		expect(() => register(1, 2, 3)).to.not.throw();
-		registerEndpoint.should.have.been.callCount(4);
 		registerEndpoint.should.always.have.been.calledWithExactly(1, 2, 3);
 	});
 });

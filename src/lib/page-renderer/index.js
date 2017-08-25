@@ -27,14 +27,16 @@ function getRenderer (assets, renderContent) {
 	const templateFile = resolveTemplateFile(assets);
 	let warnedAboutChunks = false;
 
-	getModules(assets);//prewarm
-
 	function warnAboutChunks (e) {
 		if (!warnedAboutChunks) {
 			warnedAboutChunks = true;
 			logger.warn('Could not resolve chunk names: %s', e.message || e);
 		}
 	}
+
+
+	getModules(assets)
+		.catch(warnAboutChunks);//prewarm
 
 
 	return (basePath, req, clientConfig) => {

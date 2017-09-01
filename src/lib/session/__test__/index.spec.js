@@ -478,6 +478,47 @@ describe('lib/session', () => {
 	});
 
 
+	it ('Session::maybeRedircect() - redirect on client if headers sent', () => {
+		const Session = mock.reRequire('../index');
+		const session = new Session({});
+
+		const next = sandbox.stub();
+		const basepath = '/';
+		const scope = '';
+		const start = new Date();
+
+		const resp = {
+			send: sandbox.stub(),
+			redirect () { throw new Error('headers sent'); },
+			render: sandbox.stub()
+				.onCall(0).callsFake((view, data, cb) => {
+					cb(null, 'html');
+				})
+				.onCall(1).callsFake((view, data, cb) => {
+					cb('err');
+				})
+		};
+
+		const req = {
+			method: 'GET',
+			originalUrl: '/'
+		};
+
+		resp.send.onCall(1).throws();
+
+
+		const callback = session.maybeRedircect(basepath, scope, start, req, resp, next);
+
+		expect(() => callback({statusCode: 401})).to.not.throw();
+
+		expect(() => callback({statusCode: 401})).to.not.throw();
+
+
+		next.should.have.been.calledWith('aborted');
+		resp.send.should.have.been.calledWith('html');
+	});
+
+
 	it ('Session::maybeRedircect() - does not redirect to login if route is login', () => {
 		const Session = mock.reRequire('../index');
 		const session = new Session({});

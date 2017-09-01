@@ -113,10 +113,14 @@ module.exports = exports = class SessionManager {
 			} catch (e) {
 				logger.debug('Could not redirect because: %s, rendering client-side redirect...', e.message);
 				res.render('redirect', {uri}, (err, html) => {
-					if (!err) {
-						res.send(html);
-					} else {
-						logger.error('Failed to render redirect view: %s', err.stack || err.message || err);
+					try {
+						if (!err) {
+							res.send(html);
+						} else {
+							throw err;
+						}
+					} catch (er) {
+						logger.error('Failed to render redirect view: %s', er.stack || er.message || er);
 					}
 					next('aborted');
 				});

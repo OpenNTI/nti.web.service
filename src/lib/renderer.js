@@ -39,20 +39,21 @@ function getPageRenderer ({appId, basepath, assets} = {}, config, datacache, ren
 
 		return prefetch
 			.then(()=> {
-				if (isErrorPage) {
-					if (typeof isErrorPage === 'number') {
-						res.status(isErrorPage);
-					} else {
-						res.status(404);
-					}
-				}
-
 				const configForClient = clientConfig(config, req.username, appId, req);
 				configForClient.html += datacache.getForContext(req).serialize();
 
 				//Final render
 				return Promise.resolve(render(basepath, req, configForClient))
 					.then(content => {
+
+						if (isErrorPage) {
+							if (typeof isErrorPage === 'number') {
+								res.status(isErrorPage);
+							} else {
+								res.status(404);
+							}
+						}
+
 						logger.debug('Flushing Render to client: %s %s', req.url, req.username);
 						res.send(content);
 					});

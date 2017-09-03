@@ -511,6 +511,7 @@ describe('Master', () => {
 		const master = mock.reRequire('../master');
 
 		master.restartWorkers();
+		master.restartWorkers();
 
 		fakeWorkers[0].send.verify();
 		fakeWorkers[1].send.should.not.have.been.called;

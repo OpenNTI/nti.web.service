@@ -78,8 +78,6 @@ function setupApplication (server, config, restartRequest) {
 	for (let client of config.apps) {
 		self.setupClient(client, params);
 	}
-
-	return config.port;
 }
 
 

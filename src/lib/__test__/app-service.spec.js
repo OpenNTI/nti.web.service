@@ -165,7 +165,6 @@ describe('lib/app-service', () => {
 		const restartCallback = sandbox.stub();
 		const config = Object.freeze({
 			test: 'abc',
-			port: 123,
 			apps: [
 				{
 					appId: 1
@@ -176,9 +175,7 @@ describe('lib/app-service', () => {
 			]
 		});
 
-		const result = service.setupApplication(server, config, restartCallback);
-
-		result.should.be.equal(config.port);
+		service.setupApplication(server, config, restartCallback);
 
 		restartCallback.should.not.have.been.called;
 

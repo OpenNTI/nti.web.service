@@ -21,7 +21,8 @@ const self = Object.assign(exports, {
 
 	//for tests
 	init,
-	messageHandler
+	messageHandler,
+	getApp
 });
 
 const MESSAGE_HANDLERS = {
@@ -66,10 +67,7 @@ function start ()  {
 }
 
 
-function init (config) {
-	const protocol = config.protocol === 'proxy' ? createProxy(http) : http;
-	const address = config.address || '0.0.0.0';
-
+function getApp (config) {
 	//WWW Server
 	const app = express();
 	app.engine('html', htmlTemplates);
@@ -78,10 +76,20 @@ function init (config) {
 	app.set('views', path.resolve(__dirname, 'templates'));
 	app.set('view engine', 'html');
 
-	const port = setupApplication(app, config, restart);
+	setupApplication(app, config, restart);
 
 	//Errors
 	setupErrorHandler(app, config);
+	return app;
+}
+
+
+function init (config) {
+	const protocol = config.protocol === 'proxy' ? createProxy(http) : http;
+	const address = config.address || '0.0.0.0';
+	const port = config.port;
+
+	const app = getApp(config);
 
 	const server = protocol.createServer(app);
 

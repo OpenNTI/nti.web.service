@@ -50,10 +50,10 @@ describe('Worker', () => {
 		const proxy = sandbox.stub().returns({createServer});
 		const app = {set () {}, engine () {}};
 		const express = sandbox.stub().returns(app);
-		const config = {};
 		const port = 12345;
+		const config = {port};
 
-		const setupApplication = sandbox.stub().returns(port);
+		const setupApplication = sandbox.stub();
 		const setupErrorHandler = sandbox.stub();
 
 		mock('findhit-proxywrap', {proxy});
@@ -91,10 +91,10 @@ describe('Worker', () => {
 		const proxy = sandbox.stub().returns({createServer});
 		const app = {set () {}, engine () {}};
 		const express = sandbox.stub().returns(app);
-		const config = {protocol: 'proxy'};
 		const port = 12345;
+		const config = {protocol: 'proxy', port};
 
-		const setupApplication = sandbox.stub().returns(port);
+		const setupApplication = sandbox.stub();
 		const setupErrorHandler = sandbox.stub();
 
 		mock('findhit-proxywrap', {proxy});
@@ -130,10 +130,10 @@ describe('Worker', () => {
 		const proxy = sandbox.stub();
 		const app = {set () {}, engine () {}};
 		const express = sandbox.stub().returns(app);
-		const config = {address: 'abc'};
 		const port = 12345;
+		const config = {port, address: 'abc'};
 
-		const setupApplication = sandbox.stub().returns(port);
+		const setupApplication = sandbox.stub();
 		const setupErrorHandler = sandbox.stub();
 
 		mock('findhit-proxywrap', {proxy});

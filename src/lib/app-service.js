@@ -1,5 +1,6 @@
 'use strict';
 global.SERVER = true;
+const path = require('path');
 
 const cookieParser = require('cookie-parser');
 const express = require('express');
@@ -81,11 +82,22 @@ function setupApplication (server, config, restartRequest) {
 }
 
 
+function getApplication (pkg) {
+	try {
+		return require.main.require(pkg);
+	} catch (e) {
+		const base = path.dirname(require.main.filename);
+		const tip = `Relative modules are relative to: ${base}`;
+		throw new Error(`Could not resolve package (${pkg}) for app. ${tip}`);
+	}
+}
+
+
 function setupClient (client, {config, server, datacache, interface: _interface, restartRequest}) {
 	logger.info('Setting up app (version: %s):', client.appVersion || 'Unknown');
 
 	const flatConfig = Object.assign({}, config, client);  //flattened config
-	const {register} = require.main.require(client.package);
+	const {register} = getApplication(client.package);
 	const {basepath} = client;
 
 	const clientRoute = self.contextualize(basepath, server);

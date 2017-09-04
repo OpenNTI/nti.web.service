@@ -12,7 +12,7 @@ Object.assign(exports, {
 	getRenderer
 });
 
-
+const NOOP = () => {};
 const isRootPath = RegExp.prototype.test.bind(/^\/(?!\/).*/);
 const isSiteAssets = RegExp.prototype.test.bind(/^\/site-assets/);
 const isVendoredAssets = RegExp.prototype.test.bind(/^\/vendor/);
@@ -39,7 +39,7 @@ function getRenderer (assets, renderContent) {
 		.catch(warnAboutChunks);//prewarm
 
 
-	return (basePath, req, clientConfig) => {
+	return (basePath, req, clientConfig, markError = NOOP) => {
 		const ScriptFilenameMap = { index: 'js/index.js' };
 		const u = url.parse(req.url);
 		const manifest = u.query === 'cache' ? '<html manifest="/manifest.appcache"' : '<html';
@@ -54,7 +54,7 @@ function getRenderer (assets, renderContent) {
 					Object.assign(ScriptFilenameMap, modules);
 				}
 
-				const cfg = Object.assign({}, clientConfig.config || {});
+				const cfg = Object.assign({url: req.url}, clientConfig.config || {});
 
 				const basePathFix = (original, attr, val) =>
 					attr + `="${
@@ -64,12 +64,9 @@ function getRenderer (assets, renderContent) {
 					}"`;
 
 				let rendererdContent = '';
-				try {
-					if (renderContent) {
-						rendererdContent = renderContent(clientConfig);
-					}
-				} catch (e) {
-					logger.error('Could not render content: %s', e.stack || e.message || e);
+
+				if (renderContent) {
+					rendererdContent = renderContent(cfg, markError);
 				}
 
 				const html = rendererdContent + clientConfig.html;

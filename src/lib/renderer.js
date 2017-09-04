@@ -8,7 +8,7 @@ Object.assign(exports, {
 
 function asPromise (cb) {
 	try {
-		return cb();
+		return Promise.resolve(cb());
 	} catch (e) {
 		return Promise.reject(e);
 	}
@@ -20,7 +20,7 @@ function getPageRenderer ({appId, basepath, assets} = {}, config, datacache, ren
 		render = getRenderer(assets, renderContent);
 	}
 
-	return function renderPage (req, res) {
+	return function renderPage (req, res, next) {
 		logger.debug('Rendering Inital View: %s %s', req.url, req.username);
 		let isErrorPage = false;
 
@@ -61,13 +61,7 @@ function getPageRenderer ({appId, basepath, assets} = {}, config, datacache, ren
 			.catch(error => {
 				/* istanbul ignore next */
 				logger.error(error.stack || error.message || error);
-				try {
-					res.status(500);
-					res.end(error);
-				} catch (e) {
-					/* istanbul ignore next */
-					logger.error('Error setting status to 500', e.stack || e.message || e);
-				}
+				next(error);
 			});
 	};
 }

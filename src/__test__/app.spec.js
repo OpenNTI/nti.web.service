@@ -1,7 +1,10 @@
 /* eslint no-console:0 */
 const request = require('supertest');
 const mock = require('mock-require');
+const sinon = require('sinon');
 const DataserverInterFace = require('nti-lib-interfaces');
+
+const logger = require('../lib/logger');
 
 const commonConfigs = {
 	server: 'mock:/dataserver2/',
@@ -15,15 +18,6 @@ const commonConfigs = {
 			name: 'default'
 		}
 	}
-};
-
-const mockLogger = {
-	get () { return this; },
-	attachToExpress () {},
-	info () {},
-	error () { console.error(...arguments); },
-	warn () {},
-	debug () {}
 };
 
 const mockInterface = Object.assign({}, DataserverInterFace, {
@@ -66,14 +60,23 @@ const mockInterface = Object.assign({}, DataserverInterFace, {
 });
 
 describe('Test End-to-End', () => {
+	let sandbox;
 
 	beforeEach(() => {
-		mock('../lib/logger', mockLogger);
+		sandbox = sinon.sandbox.create();
+
+		sandbox.stub(logger, 'attachToExpress');
+		sandbox.stub(logger, 'info');
+		sandbox.stub(logger, 'error');
+		sandbox.stub(logger, 'warn');
+		sandbox.stub(logger, 'debug');
+
 		mock('nti-lib-interfaces', mockInterface);
 		mock.reRequire('../lib/app-service');
 	});
 
 	afterEach(() => {
+		sandbox.restore();
 		mock.stopAll();
 	});
 
@@ -185,6 +188,94 @@ describe('Test End-to-End', () => {
 
 				//Check against double printing
 				res.text.match(/\$AppConfig/g).length.should.equal(1);
+			});
+	});
+
+
+	it ('Proper 404 for statics', () => {
+		const {getApp} = mock.reRequire('../worker');
+		const config = Object.assign({}, commonConfigs, {
+			apps: [{
+				public: true,
+				package: '../../../src/__test__/mock-app',
+				basepath: '/test/'
+			}],
+		});
+
+		return request(getApp(config))
+			.get('/test/resources/foo.missing')
+			.expect(404);
+	});
+
+
+	it ('Proper 404 for non-app routes (controlled by app)', () => {
+		const {getApp} = mock.reRequire('../worker');
+		const config = Object.assign({}, commonConfigs, {
+			apps: [{
+				public: true,
+				package: '../../../src/__test__/mock-app',
+				basepath: '/test/'
+			}],
+		});
+
+		return request(getApp(config))
+			.get('/test/foo.missing')
+			.expect(404);
+	});
+
+
+	it ('Proper 404 for non-app routes (controlled by app) v2', () => {
+		const {getApp} = mock.reRequire('../worker');
+		const config = Object.assign({}, commonConfigs, {
+			apps: [{
+				public: true,
+				package: '../../../src/__test__/mock-app',
+				basepath: '/test/'
+			}],
+		});
+
+		return request(getApp(config))
+			.get('/test/foo.explicit404')
+			.expect(404);
+	});
+
+
+	it ('Proper 500 for app errors', () => {
+		const {getApp} = mock.reRequire('../worker');
+		const config = Object.assign({}, commonConfigs, {
+			apps: [{
+				public: true,
+				package: '../../../src/__test__/mock-app',
+				basepath: '/test/'
+			}],
+		});
+
+		return request(getApp(config))
+			.get('/test/foo.500')
+			.expect(500)
+			.expect(r => {
+				r.text.should.have.string('App Error Page');
+			});
+	});
+
+
+	it ('Service 500 for errors in app', () => {
+		const {getApp} = mock.reRequire('../worker');
+		const config = Object.assign({}, commonConfigs, {
+			apps: [{
+				public: true,
+				package: '../../../src/__test__/mock-app',
+				basepath: '/test/'
+			}],
+		});
+
+		return request(getApp(config))
+			.get('/test/foo.throw')
+			.expect(500)
+			.expect(r => {
+				logger.error.should.have.been.called;
+				r.text.should.have.string('<title>Error</title>');
+				r.text.should.have.string('<div id="error">An error occurred.</div>');
 			});
 	});
 });

@@ -63,12 +63,14 @@ describe('lib/renderer', () => {
 			send: sandbox.stub(),
 			status: sandbox.stub()
 		};
+		const next = sandbox.stub();
 
 		const renderer = getPageRenderer({appId, basepath}, config, datacache, render);
 		renderer.should.be.a('function');
 
-		return renderer(req, res)
+		return renderer(req, res, next)
 			.then(() => {
+				next.should.not.have.been.called;
 				res.end.should.not.have.been.called;
 				res.status.should.not.have.been.called;
 
@@ -118,12 +120,14 @@ describe('lib/renderer', () => {
 			send: sandbox.stub(),
 			status: sandbox.stub()
 		};
+		const next = sandbox.stub();
 
 		const renderer = getPageRenderer({appId, basepath}, config, datacache, o.render);
 		renderer.should.be.a('function');
 
-		return renderer(req, res)
+		return renderer(req, res, next)
 			.then(() => {
+				next.should.not.have.been.called;
 				res.end.should.not.have.been.called;
 				res.status.should.have.been.called;
 				res.status.should.have.been.calledWith(404);
@@ -140,14 +144,16 @@ describe('lib/renderer', () => {
 		const datacache = {
 			getForContext: sandbox.stub().returns({serialize})
 		};
+		const next = sandbox.stub();
 		const appId = 'test';
 		const basepath = '/mocks/';
 		const req = {
 			url: '/test',
 			username: 'tester'
 		};
+		const err = new Error('Ooops');
 
-		const render = sandbox.stub().throws(new Error('Ooops'));
+		const render = sandbox.stub().throws(err);
 
 
 
@@ -160,11 +166,11 @@ describe('lib/renderer', () => {
 		const renderer = getPageRenderer({appId, basepath}, config, datacache, render);
 		renderer.should.be.a('function');
 
-		return renderer(req, res)
+		return renderer(req, res, next)
 			.then(() => {
-				res.end.should.have.been.called;
-				res.status.should.have.been.called;
-				res.status.should.have.been.calledWith(500);
+				next.should.have.been.calledWith(err);
+				res.end.should.not.have.been.called;
+				res.status.should.not.have.been.called;
 
 				render.should.have.been.calledOnce;
 			});

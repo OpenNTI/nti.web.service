@@ -17,14 +17,13 @@ function run () {
 }
 
 //Imported
-if (require.main !== module) {
-	Object.assign(module.exports, {
-		run,
-		setup: require('./worker').getApp,
-		logger: require('./lib/logger')
-	});
-}
-//Run
-else {
+if (require.main === module) {
+	/* istanbul ignore next */
 	run();
 }
+
+Object.assign(module.exports, {
+	run,
+	setup: require('./worker').getApp,
+	logger: require('./lib/logger')
+});

@@ -17,6 +17,7 @@ describe('Bootstraps', () => {
 		};
 
 		mock('../lib/logger', logger);
+		mock('../polyfills', {});
 	});
 
 	afterEach(() => {
@@ -31,7 +32,8 @@ describe('Bootstraps', () => {
 		mock('../master', {start: master});
 		mock('../worker', {start: worker});
 
-		mock.reRequire('../index');
+		const {run} = mock.reRequire('../index');
+		run();
 
 		master.should.have.been.calledOnce;
 		master.should.have.been.calledWith();
@@ -46,7 +48,8 @@ describe('Bootstraps', () => {
 		mock('../master', {start: master});
 		mock('../worker', {start: worker});
 
-		mock.reRequire('../index');
+		const {run} = mock.reRequire('../index');
+		run();
 
 		worker.should.have.been.calledOnce;
 		worker.should.have.been.calledWith();

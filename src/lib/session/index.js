@@ -32,7 +32,7 @@ module.exports = exports = class SessionManager {
 
 	getServiceDocument (context) {
 		const {server} = this;
-		return server.ping(context)	// server.getServiceDocument() pings as well...
+		return server.ping(void 0, context)	// server.getServiceDocument() pings as well...
 		// if we didn't need the logon.logout url, we could omit this step here.
 			.then(pong => server.getServiceDocument(context)
 				//This seems dirty and out of place...
@@ -58,7 +58,6 @@ module.exports = exports = class SessionManager {
 		const start = Date.now();
 		const url = req.originalUrl;
 		const scope = url.substr(0, basepath.length) === basepath ? url.substr(basepath.length) : url;
-
 		req.responseHeaders = req.responseHeaders || {};
 
 		req.setMaxListeners(1000);

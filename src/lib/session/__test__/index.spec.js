@@ -112,7 +112,7 @@ describe('lib/session', () => {
 				doc.setLogoutURL.should.have.been.calledWithExactly('lala');
 
 				ping.should.have.been.calledOnce;
-				ping.should.have.been.calledWithExactly(context);
+				ping.should.have.been.calledWithExactly(void 0, context);
 				getServiceDocument.should.have.been.calledOnce;
 				getServiceDocument.should.have.been.calledWithExactly(context);
 

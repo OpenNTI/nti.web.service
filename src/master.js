@@ -58,7 +58,7 @@ function load () {
 		.then(self.init)
 		.catch(error => {
 			/* istanbul ignore next */
-			logger.error('Failed to start: %s', (error && (error.stack || error.message)) || JSON.stringify(error));
+			logger.error('Failed to start: %s', (error && (error.stack || error.message)) || JSON.stringify(error, void 0, 2));
 		});
 }
 

@@ -80,14 +80,12 @@ describe('Test End-to-End', () => {
 
 	it ('Route File redirects to Route Dir', () => {
 		const {getApp} = mock.reRequire('../worker');
-		const config = Object.assign({},
-			commonConfigs, {
-				apps: [{
-					package: '../../../example',
-					basepath: '/test/'
-				}],
-			}
-		);
+		const config = Object.assign({}, commonConfigs, {
+			apps: [{
+				package: '../../../example',
+				basepath: '/test/'
+			}],
+		});
 
 		return request(getApp(config))
 			.get('/test')
@@ -100,14 +98,12 @@ describe('Test End-to-End', () => {
 
 	it ('Anonymous access redirects to login', () => {
 		const {getApp} = mock.reRequire('../worker');
-		const config = Object.assign({},
-			commonConfigs, {
-				apps: [{
-					package: '../../../example',
-					basepath: '/app/'
-				}],
-			}
-		);
+		const config = Object.assign({}, commonConfigs, {
+			apps: [{
+				package: '../../../example',
+				basepath: '/app/'
+			}],
+		});
 
 		return request(getApp(config))
 			.get('/app/')
@@ -120,14 +116,12 @@ describe('Test End-to-End', () => {
 
 	it ('Authenticated access does not redirect', () => {
 		const {getApp} = mock.reRequire('../worker');
-		const config = Object.assign({},
-			commonConfigs, {
-				apps: [{
-					package: '../../../example',
-					basepath: '/app/'
-				}],
-			}
-		);
+		const config = Object.assign({}, commonConfigs, {
+			apps: [{
+				package: '../../../example',
+				basepath: '/app/'
+			}],
+		});
 
 		return request(getApp(config))
 			.get('/app/')
@@ -142,15 +136,13 @@ describe('Test End-to-End', () => {
 
 	it ('Public access does not redirect', () => {
 		const {getApp} = mock.reRequire('../worker');
-		const config = Object.assign({},
-			commonConfigs, {
-				apps: [{
-					public: true,
-					package: '../../../example',
-					basepath: '/test/'
-				}],
-			}
-		);
+		const config = Object.assign({}, commonConfigs, {
+			apps: [{
+				public: true,
+				package: '../../../example',
+				basepath: '/test/'
+			}],
+		});
 
 		return request(getApp(config))
 			.get('/test/')
@@ -162,15 +154,13 @@ describe('Test End-to-End', () => {
 
 	it ('Render A Page', () => {
 		const {getApp} = mock.reRequire('../worker');
-		const config = Object.assign({},
-			commonConfigs, {
-				apps: [{
-					public: true,
-					package: '../../../src/__test__/mock-app',
-					basepath: '/test/'
-				}],
-			}
-		);
+		const config = Object.assign({}, commonConfigs, {
+			apps: [{
+				public: true,
+				package: '../../../src/__test__/mock-app',
+				basepath: '/test/'
+			}],
+		});
 
 		return request(getApp(config))
 			.get('/test/')

@@ -68,6 +68,11 @@ module.exports = exports = class SessionManager {
 			next('aborted');
 		});
 
+		if (res.headersSent) {
+			logger.error('Headers have already been sent. did next() get called after a redirect()/send()/end()? %s %s', req.method, url);
+			next('aborted');
+		}
+
 
 		logger.debug('SESSION [BEGIN] %s %s', req.method, url);
 

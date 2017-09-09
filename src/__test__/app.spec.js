@@ -319,7 +319,7 @@ describe('Test End-to-End', () => {
 	defineRedirectTests('tos');
 
 
-	xit ('Test Hooks: Invalid Hook', (done) => {
+	it ('Test Hooks: Invalid Hook', (done) => {
 		const Logger = logger.get('SessionManager');
 		const Session = require('../lib/session');
 

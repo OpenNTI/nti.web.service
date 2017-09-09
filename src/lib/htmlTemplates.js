@@ -3,8 +3,9 @@ const fs = require('fs');
 
 module.exports = exports = function (filePath, options, callback) {
 
-	const configValues = /\{([^}]*)\}/igm;
-	const injectValues = (cfg, original, prop) => cfg[prop] || original;
+	const configValues = /\{([^}\n\s]*)\}/igm;
+	const injectValues = (cfg, original, prop) =>
+		prop in cfg ? cfg[prop] : `MissingTemplateValue: ${original}`;
 
 	function readFileCallback (err, content) {
 		if (err) {

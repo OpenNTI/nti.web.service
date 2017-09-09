@@ -3,26 +3,24 @@
 const mock = require('mock-require');
 const sinon = require('sinon');
 
+const logger = require('../logger');
+
 describe('lib/renderer', () => {
-	let logger;
 	let sandbox;
 	let clientConfig;
 	let nodeConfigAsClientConfig;
 
 	beforeEach(() => {
 		sandbox = sinon.sandbox.create();
-		logger = {
-			attachToExpress: sandbox.stub(),
-			debug: sandbox.stub(),
-			error: sandbox.stub(),
-			info: sandbox.stub(),
-			warn: sandbox.stub(),
-		};
+		sandbox.stub(logger, 'attachToExpress');
+		sandbox.stub(logger, 'info');
+		sandbox.stub(logger, 'error');
+		sandbox.stub(logger, 'warn');
+		sandbox.stub(logger, 'debug');
 
 		clientConfig = sandbox.stub().returns({});
 		nodeConfigAsClientConfig = sandbox.stub().returns({});
 
-		mock('../logger', logger);
 		mock('../config', {clientConfig, nodeConfigAsClientConfig});
 	});
 

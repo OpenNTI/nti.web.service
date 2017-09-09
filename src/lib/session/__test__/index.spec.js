@@ -173,7 +173,8 @@ describe('lib/session', () => {
 			},
 
 			emit: sandbox.stub(),
-			on: sandbox.stub(),
+			once: sandbox.stub(),
+			removeListener: sandbox.stub(),
 			setMaxListeners: sandbox.stub(),
 		};
 
@@ -220,11 +221,12 @@ describe('lib/session', () => {
 			},
 
 			emit: sandbox.stub(),
-			on (event, cb) {
+			once (event, cb) {
 				if(event === 'close') {
 					req['____forceClose'] = cb;
 				}
 			},
+			removeListener: sandbox.stub(),
 			setMaxListeners: sandbox.stub(),
 		};
 
@@ -269,7 +271,8 @@ describe('lib/session', () => {
 			},
 
 			emit: sandbox.stub(),
-			on: sandbox.stub(),
+			once: sandbox.stub(),
+			removeListener: sandbox.stub(),
 			setMaxListeners: sandbox.stub(),
 		};
 
@@ -312,11 +315,12 @@ describe('lib/session', () => {
 			},
 
 			emit: sandbox.stub(),
-			on (event, cb) {
+			once (event, cb) {
 				if(event === 'close') {
 					req['____forceClose'] = cb;
 				}
 			},
+			removeListener: sandbox.stub(),
 			setMaxListeners: sandbox.stub(),
 		};
 
@@ -362,7 +366,8 @@ describe('lib/session', () => {
 			},
 
 			emit: sandbox.stub(),
-			on: sandbox.stub(),
+			once: sandbox.stub(),
+			removeListener: sandbox.stub(),
 			setMaxListeners: sandbox.stub(),
 		};
 
@@ -475,47 +480,6 @@ describe('lib/session', () => {
 		resp.redirect.should.have.been.calledWithExactly('/login/');
 		next.should.not.have.been.called;
 
-	});
-
-
-	it ('Session::maybeRedircect() - redirect on client if headers sent', () => {
-		const Session = mock.reRequire('../index');
-		const session = new Session({});
-
-		const next = sandbox.stub();
-		const basepath = '/';
-		const scope = '';
-		const start = new Date();
-
-		const resp = {
-			send: sandbox.stub(),
-			redirect () { throw new Error('headers sent'); },
-			render: sandbox.stub()
-				.onCall(0).callsFake((view, data, cb) => {
-					cb(null, 'html');
-				})
-				.onCall(1).callsFake((view, data, cb) => {
-					cb('err');
-				})
-		};
-
-		const req = {
-			method: 'GET',
-			originalUrl: '/'
-		};
-
-		resp.send.onCall(1).throws();
-
-
-		const callback = session.maybeRedircect(basepath, scope, start, req, resp, next);
-
-		expect(() => callback({statusCode: 401})).to.not.throw();
-
-		expect(() => callback({statusCode: 401})).to.not.throw();
-
-
-		next.should.have.been.calledWith('aborted');
-		resp.send.should.have.been.calledWith('html');
 	});
 
 

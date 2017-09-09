@@ -64,7 +64,7 @@ describe('lib/logger (middleware)', () => {
 		const {get} = mock.reRequire('../logger');
 
 		const logger = get('SomeTest');
-		LoggerFactory.get.should.have.been.calledWithExactly('NodeService:SomeTest');
+		LoggerFactory.get.should.have.been.calledWithExactly('NodeService:master:SomeTest');
 		logger.should.be.ok
 			.and.respondTo('info')
 			.and.respondTo('error')

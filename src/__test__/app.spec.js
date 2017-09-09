@@ -32,14 +32,28 @@ const mockInterface = Object.assign({}, DataserverInterFace, {
 							return Promise.reject();
 						}
 
+						const username = req.headers.authentication;
+
 						return Promise.resolve({
 							getUserWorkspace () {
 								return {
-									Title: 'username'
+									Title: username
 								};
 							},
 
-							setLogoutURL () {}
+							setLogoutURL () {},
+
+							getAppUsername () { return username; },
+
+							getAppUser () {
+								const user = {};
+
+								if (username === 'tos') {
+									user.acceptTermsOfService = true;
+								}
+
+								return Promise.resolve(user);
+							}
 						});
 					},
 					ping (name, req) {
@@ -154,6 +168,7 @@ describe('Test End-to-End', () => {
 				res.text.should.have.string('Page! at /test/');
 			});
 	});
+
 
 	it ('Render A Page', () => {
 		const {getApp} = mock.reRequire('../worker');
@@ -278,4 +293,177 @@ describe('Test End-to-End', () => {
 				r.text.should.have.string('<div id="error">An error occurred.</div>');
 			});
 	});
+
+
+	it ('Test Hooks: Session', () => {
+		const {getApp} = mock.reRequire('../worker');
+		const config = Object.assign({}, commonConfigs, {
+			apps: [{
+				package: '../../../src/__test__/mock-app-with-hooks',
+				basepath: '/test/'
+			}],
+		});
+
+		return request(getApp(config))
+			.get('/test/')
+			.set('Authentication', 'tos')
+			.expect(302)
+			.expect(res => {
+				res.headers.location.should.equal('/test/onboarding/tos');
+			});
+	});
+
+
+	defineRedirectTests('');
+	defineRedirectTests('foo');
+	defineRedirectTests('tos');
+
+
+	xit ('Test Hooks: Invalid Hook', (done) => {
+		const Logger = logger.get('SessionManager');
+		const Session = require('../lib/session');
+
+		sandbox.stub(Logger, 'error').callsFake(() => 0);
+		sandbox.spy(Session.prototype, 'middleware');
+
+
+		const {getApp} = mock.reRequire('../worker');
+		const config = Object.assign({}, commonConfigs, {
+			apps: [{
+				package: '../../../src/__test__/mock-app-with-hooks',
+				basepath: '/test/'
+			}],
+		});
+
+		request(getApp(config))
+			.get('/test/?breakme=now')
+			.set('Cookie', 'language=en')
+			.end((e) => {
+				setTimeout(() => {
+					Session.prototype.middleware.should.have.been.called;
+					Logger.error.should.have.been.calledWith(
+						'Headers have already been sent. did next() get called after a redirect()/send()/end()? %s %s'
+					);
+					done(e);
+				}, 100);
+			});
+	});
+
+
+	function defineRedirectTests (user) {
+
+		it (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
+			const {getApp} = mock.reRequire('../worker');
+			const config = Object.assign({}, commonConfigs, {
+				apps: [{
+					package: '../../../src/__test__/mock-app-with-hooks',
+					basepath: '/test/'
+				}],
+			});
+
+			return request(getApp(config))
+				.get('/test/?q=aa')
+				.set('Authentication', user)
+				.expect(302)
+				.expect(res => {
+					res.headers.location.should.equal('/test/');
+				});
+		});
+
+
+		it (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
+			const {getApp} = mock.reRequire('../worker');
+			const config = Object.assign({}, commonConfigs, {
+				apps: [{
+					package: '../../../src/__test__/mock-app-with-hooks',
+					basepath: '/test/'
+				}],
+			});
+
+			return request(getApp(config))
+				.get('/test/?q=library/courses/available/invitations/accept/token')
+				.set('Authentication', user)
+				.expect(302)
+				.expect(res => {
+					res.headers.location.should.equal('/test/catalog/code/token');
+				});
+		});
+
+
+		it (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
+			const {getApp} = mock.reRequire('../worker');
+			const config = Object.assign({}, commonConfigs, {
+				apps: [{
+					package: '../../../src/__test__/mock-app-with-hooks',
+					basepath: '/test/'
+				}],
+			});
+
+			return request(getApp(config))
+				.get('/test/?q=/app/library/courses/available/NTI-CourseInfo-iLed_iLed_001/...')
+				.set('Authentication', user)
+				.expect(302)
+				.expect(res => {
+					res.headers.location.should.equal('/test/catalog/item/NTI-CourseInfo-iLed_iLed_001/...');
+				});
+		});
+
+
+		it (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
+			const {getApp} = mock.reRequire('../worker');
+			const config = Object.assign({}, commonConfigs, {
+				apps: [{
+					package: '../../../src/__test__/mock-app-with-hooks',
+					basepath: '/test/'
+				}],
+			});
+
+			return request(getApp(config))
+				.get('/test/?q=library/availablecourses/IUB0YWc6bmV4dHRob3VnaHQuY29tLDIwMTEtMTA6TlRJLUNvdXJzZUluZm8tU3ByaW5nMjAxNV9MU1REXzExNTM/redeem/code')
+				.set('Authentication', user)
+				.expect(302)
+				.expect(res => {
+					res.headers.location.should.equal('/test/catalog/redeem/NTI-CourseInfo-Spring2015_LSTD_1153/code');
+				});
+		});
+
+
+		it (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
+			const {getApp} = mock.reRequire('../worker');
+			const config = Object.assign({}, commonConfigs, {
+				apps: [{
+					package: '../../../src/__test__/mock-app-with-hooks',
+					basepath: '/test/'
+				}],
+			});
+
+			return request(getApp(config))
+				.get('/test/?q=/app/id/unknown-OID-0x021cae18:5573657273:V0wWNR9EBJd')
+				.set('Authentication', user)
+				.expect(302)
+				.expect(res => {
+					res.headers.location.should.equal('/test/object/unknown-OID-0x021cae18%3A5573657273%3AV0wWNR9EBJd');
+				});
+		});
+
+
+		it (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
+			const {getApp} = mock.reRequire('../worker');
+			const config = Object.assign({}, commonConfigs, {
+				apps: [{
+					package: '../../../src/__test__/mock-app-with-hooks',
+					basepath: '/test/'
+				}],
+			});
+
+			return request(getApp(config))
+				.get('/test/?q=object/ntiid/tag:nextthought.com,2011-10:unknown-OID-0x021cae18:5573657273:V0wWNR9EBJd')
+				.set('Authentication', user)
+				.expect(302)
+				.expect(res => {
+					res.headers.location.should.equal('/test/object/unknown-OID-0x021cae18%3A5573657273%3AV0wWNR9EBJd');
+				});
+		});
+	}
+
 });

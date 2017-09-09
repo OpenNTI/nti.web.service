@@ -4,6 +4,7 @@ const Logger = require('../logger');
 
 const logger = Logger.get('SessionManager');
 
+const EMPTY = () => {};
 
 module.exports = exports = class SessionManager {
 	constructor (server, sessionSetup) {
@@ -60,19 +61,29 @@ module.exports = exports = class SessionManager {
 		const scope = url.substr(0, basepath.length) === basepath ? url.substr(basepath.length) : url;
 		req.responseHeaders = req.responseHeaders || {};
 
-		req.setMaxListeners(1000);
-		req.socket.setKeepAlive(true, 1000);
-		req.on('close', ()=> {
+		const skip = () => {
+			const f = next;
+			next = EMPTY;
+			f('aborted');
+		};
+
+		const reaper = ()=> {
 			req.dead = true;
 			req.emit('aborted');
-			next('aborted');
-		});
+			skip();
+		};
+
+		const cleanReaper = () => void req.removeListener('close', reaper);
 
 		if (res.headersSent) {
 			logger.error('Headers have already been sent. did next() get called after a redirect()/send()/end()? %s %s', req.method, url);
 			next('aborted');
+			return;
 		}
 
+		req.setMaxListeners(1000);
+		req.socket.setKeepAlive(true, 1000);
+		req.once('close', reaper);
 
 		logger.debug('SESSION [BEGIN] %s %s', req.method, url);
 
@@ -98,13 +109,14 @@ module.exports = exports = class SessionManager {
 			.then(()=> logger.debug('SESSION [VALID] %s %s', req.method, url))
 			.then(()=> !req.dead && this.setupIntitalData(req))
 			.then(finish)
-			.catch(this.maybeRedircect(basepath, scope, start, req, res, next))
+			.catch(this.maybeRedircect(basepath, scope, start, req, res, x => next(x)))
 			.catch(er => {
 				logger.error('SESSION [ERROR] %s %s (%s, %dms)',
 					req.method, url, er, Date.now() - start);
 
 				next(er);
-			});
+			})
+			.then(cleanReaper, x => (cleanReaper(), Promise.reject(x)));
 	}
 
 
@@ -115,19 +127,7 @@ module.exports = exports = class SessionManager {
 			try {
 				return res.redirect(uri);
 			} catch (e) {
-				logger.debug('Could not redirect because: %s, rendering client-side redirect...', e.message);
-				res.render('redirect', {uri}, (err, html) => {
-					try {
-						if (!err) {
-							res.send(html);
-						} else {
-							throw err;
-						}
-					} catch (er) {
-						logger.error('Failed to render redirect view: %s', er.stack || er.message || er);
-					}
-					next('aborted');
-				});
+				next(e);
 			}
 		}
 

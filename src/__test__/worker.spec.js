@@ -6,22 +6,20 @@ const assert = require('assert');
 const mock = require('mock-require');
 const sinon = require('sinon');
 
+const logger = require('../lib/logger');
 const {restart} = require('../lib/restart');
 
 describe('Worker', () => {
-	let logger, sandbox;
+	let sandbox;
 
 	beforeEach(() => {
 		sandbox = sinon.sandbox.create();
 
-		logger = {
-			debug: sandbox.stub(),
-			error: sandbox.stub(),
-			info: sandbox.stub(),
-			warn: sandbox.stub(),
-		};
+		sandbox.stub(logger, 'debug');
+		sandbox.stub(logger, 'error');
+		sandbox.stub(logger, 'info');
+		sandbox.stub(logger, 'warn');
 
-		mock('../lib/logger', logger);
 	});
 
 	afterEach(() => {

@@ -1,3 +1,4 @@
+/*globals expect*/
 /*eslint-env mocha*/
 'use strict';
 const assert = require('assert');
@@ -26,6 +27,26 @@ describe('Worker', () => {
 	afterEach(() => {
 		sandbox.restore();
 		mock.stopAll();
+	});
+
+
+	it ('getApp() No Configuration', () => {
+		const {getApp} = mock.reRequire('../worker');
+
+		expect(() => getApp({})).to.throw('No configuration');
+	});
+
+
+	it ('getApp() Missing app package', () => {
+		const {getApp} = mock.reRequire('../worker');
+
+		expect(() => getApp({
+			server: 'foo',
+			apps: [{
+				package: 'does not exist',
+				basepath: '/test/'
+			}],
+		})).to.throw(/Could not resolve package \(does not exist\) for app. Relative modules are relative to:/);
 	});
 
 

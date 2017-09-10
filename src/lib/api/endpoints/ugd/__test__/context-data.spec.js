@@ -1,53 +1,50 @@
-/*globals expect*/
-/*eslint-env mocha*/
+/*eslint-env jest*/
 'use strict';
-const mock = require('mock-require');
-const sinon = require('sinon');
-const {getModel} = require('nti-lib-interfaces');
-const PageInfo = getModel('pageinfo');
+
+const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 describe ('lib/api/endpoints/ugd/context-data', () => {
-	let sandbox;
+	let PageInfo;
 
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
+		jest.resetModules();
+
+		PageInfo = require('nti-lib-interfaces').Models.content.PageInfo;
 	});
 
 
 	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
+		jest.resetModules();
+	});
+
+	test ('registers ugd/context-data', () => {
+		const {default: register} = require('../context-data');
+		const api = {get: jest.fn()};
+
+		expect(() => register(api, {}, {})).not.toThrow();
+		expect(api.get).toHaveBeenCalledTimes(1);
+		expect(api.get).toHaveBeenCalledWith(expect.any(String), expect.any(Function));
 	});
 
 
-	it ('registers ugd/context-data', () => {
-		const {default: register} = mock.reRequire('../context-data');
-		const api = {get: sandbox.stub()};
+	test ('fetches the container Html', () => {
+		const {default: register} = require('../context-data');
+		const api = {get: jest.fn()};
 
-		expect(() => register(api, {}, {})).to.not.throw();
-		api.get.should.have.been.calledOnce;
-		api.get.should.have.been.calledWithExactly(sinon.match.string, sinon.match.func);
-	});
-
-
-	it ('fetches the container Html', () => {
-		const {default: register} = mock.reRequire('../context-data');
-		const api = {get: sandbox.stub()};
-
-		expect(() => register(api, {}, {})).to.not.throw();
-		api.get.should.have.been.calledOnce;
-		api.get.should.have.been.calledWithExactly(sinon.match.string, sinon.match.func);
-		const [, callback] = api.get.getCall(0).args;
+		expect(() => register(api, {}, {})).not.toThrow();
+		expect(api.get).toHaveBeenCalledTimes(1);
+		expect(api.get).toHaveBeenCalledWith(expect.any(String), expect.any(Function));
+		const [, callback] = api.get.mock.calls[0];
 
 		const pageInfo = new PageInfo({}, null, {});
-		sandbox.stub(pageInfo, 'getContent').returns(Promise.resolve('html!'));
+		stub(pageInfo, 'getContent', () => Promise.resolve('html!'));
 
 		const req = {
 			ntiidObject: {
-				getContainerID: sandbox.stub().returns('my-container-id')
+				getContainerID: jest.fn(() => 'my-container-id')
 			},
 			ntiService: {
-				getParsedObject: sandbox.stub().returns(Promise.resolve(pageInfo))
+				getParsedObject: jest.fn(() => Promise.resolve(pageInfo))
 			}
 		};
 
@@ -59,28 +56,28 @@ describe ('lib/api/endpoints/ugd/context-data', () => {
 			callback(req, res, error);
 		})
 			.then(json => {
-				json.should.be.ok;
-				req.ntiidObject.getContainerID.should.have.been.calledOnce;
-				req.ntiService.getParsedObject.should.have.been.calledOnce;
+				expect(json).toBeTruthy();
+				expect(req.ntiidObject.getContainerID).toHaveBeenCalledTimes(1);
+				expect(req.ntiService.getParsedObject).toHaveBeenCalledTimes(1);
 			});
 	});
 
 
-	it ('fetches the container - did not get pageInfo', () => {
-		const {default: register} = mock.reRequire('../context-data');
-		const api = {get: sandbox.stub()};
+	test ('fetches the container - did not get pageInfo', () => {
+		const {default: register} = require('../context-data');
+		const api = {get: jest.fn()};
 
-		expect(() => register(api, {}, {})).to.not.throw();
-		api.get.should.have.been.calledOnce;
-		api.get.should.have.been.calledWithExactly(sinon.match.string, sinon.match.func);
-		const [, callback] = api.get.getCall(0).args;
+		expect(() => register(api, {}, {})).not.toThrow();
+		expect(api.get).toHaveBeenCalledTimes(1);
+		expect(api.get).toHaveBeenCalledWith(expect.any(String), expect.any(Function));
+		const [, callback] = api.get.mock.calls[0];
 
 		const req = {
 			ntiidObject: {
-				getContainerID: sandbox.stub().returns('my-container-id')
+				getContainerID: jest.fn(() => 'my-container-id')
 			},
 			ntiService: {
-				getParsedObject: sandbox.stub().returns(Promise.resolve({}))
+				getParsedObject: jest.fn(() => Promise.resolve({}))
 			}
 		};
 
@@ -92,9 +89,9 @@ describe ('lib/api/endpoints/ugd/context-data', () => {
 			callback(req, res, error);
 		})
 			.then(json => {
-				json.should.be.ok;
-				req.ntiidObject.getContainerID.should.have.been.calledOnce;
-				req.ntiService.getParsedObject.should.have.been.calledOnce;
+				expect(json).toBeTruthy();
+				expect(req.ntiidObject.getContainerID).toHaveBeenCalledTimes(1);
+				expect(req.ntiService.getParsedObject).toHaveBeenCalledTimes(1);
 			});
 	});
 });

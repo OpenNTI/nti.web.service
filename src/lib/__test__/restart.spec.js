@@ -1,35 +1,35 @@
-/*eslint-env mocha*/
+/*eslint-env jest*/
 'use strict';
-const mock = require('mock-require');
-const sinon = require('sinon');
+
+const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
+
 
 describe('lib/restart', () => {
-	let sandbox;
 
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
+		jest.resetModules();
 	});
+
 
 	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
+		jest.resetModules();
 	});
 
-	it ('exports a restart function', () => {
-		const {restart: fn} = mock.reRequire('../restart');
+	test ('exports a restart function', () => {
+		const {restart: fn} = require('../restart');
 
-		fn.should.be.a('function');
-		fn.length.should.be.equal(0);
+		expect(fn).toEqual(expect.any(Function));
+		expect(fn.length).toEqual(0);
 	});
 
 
-	it ('restart() sends WORKER_WANTS_TO_RESTART_THE_POOL', () => {
-		const stubby = sandbox.stub();
+	test ('restart() sends WORKER_WANTS_TO_RESTART_THE_POOL', () => {
+		const stubby = jest.fn();
 		const send = process.send
-			? (sandbox.stub(process, 'send'), process.send)
+			? (stub(process, 'send'), process.send)
 			: (process.send = stubby);
 
-		const {restart} = mock.reRequire('../restart');
+		const {restart} = require('../restart');
 
 		restart();
 
@@ -37,8 +37,8 @@ describe('lib/restart', () => {
 			delete process.send;
 		}
 
-		send.should.have.been.calledOnce;
-		send.should.have.been.calledWith({cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL'});
+		expect(send).toHaveBeenCalledTimes(1);
+		expect(send).toHaveBeenCalledWith({cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL'});
 	});
 
 });

@@ -1,13 +1,11 @@
-/*globals expect*/
-/*eslint-env mocha*/
+/*eslint-env jest*/
 'use strict';
-const mock = require('mock-require');
-const sinon = require('sinon');
 
+const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 describe ('lib/api - index', () => {
 	let logger;
-	let sandbox;
+	let expressApi;
 	let expressMock;
 	let endpoints;
 	let getServiceDocument;
@@ -15,165 +13,164 @@ describe ('lib/api - index', () => {
 	let doc;
 
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
-		logger = {
-			debug: sandbox.stub(),
-			error: sandbox.stub(),
-			info: sandbox.stub(),
-			warn: sandbox.stub(),
-			get: sandbox.stub().returns(logger)
-		};
+		jest.resetModules();
+		logger = require('../../logger');
 
-		getParsedObject = sandbox.spy(id => ({NTIID: id}));
+		stub(logger, 'get', () => logger);
+		stub(logger, 'attachToExpress');
+		stub(logger, 'debug');
+		stub(logger, 'error');
+		stub(logger, 'info');
+		stub(logger, 'warn');
+
+		getParsedObject = jest.fn(id => ({NTIID: id}));
 		doc = {getParsedObject};
-		endpoints = sandbox.stub();
-		getServiceDocument = sandbox.stub().returns(Promise.resolve(doc));
+		endpoints = jest.fn();
+		getServiceDocument = jest.fn(() => Promise.resolve(doc));
 
-		expressMock = sandbox.spy(() => Object.create(expressMock, {
-			param: {value: sandbox.stub()},
-			use: {value: sandbox.stub()},
-			get: {value: sandbox.stub()}
-		}));
+		expressApi = Object.create({}, {
+			param: {value: jest.fn()},
+			use: {value: jest.fn()},
+			get: {value: jest.fn()}
+		});
+		expressMock = jest.fn(() => expressApi);
 
-		mock('../../logger', logger);
-		mock('../endpoints', endpoints);
-		mock('express', expressMock);
+
+		jest.doMock('../endpoints', () => endpoints);
+		jest.doMock('express', () => expressMock);
 	});
 
 
 	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
+		jest.resetModules();
 	});
 
 
-	it ('registerEndPoints(): attaches endpoints to api/*', () => {
-		const app = {use: sandbox.stub()};
-		const register = mock.reRequire('../index');
+	test ('registerEndPoints(): attaches endpoints to api/*', () => {
+		const app = {use: jest.fn()};
+		const register = require('../index');
 		const config = {};
 		const dataserver = {getServiceDocument};
 
 		register(app, config, dataserver);
 
-		expressMock.should.have.been.calledOnce;
-		const api = expressMock.getCall(0).returnValue;
-		api.should.be.ok;
+		expect(expressMock).toHaveBeenCalledTimes(1);
+		const api = expressApi;
+		expect(api).toBeTruthy();
 
-		app.use.should.have.been.calledOnce;
-		app.use.should.have.been.calledWith(sinon.match.regexp, sinon.match({use: sinon.match.func}));
+		expect(app.use).toHaveBeenCalledTimes(1);
+		expect(app.use).toHaveBeenCalledWith(expect.any(RegExp), expect.objectContaining({use: expect.any(Function)}));
 
-		endpoints.should.have.been.calledOnce;
-		endpoints.should.have.been.calledWithExactly(api, config, dataserver);
+		expect(endpoints).toHaveBeenCalledTimes(1);
+		expect(endpoints).toHaveBeenCalledWith(api, config, dataserver);
 
-		api.param.should.have.been.calledOnce;
-		api.param.should.have.been.calledWithExactly('ntiid', sinon.match.func);
+		expect(api.param).toHaveBeenCalledTimes(1);
+		expect(api.param).toHaveBeenCalledWith('ntiid', expect.any(Function));
 
-		api.use.should.have.been.calledOnce;
-		api.use.should.have.been.calledWithExactly(sinon.match.func);
+		expect(api.use).toHaveBeenCalledTimes(1);
+		expect(api.use).toHaveBeenCalledWith(expect.any(Function));
 
-		api.ServiceMiddleWare.should.be.a('function');
-		api.ServiceMiddleWare.length.should.equal(3);
+		expect(api.ServiceMiddleWare).toEqual(expect.any(Function));
+		expect(api.ServiceMiddleWare.length).toEqual(3);
 	});
 
 
-	it ('registerEndPoints(): ServiceMiddleWare', () => {
-		const app = {use: sandbox.stub()};
-		const register = mock.reRequire('../index');
+	test ('registerEndPoints(): ServiceMiddleWare', () => {
+		const app = {use: jest.fn()};
+		const register = require('../index');
 		const config = {};
 		const dataserver = {getServiceDocument};
 
 		register(app, config, dataserver);
 
-		expressMock.should.have.been.calledOnce;
-		const api = expressMock.getCall(0).returnValue;
-		api.should.be.ok;
-
-		api.ServiceMiddleWare.should.be.a('function');
-		api.ServiceMiddleWare.length.should.equal(3);
+		expect(expressMock).toHaveBeenCalledTimes(1);
+		const api = expressApi;
+		expect(api.ServiceMiddleWare).toEqual(expect.any(Function));
+		expect(api.ServiceMiddleWare.length).toEqual(3);
 
 		const req = {};
 		const res = {};
-		const next = sandbox.stub();
+		const next = jest.fn();
 
 		return Promise.resolve(api.ServiceMiddleWare(req, res, next))
 			.then(result => {
-				expect(result).to.be.an('undefined');
-				req.ntiService.should.be.equal(doc);
+				expect(result).toEqual(undefined);
+				expect(req.ntiService).toEqual(doc);
 
-				next.should.have.been.calledOnce;
-				next.should.have.been.calledWithExactly();
-				next.reset();
+				expect(next).toHaveBeenCalledTimes(1);
+				expect(next).toHaveBeenCalledWith();
+				next.mockClear();
 
-				getServiceDocument.should.have.been.calledOnce;
-				getServiceDocument.should.have.been.calledWith(req);
-				getServiceDocument.reset();
+				expect(getServiceDocument).toHaveBeenCalledTimes(1);
+				expect(getServiceDocument).toHaveBeenCalledWith(req);
+				getServiceDocument.mockClear();
 			})
 
 			.then(() => api.ServiceMiddleWare(req, res, next))
 			.then(result => {
-				expect(result).to.be.an('undefined');
-				req.ntiService.should.be.equal(doc);
+				expect(result).toEqual(undefined);
+				expect(req.ntiService).toEqual(doc);
 
-				next.should.have.been.calledOnce;
-				next.should.have.been.calledWithExactly();
+				expect(next).toHaveBeenCalledTimes(1);
+				expect(next).toHaveBeenCalledWith();
 
-				getServiceDocument.should.not.have.been.called;
+				expect(getServiceDocument).not.toHaveBeenCalled();
 			});
 	});
 
 
-	it ('registerEndPoints(): param filter should fetch object', () => {
-		const app = {use: sandbox.stub()};
-		const register = mock.reRequire('../index');
+	test ('registerEndPoints(): param filter should fetch object', () => {
+		const app = {use: jest.fn()};
+		const register = require('../index');
 		const config = {};
 		const dataserver = {getServiceDocument};
 
 		register(app, config, dataserver);
 
-		expressMock.should.have.been.calledOnce;
-		const api = expressMock.getCall(0).returnValue;
+		expect(expressMock).toHaveBeenCalledTimes(1);
+		const api = expressApi;
 
 		const req = {ntiService: doc};
 		const res = {};
 		const id = 'some-object-id';
 
 
-		api.param.should.have.been.callledOnce;
-		api.param.should.have.been.calledWithExactly('ntiid', sinon.match.func);
-		const callback = api.param.getCall(0).args[1];
-		callback.length.should.equal(4);
+		expect(api.param).toHaveBeenCalledTimes(1);
+		expect(api.param).toHaveBeenCalledWith('ntiid', expect.any(Function));
+		const callback = api.param.mock.calls[0][1];
+		expect(callback.length).toEqual(4);
 
 		return new Promise((finish, err) => callback(req, res, (e) => e ? err(e) : finish(), id))
 			.then(() => {
-				req.ntiidObject.should.be.ok;
-				req.ntiidObject.NTIID.should.equal(id);
+				expect(req.ntiidObject).toBeTruthy();
+				expect(req.ntiidObject.NTIID).toEqual(id);
 			});
 	});
 
 
-	it ('registerEndPoints(): error handler', () => {
-		const app = {use: sandbox.stub()};
-		const register = mock.reRequire('../index');
+	test ('registerEndPoints(): error handler', () => {
+		const app = {use: jest.fn()};
+		const register = require('../index');
 		const config = {};
 		const dataserver = {getServiceDocument};
 
 		register(app, config, dataserver);
 
-		expressMock.should.have.been.calledOnce;
-		const api = expressMock.getCall(0).returnValue;
+		expect(expressMock).toHaveBeenCalledTimes(1);
+		const api = expressApi;
 
-		const next = sandbox.stub();
+		const next = jest.fn();
 		const req = {ntiService: doc};
 		const res = {
-			end: sandbox.spy(() => res),
-			json: sandbox.spy(() => res),
-			status: sandbox.spy(() => res)
+			end: jest.fn(() => res),
+			json: jest.fn(() => res),
+			status: jest.fn(() => res)
 		};
 
-		api.use.should.have.been.callledOnce;
-		api.use.should.have.been.calledWithExactly(sinon.match.func);
-		const callback = api.use.getCall(0).args[0];
-		callback.length.should.equal(4);
+		expect(api.use).toHaveBeenCalledTimes(1);
+		expect(api.use).toHaveBeenCalledWith(expect.any(Function));
+		const callback = api.use.mock.calls[0][0];
+		expect(callback.length).toEqual(4);
 
 		const err = {
 			stack: '',
@@ -182,17 +179,17 @@ describe ('lib/api - index', () => {
 
 		callback(err, req, res, next);
 
-		next.should.not.have.been.called;
-		logger.error.should.have.been.calledOnce;
-		logger.error.should.have.been.calledWith(sinon.match.string);
+		expect(next).not.toHaveBeenCalled();
+		expect(logger.error).toHaveBeenCalledTimes(1);
+		expect(logger.error).toHaveBeenCalledWith(expect.any(String),expect.any(String));
 
-		res.status.should.have.been.calledOnce;
-		res.status.should.have.been.calledWithExactly(500);
+		expect(res.status).toHaveBeenCalledTimes(1);
+		expect(res.status).toHaveBeenCalledWith(500);
 
-		res.json.should.have.been.calledOnce;
-		res.json.should.have.been.calledWithExactly(sinon.match({stack: err.stack, message: err.message}));
+		expect(res.json).toHaveBeenCalledTimes(1);
+		expect(res.json).toHaveBeenCalledWith(expect.objectContaining({stack: err.stack, message: err.message}));
 
-		res.end.should.have.been.calledOnce;
-		res.end.should.have.been.calledWithExactly();
+		expect(res.end).toHaveBeenCalledTimes(1);
+		expect(res.end).toHaveBeenCalledWith();
 	});
 });

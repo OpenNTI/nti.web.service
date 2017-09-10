@@ -1,7 +1,7 @@
-/*eslint-env mocha*/
+/*eslint-env jest*/
 'use strict';
-const mock = require('mock-require');
-const sinon = require('sinon');
+
+const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 const siteMap = {
 	site1Alias1: 'site1',
@@ -17,74 +17,68 @@ const siteMap = {
 };
 
 describe('lib/site-mapping', () => {
-	let logger, sandbox;
+	let logger;
 
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
-		logger = {
-			debug: sandbox.stub(),
-			error: sandbox.stub(),
-			info: sandbox.stub(),
-			warn: sandbox.stub(),
-		};
+		jest.resetModules();
+		logger = require('../logger');
 
-		mock('../logger', logger);
+		stub(logger, 'get', () => logger);
+		stub(logger, 'attachToExpress');
+		stub(logger, 'debug');
+		stub(logger, 'error');
+		stub(logger, 'info');
+		stub(logger, 'warn');
 	});
+
 
 	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
+		jest.resetModules();
 	});
 
-	it ('exports a function', () => {
-		const fn = mock.reRequire('../site-mapping');
+	test ('exports a function', () => {
+		const fn = require('../site-mapping');
 
-		fn.should.be.a('function');
-		fn.length.should.be.equal(2);
+		expect(fn).toEqual(expect.any(Function));
+		expect(fn.length).toEqual(2);
 	});
 
-	it ('returns defaults', () => {
-		const fn = mock.reRequire('../site-mapping');
+	test ('returns defaults', () => {
+		const fn = require('../site-mapping');
 
-		fn(siteMap, 'bla').should.be.ok
-			.and.to.have.property('name', 'default');
+		expect(fn(siteMap, 'bla')).toHaveProperty('name', 'default');
 
-		fn(siteMap, 'badAlias').should.be.ok
-			.and.to.have.property('name', 'default');
+		expect(fn(siteMap, 'badAlias')).toHaveProperty('name', 'default');
 
-		fn(siteMap).should.be.ok
-			.and.to.have.property('name', 'default');
+		expect(fn(siteMap)).toHaveProperty('name', 'default');
 
-		fn().should.be.ok
-			.and.to.have.property('name', 'default');
+		expect(fn()).toHaveProperty('name', 'default');
 
-		logger.warn.should.have.been.calledThrice
-			.and.have.been.calledWith('No site-mapping entry found for %s.', 'bla')
-			.and.have.been.calledWith('No site-mapping entry found for %s.', 'badAlias')
-			.and.have.been.calledWith('No site-mapping entry found for %s.', undefined);
+		expect(logger.warn).toHaveBeenCalledTimes(3);
+		expect(logger.warn).toHaveBeenCalledWith('No site-mapping entry found for %s.', 'bla');
+		expect(logger.warn).toHaveBeenCalledWith('No site-mapping entry found for %s.', 'badAlias');
+		expect(logger.warn).toHaveBeenCalledWith('No site-mapping entry found for %s.', undefined);
 	});
 
-	it ('returns named entry', () => {
-		const fn = mock.reRequire('../site-mapping');
+	test ('returns named entry', () => {
+		const fn = require('../site-mapping');
 
-		fn(siteMap, 'site1').should.be.equal(siteMap.site1);
+		expect(fn(siteMap, 'site1')).toEqual(siteMap.site1);
 	});
 
-	it ('returns aliased entry', () => {
-		const fn = mock.reRequire('../site-mapping');
+	test ('returns aliased entry', () => {
+		const fn = require('../site-mapping');
 
-		fn(siteMap, 'site1Alias1').should.be.equal(siteMap.site1);
-		fn(siteMap, 'site1Alias2').should.be.equal(siteMap.site1);
+		expect(fn(siteMap, 'site1Alias1')).toEqual(siteMap.site1);
+		expect(fn(siteMap, 'site1Alias2')).toEqual(siteMap.site1);
 	});
 
-	it ('returns default for cycled alias', () => {
-		const fn = mock.reRequire('../site-mapping');
+	test ('returns default for cycled alias', () => {
+		const fn = require('../site-mapping');
 
-		fn(siteMap, 'aliasBadCycle').should.be.ok
-			.and.to.have.property('name', 'default');
+		expect(fn(siteMap, 'aliasBadCycle')).toHaveProperty('name', 'default');
 
-		logger.warn.should.have.been.called
-			.and.have.been.calledWith('Cycle in alias: %s -x-> %s <=')
-			.and.have.been.calledWith('No site-mapping entry found for %s.', 'aliasBadCycle');
+		expect(logger.warn).toHaveBeenCalledWith('Cycle in alias: %s -x-> %s <=', expect.any(String), expect.any(String));
+		expect(logger.warn).toHaveBeenCalledWith('No site-mapping entry found for %s.', 'aliasBadCycle');
 	});
 });

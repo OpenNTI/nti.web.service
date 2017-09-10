@@ -1,33 +1,27 @@
-/*globals expect*/
-/*eslint-env mocha*/
+/*eslint-env jest*/
 'use strict';
-const mock = require('mock-require');
-const sinon = require('sinon');
 
 
 describe ('lib/api/endpoints/index', () => {
-	let sandbox;
 
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
+		jest.resetModules();
 	});
-
 
 	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
+		jest.resetModules();
 	});
 
-
-	it ('endpoint index registers all the endpoints', () => {
-		const registerEndpoint = sandbox.stub();
+	test ('endpoint index registers all the endpoints', () => {
+		const registerEndpoint = jest.fn();
 		const m = {default: registerEndpoint};
-		mock('../health-check', m);
-		mock('../user-agreement', m);
-		mock('../ugd/context-data', m);
-		const register = mock.reRequire('../index');
+		jest.doMock('../health-check', () => m);
+		jest.doMock('../user-agreement', () => m);
+		jest.doMock('../ugd/context-data', () => m);
+		const register = require('../index');
 
-		expect(() => register(1, 2, 3)).to.not.throw();
-		registerEndpoint.should.always.have.been.calledWithExactly(1, 2, 3);
+		expect(() => register(1, 2, 3)).not.toThrow();
+		expect(registerEndpoint).toHaveBeenCalledTimes(3);
+		expect(registerEndpoint).toHaveBeenCalledWith(1, 2, 3);
 	});
 });

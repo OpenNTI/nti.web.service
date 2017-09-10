@@ -7,6 +7,7 @@ const yargs = require('yargs');
 const uuid = require('uuid/v4');
 const {SiteName, ServiceStash} = require('nti-lib-interfaces');
 
+const getApplication = require('./app-loader');
 const getSiteFrom = require('./site-mapping');
 const logger = require('./logger');
 
@@ -190,7 +191,7 @@ function config (env) {
 
 	for(let a of c.apps) {
 		try {
-			const pkg = require.main.require(a.package + '/package.json');
+			const pkg = getApplication(a.package + '/package.json');
 
 			a.appId = a.appId || pkg.name || a.basepath;
 			a.appName = a.appName || pkg.name;

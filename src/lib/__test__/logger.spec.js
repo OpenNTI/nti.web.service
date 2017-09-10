@@ -1,94 +1,92 @@
-/*globals expect*/
-/*eslint-env mocha*/
+/*eslint-env jest*/
 'use strict';
-const mock = require('mock-require');
-const sinon = require('sinon');
 
 describe('lib/logger (middleware)', () => {
 	let loggerBackend,
-		sandbox,
 		morganConstructor,
 		responseTimeConstructor,
 		LoggerFactory;
 
+
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
+		jest.resetModules();
+
 		loggerBackend = {
-			debug: sandbox.stub(),
-			error: sandbox.stub(),
-			info: sandbox.stub(),
-			warn: sandbox.stub(),
+			debug: jest.fn(),
+			error: jest.fn(),
+			info: jest.fn(),
+			warn: jest.fn(),
 		};
-		responseTimeConstructor = sandbox.stub().returns('response-time-middleware');
+
+		responseTimeConstructor = jest.fn(() => 'response-time-middleware');
 		morganConstructor = function () { return 'morgan-middleware'; };
 
-		LoggerFactory = {get: sandbox.stub().returns(loggerBackend)};
+		LoggerFactory = {get: jest.fn(() => loggerBackend)};
 
-		mock('cluster', {isMaster: true});
-		mock('morgan', morganConstructor);
-		mock('response-time', responseTimeConstructor);
-		mock('nti-util-logger', {default: LoggerFactory});
+		jest.doMock('cluster', () => ({isMaster: true}));
+		jest.doMock('morgan', () => morganConstructor);
+		jest.doMock('response-time', () => responseTimeConstructor);
+		jest.doMock('nti-util-logger', () => ({default: LoggerFactory}));
 	});
+
 
 	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
+		jest.resetModules();
 	});
 
-	it ('Should export a usable interface', () => {
-		const logger = mock.reRequire('../logger');
-		logger.should.itself.respondTo('get')
-			.and.respondTo('attachToExpress')
-			.and.respondTo('info')
-			.and.respondTo('error')
-			.and.respondTo('warn')
-			.and.respondTo('debug');
-	});
-
-
-	it ('Should use an nti-util-logger backend and identify master/worker', () => {
-		mock.reRequire('../logger');
-		LoggerFactory.get.should.have.been.called;
-		LoggerFactory.get.should.have.been.calledWith('NodeService:master');
-
-		LoggerFactory.get.reset();
-
-		mock('cluster', {isMaster: false, worker: {id: 'foobar'}});
-		mock.reRequire('../logger');
-
-		LoggerFactory.get.should.have.been.calledWith('NodeService:worker:foobar');
+	test ('Should export a usable interface', () => {
+		const logger = require('../logger');
+		expect(logger).toHaveProperty('get', expect.any(Function));
+		expect(logger).toHaveProperty('attachToExpress', expect.any(Function));
+		expect(logger).toHaveProperty('info', expect.any(Function));
+		expect(logger).toHaveProperty('error', expect.any(Function));
+		expect(logger).toHaveProperty('warn', expect.any(Function));
+		expect(logger).toHaveProperty('debug', expect.any(Function));
 	});
 
 
-	it ('get(name) returns a new logger with its name prefixed with NodeService', () => {
-		const {get} = mock.reRequire('../logger');
+	test ('Should use an nti-util-logger backend and identify master', () => {
+		require('../logger');
+		expect(LoggerFactory.get).toHaveBeenCalled();
+		expect(LoggerFactory.get).toHaveBeenCalledWith('NodeService:master');
+	});
+
+
+	test ('Should use an nti-util-logger backend and identify worker', () => {
+		jest.doMock('cluster', () => ({isMaster: false, worker: {id: 'foobar'}}));
+		require('../logger');
+
+		expect(LoggerFactory.get).toHaveBeenCalledWith('NodeService:worker:foobar');
+	});
+
+
+	test ('get(name) returns a new logger with its name prefixed with NodeService', () => {
+		const {get} = require('../logger');
 
 		const logger = get('SomeTest');
-		LoggerFactory.get.should.have.been.calledWithExactly('NodeService:master:SomeTest');
-		logger.should.be.ok
-			.and.respondTo('info')
-			.and.respondTo('error')
-			.and.respondTo('warn')
-			.and.respondTo('debug');
+		expect(LoggerFactory.get).toHaveBeenCalledWith('NodeService:master:SomeTest');
+		expect(logger).toHaveProperty('info', expect.any(Function));
+		expect(logger).toHaveProperty('error', expect.any(Function));
+		expect(logger).toHaveProperty('warn', expect.any(Function));
+		expect(logger).toHaveProperty('debug', expect.any(Function));
 	});
 
 
-	it ('attachToExpress() sets up ', () => {
-		const {attachToExpress} = mock.reRequire('../logger');
-		const use = sandbox.stub();
+	test ('attachToExpress() sets up ', () => {
+		const {attachToExpress} = require('../logger');
+		const use = jest.fn();
 
-		expect(() => attachToExpress({use}))
-			.not.to.throw()
-			.and.to.be.undefined;
+		expect(() => attachToExpress({use})).not.toThrow();
+		expect(attachToExpress({use: jest.fn()})).not.toBeDefined();
 
-		use.should.have.been.calledTwice
-			.and.have.been.calledWith('response-time-middleware')
-			.and.have.been.calledWith('morgan-middleware');
+		expect(use).toHaveBeenCalledTimes(2);
+		expect(use).toHaveBeenCalledWith('response-time-middleware');
+		expect(use).toHaveBeenCalledWith('morgan-middleware');
 	});
 
 
-	it ('The static logger methods should forward arguments to the backend', () => {
-		const logger = mock.reRequire('../logger');
+	test ('The static logger methods should forward arguments to the backend', () => {
+		const logger = require('../logger');
 		const methods = ['info', 'error', 'warn', 'debug'];
 
 		for (let method of methods) {
@@ -96,8 +94,8 @@ describe('lib/logger (middleware)', () => {
 
 			logger[method](...args);
 
-			loggerBackend[method].should.have.been.calledWithExactly(...args)
-				.and.calledOn(loggerBackend);
+			expect(loggerBackend[method]).toHaveBeenCalledWith(...args);
+			// expect(loggerBackend[method]).calledOn(loggerBackend);
 		}
 	});
 });

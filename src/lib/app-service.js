@@ -1,6 +1,5 @@
 'use strict';
 global.SERVER = true;
-const path = require('path');
 
 const cookieParser = require('cookie-parser');
 const express = require('express');
@@ -8,6 +7,7 @@ const requestLanguage = require('express-request-language');
 const staticFiles = require('serve-static');
 const {default: dataserver} = require('nti-lib-interfaces');
 
+const getApplication = require('./app-loader');
 const registerEndPoints = require('./api');
 const {attachToExpress: setupCompression} = require('./compress');
 const cacheBuster = require('./no-cache');
@@ -78,17 +78,6 @@ function setupApplication (server, config, restartRequest) {
 
 	for (let client of config.apps) {
 		self.setupClient(client, params);
-	}
-}
-
-
-function getApplication (pkg) {
-	try {
-		return require.main.require(pkg);
-	} catch (e) {
-		const base = path.dirname(require.main.filename);
-		const tip = `Relative modules are relative to: ${base}`;
-		throw new Error(`Could not resolve package (${pkg}) for app. ${tip}`);
 	}
 }
 

@@ -173,11 +173,26 @@ function config (env) {
 		});
 	}
 
+	c.apps = c.apps.sort((a, b) => (
+		b = b.basepath,
+		a = a.basepath,
+		//should it compare path segment count instead of pure length?
+		b.length - a.length
+		|| ( //fallback to normal string compare sort when lengths are equal...
+			(a < b)
+				? -1
+				: (b < a)
+					? 1
+					: 0
+		)
+	));
+
+
 	for(let a of c.apps) {
 		try {
 			const pkg = require.main.require(a.package + '/package.json');
 
-			a.appId = a.appId || a.basepath || pkg.name;
+			a.appId = a.appId || pkg.name || a.basepath;
 			a.appName = a.appName || pkg.name;
 			a.appVersion = a.appVersion || pkg.version;
 

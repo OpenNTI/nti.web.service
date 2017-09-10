@@ -246,8 +246,10 @@ describe ('lib/config', () => {
 			development: {
 				port: 8081,
 				apps: [
-					{ package: 'foo' },
-					{ package: 'bar' }
+					{ package: 'foo', basepath: '/foo/' },
+					{ package: 'bar', basepath: '/bar/' },
+					{ package: 'baz', basepath: '/foo/baz/' },
+					{ package: 'buz', basepath: '/foo/buz/' }
 				]
 			},
 			'site-mappings': {}
@@ -256,14 +258,28 @@ describe ('lib/config', () => {
 		return Promise.resolve(config(env))
 			.then(c => {
 				expect(c).to.be.an('object');
-				c.apps[0].appId.should.equal('foo.net');
-				c.apps[0].appName.should.equal('foo.net');
-				c.apps[0].appVersion.should.equal('123');
 
-				c.apps[1].appId.should.be.ok;
-				c['site-mappings'].should.be.ok;
+				for (let x = 0; x < c.apps.length; x++ ) {
+					expect(c.apps[x].appId).be.ok;
+				}
 
-				logger.warn.should.have.been.calledWith('Could not fill in package values for app %s, because: %s', 'bar');
+				expect(c.apps.map(x => x.basepath)).to.deep.equal([
+					'/foo/baz/',
+					'/foo/buz/',
+					'/bar/',
+					'/foo/'
+				]);
+
+				const i = c.apps.findIndex(x => x.appId === 'foo.net');
+
+				expect(i).to.not.equal(-1);
+				expect(c.apps[i].appId).to.equal('foo.net');
+				expect(c.apps[i].appName).to.equal('foo.net');
+				expect(c.apps[i].appVersion).to.equal('123');
+
+				expect(c['site-mappings']).to.be.ok;
+
+				expect(logger.warn).to.have.been.calledWith('Could not fill in package values for app %s, because: %s', 'bar');
 			});
 	});
 

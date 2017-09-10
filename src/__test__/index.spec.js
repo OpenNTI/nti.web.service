@@ -1,60 +1,48 @@
-/*eslint-env mocha*/
+/*eslint-env jest*/
 'use strict';
-const mock = require('mock-require');
-const sinon = require('sinon');
 
 describe('Bootstraps', () => {
-	let logger, sandbox;
 
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
+		jest.resetModules();
+		const logger = require('../lib/logger');
+		const noop = () => {};
+		jest.spyOn(logger, 'debug').mockImplementation(noop);
+		jest.spyOn(logger, 'error').mockImplementation(noop);
+		jest.spyOn(logger, 'info').mockImplementation(noop);
+		jest.spyOn(logger, 'warn').mockImplementation(noop);
 
-		logger = {
-			debug: sandbox.stub(),
-			error: sandbox.stub(),
-			info: sandbox.stub(),
-			warn: sandbox.stub(),
-		};
-
-		mock('../lib/logger', logger);
-		mock('../polyfills', {});
-	});
-
-	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
+		jest.mock('../polyfills', () => {});
 	});
 
 	it ('isMaster: true, master bootstraps. not worker.', () => {
-		const master = sandbox.spy();
-		const worker = sandbox.spy();
-		mock('cluster', {isMaster: true});
-		mock('../master', {start: master});
-		mock('../worker', {start: worker});
+		const master = jest.fn();
+		const worker = jest.fn();
+		jest.doMock('cluster', () => ({isMaster: true}));
+		jest.doMock('../master', () => ({start: master}));
+		jest.doMock('../worker', () => ({start: worker}));
 
-		const {run} = mock.reRequire('../index');
+		const {run} = require('../index');
 		run();
 
-		master.should.have.been.calledOnce;
-		master.should.have.been.calledWith();
-		master.should.have.been.calledOn(void 0);
-		worker.called.should.not.be.true;
+		expect(master).toHaveBeenCalledTimes(1);
+		expect(master).toHaveBeenCalledWith();
+		expect(worker).not.toHaveBeenCalled();
 	});
 
 	it ('isMaster: false, worker bootstraps. not master.', () => {
-		const master = sandbox.spy();
-		const worker = sandbox.spy();
-		mock('cluster', {isMaster: false});
-		mock('../master', {start: master});
-		mock('../worker', {start: worker});
+		const master = jest.fn();
+		const worker = jest.fn();
+		jest.doMock('cluster', () => ({isMaster: false}));
+		jest.doMock('../master', () => ({start: master}));
+		jest.doMock('../worker', () => ({start: worker}));
 
-		const {run} = mock.reRequire('../index');
+		const {run} = require('../index');
 		run();
 
-		worker.should.have.been.calledOnce;
-		worker.should.have.been.calledWith();
-		worker.should.have.been.calledOn(void 0);
-		master.should.not.have.been.called;
+		expect(worker).toHaveBeenCalledTimes(1);
+		expect(worker).toHaveBeenCalledWith();
+		expect(master).not.toHaveBeenCalled();
 	});
 
 });

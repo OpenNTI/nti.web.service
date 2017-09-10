@@ -1,245 +1,236 @@
-/*globals expect*/
-/*eslint-env mocha*/
+/*eslint-env jest*/
 'use strict';
-const mock = require('mock-require');
-const sinon = require('sinon');
+
+const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
+
 
 describe('lib/compress (middleware)', () => {
-	let sandbox;
 
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
+		jest.resetModules();
 	});
+
 
 	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
+		jest.resetModules();
 	});
 
 
-	it ('attachToExpress adds two middleware, one to serve precompressed gz files, and one to fallback to dynamicly compress.', () => {
+	test ('attachToExpress adds two middleware, one to serve precompressed gz files, and one to fallback to dynamicly compress.', () => {
 		const compression = {};
 		const precompressed = {};
-		const use = sandbox.stub();
-		const compressionFactory = sandbox.stub().returns(compression);
+		const use = jest.fn();
+		const compressionFactory = jest.fn(() => compression);
 
-		mock('compression', compressionFactory);
-		const o = mock.reRequire('../compress');
-		sandbox.stub(o, 'precompressed').returns(precompressed);
+		jest.doMock('compression', () => compressionFactory);
+		const o = require('../compress');
+		stub(o, 'precompressed', () => precompressed);
 
 		o.attachToExpress({use});
 
-		compressionFactory.should.have.been.calledOnce;
+		expect(compressionFactory).toHaveBeenCalledTimes(1);
 
-		use.should.have.been.calledTwice
-			.and.calledWithExactly(precompressed)
-			.and.calledWithExactly(compression);
+		expect(use).toHaveBeenCalledTimes(2);
+		expect(use).toHaveBeenCalledWith(precompressed);
+		expect(use).toHaveBeenCalledWith(compression);
 	});
 
 
-	it ('compression filter function returns false when the request has x-no-compression header', () => {
-		const filter = sandbox.stub().returns(true);
-		mock('compression', {filter});
-		const {compressionFilter} = mock.reRequire('../compress');
+	test ('compression filter function returns false when the request has x-no-compression header', () => {
+		const filter = jest.fn(() => true);
+		jest.doMock('compression', () => ({filter}));
+		const {compressionFilter} = require('../compress');
 
-		const req = {url: '/', get: sandbox.stub()};
-		req.get.withArgs('x-no-compression').returns(true);
+		const req = {url: '/', get: jest.fn(x => x === 'x-no-compression' || void 0)};
 
-		compressionFilter(req).should.be.false;
-		filter.should.not.have.called;
+		expect(compressionFilter(req)).toBe(false);
+		expect(filter).not.toHaveBeenCalled();
 	});
 
 
-	it ('compression filter function returns false when the request url ends in .gz', () => {
-		const filter = sandbox.stub().returns(true);
-		mock('compression', {filter});
-		const {compressionFilter} = mock.reRequire('../compress');
+	test ('compression filter function returns false when the request url ends in .gz', () => {
+		const filter = jest.fn(() => true);
+		jest.doMock('compression', () => ({filter}));
+		const {compressionFilter} = require('../compress');
 
-		const req = {url: '/index.js.gz', get: sandbox.stub()};
+		const req = {url: '/index.js.gz', get: jest.fn()};
 
-		compressionFilter(req).should.be.false;
-		filter.should.not.have.called;
+		expect(compressionFilter(req)).toBe(false);
+		expect(filter).not.toHaveBeenCalled();
 	});
 
 
-	it ('compression filter function calls fallback filter when url does not end in .gz nor have header-block', () => {
-		const filter = sandbox.stub().returns(true);
-		mock('compression', {filter});
-		const {compressionFilter} = mock.reRequire('../compress');
+	test ('compression filter function calls fallback filter when url does not end in .gz nor have header-block', () => {
+		const filter = jest.fn(() => true);
+		jest.doMock('compression', () => ({filter}));
+		const {compressionFilter} = require('../compress');
 
-		const req = {url: '/index.js', get: sandbox.stub()};
+		const req = {url: '/index.js', get: jest.fn()};
 
-		compressionFilter(req).should.be.true;
-		filter.should.have.called;
+		expect(compressionFilter(req)).toBe(true);
+		expect(filter).toHaveBeenCalled();
 	});
 
 
-	it ('precompressed() bypass: requests that have x-no-compression header', () => {
-		const filter = sandbox.stub().returns(true);
-		const next = sandbox.stub();
-		const access = sandbox.stub();
-		mock('compression', {filter});
-		mock('fs', {access});
-		const {precompressed} = mock.reRequire('../compress');
+	test ('precompressed() bypass: requests that have x-no-compression header', () => {
+		const filter = jest.fn(() => true);
+		const next = jest.fn();
+		const access = jest.fn();
+		jest.doMock('compression', () => ({filter}));
+		jest.doMock('fs', () => ({access}));
+		const {precompressed} = require('../compress');
 
 		const middleware = precompressed('/');
-		middleware.should.be.a('function');
+		expect(middleware).toEqual(expect.any(Function));
 
 		const req = Object.freeze({
 			url: '/foobar',
-			get: sandbox.stub()
+			get: jest.fn(x => x === 'x-no-compression' || (x === 'accept-encoding' ? 'plain,gzip' : void x))
 		});
 
-		req.get.withArgs('x-no-compression').returns(true);
-		req.get.withArgs('accept-encoding').returns('plain,gzip');
 
 		middleware(req, null, next);
 
-		next.should.have.been.called;
-		access.should.not.have.been.called;
+		expect(next).toHaveBeenCalled();
+		expect(access).not.toHaveBeenCalled();
 	});
 
 
-	it ('precompressed() bypass: requests that do not declare support', () => {
-		const filter = sandbox.stub().returns(true);
-		const next = sandbox.stub();
-		const access = sandbox.stub();
-		mock('compression', {filter});
-		mock('fs', {access});
-		const {precompressed} = mock.reRequire('../compress');
+	test ('precompressed() bypass: requests that do not declare support', () => {
+		const filter = jest.fn(() => true);
+		const next = jest.fn();
+		const access = jest.fn();
+		jest.doMock('compression', () => ({filter}));
+		jest.doMock('fs', () => ({access}));
+		const {precompressed} = require('../compress');
 
 		const middleware = precompressed('/');
-		middleware.should.be.a('function');
+		expect(middleware).toEqual(expect.any(Function));
 
 		const req = Object.freeze({
 			url: '/foobar',
-			get: sandbox.stub()
+			get: jest.fn(x => x === 'accept-encoding' ? '' : void x)
 		});
-		req.get.withArgs('accept-encoding').returns('');
 
 		middleware(req, null, next);
 
-		next.should.have.been.called;
-		access.should.not.have.been.called;
+		expect(next).toHaveBeenCalled();
+		expect(access).not.toHaveBeenCalled();
 	});
 
 
-	it ('precompressed() bypass: file access errors', () => {
-		const filter = sandbox.stub().returns(true);
-		const next = sandbox.stub();
-		const access = sandbox.stub();
-		mock('compression', {filter});
-		mock('fs', {access});
-		const {precompressed} = mock.reRequire('../compress');
+	test ('precompressed() bypass: file access errors', () => {
+		const filter = jest.fn(() => true);
+		const next = jest.fn();
+		const access = jest.fn();
+		jest.doMock('compression', () => ({filter}));
+		jest.doMock('fs', () => ({access}));
+		const {precompressed} = require('../compress');
 
 		const middleware = precompressed('/');
-		middleware.should.be.a('function');
+		expect(middleware).toEqual(expect.any(Function));
 
 		const res = {
-			set: sandbox.stub()
+			set: jest.fn()
 		};
 
 		const req = Object.freeze({
 			url: '/foobar',
-			get: sandbox.stub()
+			get: jest.fn(x => x === 'accept-encoding' ? 'plain,gzip' : void x)
 		});
 
-		req.get.withArgs('accept-encoding').returns('plain,gzip');
 
 		middleware(req, res, next);
 
-		next.should.not.have.been.called;
+		expect(next).not.toHaveBeenCalled();
 
-		access.should.have.been.called;
-		const callback = access.getCall(0).args[2];
-		callback.should.be.a('function');
+		expect(access).toHaveBeenCalled();
+		const callback = access.mock.calls[0][2];
+		expect(callback).toEqual(expect.any(Function));
 
 		//manually callback the fs.access callback... with an error
-		expect(() => callback(new Error('oops'))).to.not.throw();
+		expect(() => callback(new Error('oops'))).not.toThrow();
 
 		//By getting here, the 'req' object had not been modified (the freeze would make modifications to throw, and fail the test)
-		res.set.should.not.have.been.called;
-		next.should.have.been.called;
+		expect(res.set).not.toHaveBeenCalled();
+		expect(next).toHaveBeenCalled();
 	});
 
 
-	it ('precompressed(): switches the static asset to the .gz and adds changes encodeing', () => {
-		const filter = sandbox.stub().returns(true);
-		const next = sandbox.stub();
-		const access = sandbox.stub();
-		mock('compression', {filter});
-		mock('fs', {access});
-		const {precompressed} = mock.reRequire('../compress');
+	test ('precompressed(): switches the static asset to the .gz and adds changes encodeing', () => {
+		const filter = jest.fn(() => true);
+		const next = jest.fn();
+		const access = jest.fn();
+		jest.doMock('compression', () => ({filter}));
+		jest.doMock('fs', () => ({access}));
+		const {precompressed} = require('../compress');
 
 		const middleware = precompressed('/');
-		middleware.should.be.a('function');
+		expect(middleware).toEqual(expect.any(Function));
 
 		const req = {
 			url: '/foobar',
-			get: sandbox.stub()
+			get: jest.fn(x => x === 'accept-encoding' ? 'plain,gzip' : void x)
 		};
 
 		const res = {
-			set: sandbox.stub()
+			set: jest.fn()
 		};
-
-		req.get.withArgs('accept-encoding').returns('plain,gzip');
 
 		middleware(req, res, next);
 
-		next.should.not.have.been.called;
+		expect(next).not.toHaveBeenCalled();
 
-		access.should.have.been.called;
-		const callback = access.getCall(0).args[2];
-		callback.should.be.a('function');
+		expect(access).toHaveBeenCalled();
+		const callback = access.mock.calls[0][2];
+		expect(callback).toEqual(expect.any(Function));
 
 		//manually callback the fs.access callback... with no error
-		expect(() => callback()).to.not.throw();
+		expect(() => callback()).not.toThrow();
 
-		req.url.should.match(/\.gz$/i);
-		res.set.should.have.been.calledOnce
-			.and.calledWithExactly('Content-Encoding', 'gzip');
-		next.should.have.been.called;
+		expect(req.url).toEqual(expect.stringMatching(/\.gz$/i));
+		expect(res.set).toHaveBeenCalledTimes(1);
+		expect(res.set).toHaveBeenCalledWith('Content-Encoding', 'gzip');
+		expect(next).toHaveBeenCalled();
 	});
 
-	it ('precompressed(): switches the static asset to the .gz and adds changes encodeing, enforcing known Content-Types', () => {
-		const filter = sandbox.stub().returns(true);
-		const next = sandbox.stub();
-		const access = sandbox.stub();
-		mock('compression', {filter});
-		mock('fs', {access});
-		const {precompressed} = mock.reRequire('../compress');
+
+	test ('precompressed(): switches the static asset to the .gz and adds changes encodeing, enforcing known Content-Types', () => {
+		const filter = jest.fn(() => true);
+		const next = jest.fn();
+		const access = jest.fn();
+		jest.doMock('compression', () => ({filter}));
+		jest.doMock('fs', () => ({access}));
+		const {precompressed} = require('../compress');
 
 		const middleware = precompressed('/');
-		middleware.should.be.a('function');
+		expect(middleware).toEqual(expect.any(Function));
 
 		const req = {
 			url: '/foobar.html',
-			get: sandbox.stub()
+			get: jest.fn(x => x === 'accept-encoding' ? 'plain,gzip' : void x)
 		};
 
 		const res = {
-			set: sandbox.stub()
+			set: jest.fn()
 		};
-
-		req.get.withArgs('accept-encoding').returns('plain,gzip');
 
 		middleware(req, res, next);
 
-		next.should.not.have.been.called;
+		expect(next).not.toHaveBeenCalled();
 
-		access.should.have.been.called;
-		const callback = access.getCall(0).args[2];
-		callback.should.be.a('function');
+		expect(access).toHaveBeenCalled();
+		const callback = access.mock.calls[0][2];
+		expect(callback).toEqual(expect.any(Function));
 
 		//manually callback the fs.access callback... with no error
-		expect(() => callback()).to.not.throw();
+		expect(() => callback()).not.toThrow();
 
-		req.url.should.match(/\.gz$/i);
-		res.set.should.have.been.calledTwice
-			.and.calledWithExactly('Content-Encoding', 'gzip')
-			.and.calledWithExactly('Content-Type', 'text/html');
-		next.should.have.been.called;
+		expect(req.url).toEqual(expect.stringMatching(/\.gz$/i));
+		expect(res.set).toHaveBeenCalledTimes(2);
+		expect(res.set).toHaveBeenCalledWith('Content-Encoding', 'gzip');
+		expect(res.set).toHaveBeenCalledWith('Content-Type', 'text/html');
+		expect(next).toHaveBeenCalled();
 	});
 
 });

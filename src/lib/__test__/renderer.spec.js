@@ -1,99 +1,99 @@
-/*eslint-env mocha*/
+/*eslint-env jest*/
 'use strict';
-const mock = require('mock-require');
-const sinon = require('sinon');
 
-const logger = require('../logger');
+const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 describe('lib/renderer', () => {
-	let sandbox;
+	let logger;
 	let clientConfig;
 	let nodeConfigAsClientConfig;
 
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
-		sandbox.stub(logger, 'attachToExpress');
-		sandbox.stub(logger, 'info');
-		sandbox.stub(logger, 'error');
-		sandbox.stub(logger, 'warn');
-		sandbox.stub(logger, 'debug');
+		jest.resetModules();
+		logger = require('../logger');
 
-		clientConfig = sandbox.stub().returns({});
-		nodeConfigAsClientConfig = sandbox.stub().returns({});
+		stub(logger, 'get', () => logger);
+		stub(logger, 'attachToExpress');
+		stub(logger, 'debug');
+		stub(logger, 'error');
+		stub(logger, 'info');
+		stub(logger, 'warn');
 
-		mock('../config', {clientConfig, nodeConfigAsClientConfig});
+		clientConfig = jest.fn(() => ({}));
+		nodeConfigAsClientConfig = jest.fn(() => ({}));
+
+		jest.doMock('../config', () => ({clientConfig, nodeConfigAsClientConfig}));
 	});
 
 
 	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
+		jest.resetModules();
 	});
 
 
-	it ('exports a function to get/make the renderer', () => {
-		const {getPageRenderer} = mock.reRequire('../renderer');
-		getPageRenderer.should.be.a('function');
+	test ('exports a function to get/make the renderer', () => {
+		const {getPageRenderer} = require('../renderer');
+		expect(getPageRenderer).toEqual(expect.any(Function));
 
 		const renderer = getPageRenderer();
-		renderer.should.be.a('function');
+		expect(renderer).toEqual(expect.any(Function));
 	});
 
 
-	it ('renderer: calls app.render twice to pre-flight network calls', () => {
-		const {getPageRenderer} = mock.reRequire('../renderer');
+	test ('renderer: calls app.render twice to pre-flight network calls', () => {
+		const {getPageRenderer} = require('../renderer');
 		const config = {};
-		const serialize = sandbox.stub().returns('testHTML');
+		const serialize = jest.fn(() => 'testHTML');
 		const datacache = {
-			getForContext: sandbox.stub().returns({serialize})
+			getForContext: jest.fn(() => ({serialize}))
 		};
-		const render = sandbox.stub().returns('TestApp');
+		const render = jest.fn(() => 'TestApp');
 		const appId = 'test';
 		const basepath = '/mocks/';
 		const req = {
 			url: '/test',
 			username: 'tester',
-			waitForPending: sandbox.stub()
+			waitForPending: jest.fn()
 		};
 
 		const res = {
-			end: sandbox.stub(),
-			send: sandbox.stub(),
-			status: sandbox.stub()
+			end: jest.fn(),
+			send: jest.fn(),
+			status: jest.fn()
 		};
-		const next = sandbox.stub();
+		const next = jest.fn();
 
 		const renderer = getPageRenderer({appId, basepath}, config, datacache, render);
-		renderer.should.be.a('function');
+		expect(renderer).toEqual(expect.any(Function));
 
 		return renderer(req, res, next)
 			.then(() => {
-				next.should.not.have.been.called;
-				res.end.should.not.have.been.called;
-				res.status.should.not.have.been.called;
+				expect(next).not.toHaveBeenCalled();
+				expect(res.end).not.toHaveBeenCalled();
+				expect(res.status).not.toHaveBeenCalled();
 
-				req.waitForPending.should.have.been.calledOnce;
-				req.waitForPending.should.have.been.calledWithExactly(5 * 60000);
+				expect(req.waitForPending).toHaveBeenCalledTimes(1);
+				expect(req.waitForPending).toHaveBeenCalledWith(5 * 60000);
 
-				clientConfig.should.have.been.calledOnce;
-				clientConfig.should.have.been.calledWithExactly(config, req.username, appId, req);
+				expect(clientConfig).toHaveBeenCalledTimes(1);
+				expect(clientConfig).toHaveBeenCalledWith(config, req.username, appId, req);
 
-				nodeConfigAsClientConfig.should.have.been.calledOnce;
-				nodeConfigAsClientConfig.should.have.been.calledWithExactly(config, appId, req);
+				expect(nodeConfigAsClientConfig).toHaveBeenCalledTimes(1);
+				expect(nodeConfigAsClientConfig).toHaveBeenCalledWith(config, appId, req);
 
-				render.should.have.been.calledTwice;
-				render.should.have.been.calledWithExactly(basepath, req, sinon.match.object, sinon.match.func);
-				render.should.have.been.calledWithExactly(basepath, req, sinon.match.object);
+				expect(render).toHaveBeenCalledTimes(2);
+				expect(render).toHaveBeenCalledWith(basepath, req, expect.any(Object), expect.any(Function));
+				expect(render).toHaveBeenCalledWith(basepath, req, expect.any(Object));
 			});
 	});
 
 
-	it ('renderer: not-found', () => {
-		const {getPageRenderer} = mock.reRequire('../renderer');
+	test ('renderer: not-found', () => {
+		const {getPageRenderer} = require('../renderer');
 		const config = {};
-		const serialize = sandbox.stub().returns('testHTML');
+		const serialize = jest.fn(() => 'testHTML');
 		const datacache = {
-			getForContext: sandbox.stub().returns({serialize})
+			getForContext: jest.fn(() => ({serialize}))
 		};
 		const appId = 'test';
 		const basepath = '/mocks/';
@@ -111,38 +111,38 @@ describe('lib/renderer', () => {
 			}
 		};
 
-		sandbox.spy(o, 'render');
+		jest.spyOn(o, 'render');
 
 		const res = {
-			end: sandbox.stub(),
-			send: sandbox.stub(),
-			status: sandbox.stub()
+			end: jest.fn(),
+			send: jest.fn(),
+			status: jest.fn()
 		};
-		const next = sandbox.stub();
+		const next = jest.fn();
 
 		const renderer = getPageRenderer({appId, basepath}, config, datacache, o.render);
-		renderer.should.be.a('function');
+		expect(renderer).toEqual(expect.any(Function));
 
 		return renderer(req, res, next)
 			.then(() => {
-				next.should.not.have.been.called;
-				res.end.should.not.have.been.called;
-				res.status.should.have.been.called;
-				res.status.should.have.been.calledWith(404);
+				expect(next).not.toHaveBeenCalled();
+				expect(res.end).not.toHaveBeenCalled();
+				expect(res.status).toHaveBeenCalled();
+				expect(res.status).toHaveBeenCalledWith(404);
 
-				o.render.should.have.been.calledTwice;
+				expect(o.render).toHaveBeenCalledTwice;
 			});
 	});
 
 
-	it ('renderer: Error Thrown', () => {
-		const {getPageRenderer} = mock.reRequire('../renderer');
+	test ('renderer: Error Thrown', () => {
+		const {getPageRenderer} = require('../renderer');
 		const config = {};
-		const serialize = sandbox.stub().returns('testHTML');
+		const serialize = jest.fn(() => 'testHTML');
 		const datacache = {
-			getForContext: sandbox.stub().returns({serialize})
+			getForContext: jest.fn(() => ({serialize}))
 		};
-		const next = sandbox.stub();
+		const next = jest.fn();
 		const appId = 'test';
 		const basepath = '/mocks/';
 		const req = {
@@ -151,26 +151,26 @@ describe('lib/renderer', () => {
 		};
 		const err = new Error('Ooops');
 
-		const render = sandbox.stub().throws(err);
+		const render = jest.fn(() => {throw err;});
 
 
 
 		const res = {
-			end: sandbox.stub(),
-			send: sandbox.stub(),
-			status: sandbox.stub()
+			end: jest.fn(),
+			send: jest.fn(),
+			status: jest.fn()
 		};
 
 		const renderer = getPageRenderer({appId, basepath}, config, datacache, render);
-		renderer.should.be.a('function');
+		expect(renderer).toEqual(expect.any(Function));
 
 		return renderer(req, res, next)
 			.then(() => {
-				next.should.have.been.calledWith(err);
-				res.end.should.not.have.been.called;
-				res.status.should.not.have.been.called;
+				expect(next).toHaveBeenCalledWith(err);
+				expect(res.end).not.toHaveBeenCalled();
+				expect(res.status).not.toHaveBeenCalled();
 
-				render.should.have.been.calledOnce;
+				expect(render).toHaveBeenCalledTimes(1);
 			});
 	});
 });

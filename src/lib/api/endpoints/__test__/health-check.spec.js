@@ -1,78 +1,73 @@
-/*globals expect*/
-/*eslint-env mocha*/
+/*eslint-env jest*/
 'use strict';
-const mock = require('mock-require');
-const sinon = require('sinon');
 
 
 describe ('lib/api/endpoints/heath-check', () => {
-	let sandbox;
 
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
+		jest.resetModules();
 	});
 
 
 	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
+		jest.resetModules();
 	});
 
 
-	it ('registers _ops/ping', () => {
-		const {default: register} = mock.reRequire('../health-check');
-		const api = {get: sandbox.stub()};
+	test ('registers _ops/ping', () => {
+		const {default: register} = require('../health-check');
+		const api = {get: jest.fn()};
 
-		expect(() => register(api, {}, {})).to.not.throw();
-		api.get.should.have.been.calledOnce;
-		api.get.should.have.been.calledWithExactly(sinon.match.regexp, sinon.match.func);
+		expect(() => register(api, {}, {})).not.toThrow();
+		expect(api.get).toHaveBeenCalledTimes(1);
+		expect(api.get).toHaveBeenCalledWith(expect.any(RegExp), expect.any(Function));
 	});
 
 
-	it ('_ops/ping calls server.get(_ops/ping)', () => {
-		const {default: register} = mock.reRequire('../health-check');
-		const api = {get: sandbox.stub()};
-		const server = {get: sandbox.stub().returns(Promise.resolve())};
+	test ('_ops/ping calls server.get(_ops/ping)', () => {
+		const {default: register} = require('../health-check');
+		const api = {get: jest.fn()};
+		const server = {get: jest.fn(() => Promise.resolve())};
 
-		expect(() => register(api, {}, server)).to.not.throw();
-		api.get.should.have.been.calledOnce;
-		api.get.should.have.been.calledWithExactly(sinon.match.regexp, sinon.match.func);
-		const [, callback] = api.get.getCall(0).args;
+		expect(() => register(api, {}, server)).not.toThrow();
+		expect(api.get).toHaveBeenCalledTimes(1);
+		expect(api.get).toHaveBeenCalledWith(expect.any(RegExp), expect.any(Function));
+		const [, callback] = api.get.mock.calls[0];
 		const res = {
-			status: sandbox.stub()
+			status: jest.fn()
 		};
 
 		return new Promise(finish => {
 			res.end = finish;
-			callback(context, res);
+			callback({}, res);
 		})
 			.then(() => {
-				res.status.should.have.been.calledOnce;
-				res.status.should.have.been.calledWithExactly(200);
+				expect(res.status).toHaveBeenCalledTimes(1);
+				expect(res.status).toHaveBeenCalledWith(200);
 			});
 	});
 
 
-	it ('_ops/ping 503\'s if anything goes wrong.', () => {
-		const {default: register} = mock.reRequire('../health-check');
-		const api = {get: sandbox.stub()};
-		const server = {get: sandbox.stub().returns(Promise.reject())};
+	test ('_ops/ping 503\'s if anything goes wrong.', () => {
+		const {default: register} = require('../health-check');
+		const api = {get: jest.fn()};
+		const server = {get: jest.fn(() => Promise.reject())};
 
-		expect(() => register(api, {}, server)).to.not.throw();
-		api.get.should.have.been.calledOnce;
-		api.get.should.have.been.calledWithExactly(sinon.match.regexp, sinon.match.func);
-		const [, callback] = api.get.getCall(0).args;
+		expect(() => register(api, {}, server)).not.toThrow();
+		expect(api.get).toHaveBeenCalledTimes(1);
+		expect(api.get).toHaveBeenCalledWith(expect.any(RegExp), expect.any(Function));
+		const [, callback] = api.get.mock.calls[0];
 		const res = {
-			status: sandbox.stub()
+			status: jest.fn()
 		};
 
 		return new Promise(finish => {
 			res.end = finish;
-			callback(context, res);
+			callback({}, res);
 		})
 			.then(() => {
-				res.status.should.have.been.calledOnce;
-				res.status.should.have.been.calledWithExactly(503);
+				expect(res.status).toHaveBeenCalledTimes(1);
+				expect(res.status).toHaveBeenCalledWith(503);
 			});
 	});
 });

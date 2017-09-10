@@ -1,8 +1,7 @@
-/*globals expect*/
-/*eslint-env mocha*/
+/*eslint-env jest*/
 'use strict';
-const mock = require('mock-require');
-const sinon = require('sinon');
+
+const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 describe('lib/app-service', () => {
 	const cacheBusterMiddleware = Object.freeze({});
@@ -16,153 +15,152 @@ describe('lib/app-service', () => {
 	let getPageRenderer;
 	let logger;
 	let registerEndPoints;
-	let sandbox;
 	let sessionMock;
 	let sessionMockInstance;
 	let server;
 	let setupDataserver;
 
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
-		logger = {
-			attachToExpress: sandbox.stub(),
-			debug: sandbox.stub(),
-			error: sandbox.stub(),
-			info: sandbox.stub(),
-			warn: sandbox.stub(),
-		};
+		jest.resetModules();
+		logger = require('../logger');
 
-		cookieParserConstructor = sandbox.stub().returns('cookie-parser-middleware');
-		expressRequestLanguageMock = sandbox.stub().returns('express-request-language-middleware');
-		compressionMock = sandbox.stub();
+		stub(logger, 'get', () => logger);
+		stub(logger, 'attachToExpress');
+		stub(logger, 'debug');
+		stub(logger, 'error');
+		stub(logger, 'info');
+		stub(logger, 'warn');
+
+		cookieParserConstructor = jest.fn(() => 'cookie-parser-middleware');
+		expressRequestLanguageMock = jest.fn(() => 'express-request-language-middleware');
+		compressionMock = jest.fn();
 
 		sessionMockInstance = {
-			anonymousMiddleware: sandbox.stub().returns('anonymousMiddleware'),
-			middleware: sandbox.stub().returns('authenticatedMiddleware')
+			anonymousMiddleware: jest.fn(() => 'anonymousMiddleware'),
+			middleware: jest.fn(() => 'authenticatedMiddleware')
 		};
 
-		sessionMock = sandbox.stub().returns(sessionMockInstance);
+		sessionMock = jest.fn(() => sessionMockInstance);
 
-		setupDataserver = sandbox.stub().returns({mockServer: true});
+		setupDataserver = jest.fn(() => ({mockServer: true}));
 
-		staticMock = sandbox.stub().returns('staticMiddleware');
+		staticMock = jest.fn(() => 'staticMiddleware');
+
 		expressMock = Object.assign(
 			() => Object.create(expressMock, {
-				use: {value: sandbox.stub()},
-				set: {value: sandbox.stub()},
-				get: {value: sandbox.stub()}
+				use: {value: jest.fn()},
+				set: {value: jest.fn()},
+				get: {value: jest.fn()}
 			}), { static: staticMock });
 
 		server = Object.freeze(expressMock());
 
-		getPageRenderer = sandbox.stub().returns('page-renderer');
-		registerEndPoints = sandbox.stub();
+		getPageRenderer = jest.fn(() => 'page-renderer');
+		registerEndPoints = jest.fn();
 
-		mock('cookie-parser', cookieParserConstructor);
-		mock('express-request-language', expressRequestLanguageMock);
-		mock('../logger', logger);
-		mock('express', expressMock);
-		mock('serve-static', staticMock);
-		mock('nti-lib-interfaces', {default: setupDataserver});
-		mock('../api', registerEndPoints);
-		mock('../compress', {attachToExpress: compressionMock});
-		mock('../no-cache', cacheBusterMiddleware);
-		mock('../cors', corsMiddleware);
-		mock('../session', sessionMock);
-		mock('../renderer', {getPageRenderer});
+		jest.doMock('cookie-parser', () => cookieParserConstructor);
+		jest.doMock('express-request-language', () => expressRequestLanguageMock);
+		jest.doMock('../logger', () => logger);
+		jest.doMock('express', () => expressMock);
+		jest.doMock('serve-static', () => staticMock);
+		jest.doMock('nti-lib-interfaces', () => ({default: setupDataserver}));
+		jest.doMock('../api', () => registerEndPoints);
+		jest.doMock('../compress', () => ({attachToExpress: compressionMock}));
+		jest.doMock('../no-cache', () => cacheBusterMiddleware);
+		jest.doMock('../cors', () => corsMiddleware);
+		jest.doMock('../session', () => sessionMock);
+		jest.doMock('../renderer', () => ({getPageRenderer}));
 
 		if (!process.send) {
 			process.send = function fakeSend () {};
 		}
-		sandbox.stub(process, 'send');
+		stub(process, 'send');
 	});
 
 	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
+		jest.resetModules();
 		if (process.send.name === 'fakeSend') {
 			delete process.send;
 		}
 	});
 
 
-	it ('neverCacheManifestFiles(): adds no-cache headers for manifests', () => {
+	test ('neverCacheManifestFiles(): adds no-cache headers for manifests', () => {
 		const resp = Object.freeze({});
-		const stuby = sandbox.stub();
-		mock('../no-cache', stuby);
-		const service = mock.reRequire('../app-service');
+		const stuby = jest.fn();
+		jest.doMock('../no-cache', () => stuby);
+		const service = require('../app-service');
 
 		service.neverCacheManifestFiles(resp, '/index.html');
-		stuby.should.not.have.been.called;
-		stuby.reset();
+		expect(stuby).not.toHaveBeenCalled();
+		stuby.mockClear();
 
 		service.neverCacheManifestFiles(resp, '/index.appcache.html');
-		stuby.should.not.have.been.called;
-		stuby.reset();
+		expect(stuby).not.toHaveBeenCalled();
+		stuby.mockClear();
 
 		service.neverCacheManifestFiles(resp, '/index.html.appcache');
-		stuby.should.have.been.calledOnce;
-		stuby.should.have.been.calledWith(null, resp, sinon.match.func);
-		stuby.reset();
+		expect(stuby).toHaveBeenCalledTimes(1);
+		expect(stuby).toHaveBeenCalledWith(null, resp, expect.any(Function));
+		stuby.mockClear();
 
 		service.neverCacheManifestFiles(resp, '/index.appcache');
-		stuby.should.have.been.calledOnce;
-		stuby.should.have.been.calledWith(null, resp, sinon.match.func);
-		stuby.reset();
+		expect(stuby).toHaveBeenCalledTimes(1);
+		expect(stuby).toHaveBeenCalledWith(null, resp, expect.any(Function));
 	});
 
 
-	it ('forceError(): throws', () => {
-		const service = mock.reRequire('../app-service');
+	test ('forceError(): throws', () => {
+		const service = require('../app-service');
 
-		expect(() => service.forceError()).to.throw();
+		expect(() => service.forceError()).toThrow();
 	});
 
 
-	it ('resourceNotFound(): sets 404', () => {
-		const service = mock.reRequire('../app-service');
+	test ('resourceNotFound(): sets 404', () => {
+		const service = require('../app-service');
 
 		const resp = {
 			status () { return this; },
 			send () { return this; }
 		};
 
-		sandbox.spy(resp, 'status');
-		sandbox.spy(resp, 'send');
+		jest.spyOn(resp, 'status');
+		jest.spyOn(resp, 'send');
 
 		service.resourceNotFound(null, resp);
 		// res.status(404).send('Asset Not Found');
 
-		resp.status.should.have.been.calledOnce;
-		resp.status.should.have.been.calledWithExactly(404);
+		expect(resp.status).toHaveBeenCalledTimes(1);
+		expect(resp.status).toHaveBeenCalledWith(404);
 
-		resp.send.should.have.been.calledOnce;
-		resp.send.should.have.been.calledWithExactly('Asset Not Found');
+		expect(resp.send).toHaveBeenCalledTimes(1);
+		expect(resp.send).toHaveBeenCalledWith('Asset Not Found');
 	});
 
 
-	it ('contextualize(): nests an express instance under a route', () => {
-		const service = mock.reRequire('../app-service');
-		sandbox.stub(service, 'setupApplication');
-		sandbox.stub(service, 'setupClient');
+	test ('contextualize(): nests an express instance under a route', () => {
+		const service = require('../app-service');
+		stub(service, 'setupApplication');
+		stub(service, 'setupClient');
 
 		const root = '/test';
 		const app = expressMock();
 
 		const newApp = service.contextualize(root, app);
 
-		newApp.should.be.ok;
-		newApp.should.not.equal(app);
+		expect(newApp).toBeTruthy();
+		expect(newApp).not.toBe(app);
 
-		app.use.should.have.been.calledOnce;
-		app.use.should.have.been.calledWith(root, newApp);
+		expect(app.use).toHaveBeenCalledTimes(1);
+		expect(app.use).toHaveBeenCalledWith(root, newApp);
 	});
 
 
-	it ('setupApplication(): gathers config, attaches middleware, and sets up all apps', () => {
-		const service = mock.reRequire('../app-service');
-		sandbox.stub(service, 'setupClient');
-		const restartCallback = sandbox.stub();
+	test ('setupApplication(): gathers config, attaches middleware, and sets up all apps', () => {
+		const service = require('../app-service');
+		stub(service, 'setupClient');
+		const restartCallback = jest.fn();
 		const config = Object.freeze({
 			test: 'abc',
 			apps: [
@@ -177,35 +175,35 @@ describe('lib/app-service', () => {
 
 		service.setupApplication(server, config, restartCallback);
 
-		restartCallback.should.not.have.been.called;
+		expect(restartCallback).not.toHaveBeenCalled();
 
-		logger.attachToExpress.should.have.been.calledOnce;
-		logger.attachToExpress.should.have.been.calledWith(server);
+		expect(logger.attachToExpress).toHaveBeenCalledTimes(1);
+		expect(logger.attachToExpress).toHaveBeenCalledWith(server);
 
-		service.setupClient.should.have.been.calledTwice;
-		service.setupClient.should.have.been.calledWith(config.apps[0]);
-		service.setupClient.should.have.been.calledWith(config.apps[1]);
+		expect(service.setupClient).toHaveBeenCalledTimes(2);
+		expect(service.setupClient).toHaveBeenCalledWith(config.apps[0], expect.any(Object));
+		expect(service.setupClient).toHaveBeenCalledWith(config.apps[1], expect.any(Object));
 
-		server.use.should.have.been.calledTwice
-			.and.have.been.calledWith('cookie-parser-middleware')
-			.and.have.been.calledWith(corsMiddleware);
+		expect(server.use).toHaveBeenCalledTimes(2);
+		expect(server.use).toHaveBeenCalledWith('cookie-parser-middleware');
+		expect(server.use).toHaveBeenCalledWith(corsMiddleware);
 	});
 
 
-	it ('setupClient(): expectations (production)', () => {
+	test ('setupClient(): expectations (production)', () => {
 		const ONE_HOUR = '1 hour';
 		const mockReg = {
 			assets: 'mock/assets/path',
 			devmode: false,
-			render: sandbox.stub(),
-			sessionSetup: sandbox.stub()
+			render: jest.fn(),
+			sessionSetup: jest.fn()
 		};
 
-		mock('test-app', {register: sandbox.stub().returns(mockReg)});
+		jest.doMock('test-app', () => ({register: jest.fn(() => mockReg)}), {virtual: true});
 
-		const service = mock.reRequire('../app-service');
+		const service = require('../app-service');
 		const clientApp = expressMock();
-		sandbox.stub(service, 'contextualize').returns(clientApp);
+		stub(service, 'contextualize', () => clientApp);
 
 		//the freeze ensures attempts at modifying it will explode.
 		const clientConfig = Object.freeze({
@@ -220,77 +218,77 @@ describe('lib/app-service', () => {
 			config: Object.freeze({mockConfig: true}),
 			datacache: Object.freeze({}),
 			interface: Object.freeze({}),
-			restartRequest: sandbox.stub()
+			restartRequest: jest.fn()
 		};
 
 		const ret = service.setupClient(clientConfig, params);
 
-		expect(ret).to.be.undefinded;
-		params.restartRequest.should.not.have.been.called;
+		expect(ret).not.toBeDefined();
+		expect(params.restartRequest).not.toHaveBeenCalled();
 
-		service.contextualize.should.have.been.called;
+		expect(service.contextualize).toHaveBeenCalled();
 
-		compressionMock.should.have.been.calledOnce;
-		compressionMock.should.have.been.calledWith(clientApp, mockReg.assets);
+		expect(compressionMock).toHaveBeenCalledTimes(1);
+		expect(compressionMock).toHaveBeenCalledWith(clientApp, mockReg.assets);
 
-		staticMock.should.have.been.calledOnce;
-		staticMock.should.have.been.calledWith(mockReg.assets);
-		staticMock.should.have.been.calledWith(mockReg.assets, sinon.match({maxAge: ONE_HOUR}));
+		expect(staticMock).toHaveBeenCalledTimes(1);
+		expect(staticMock).toHaveBeenCalledWith(mockReg.assets, expect.any(Object));
+		expect(staticMock).toHaveBeenCalledWith(mockReg.assets, expect.objectContaining({maxAge: ONE_HOUR}));
 
-		clientApp.get.should.have.been.calledTwice;
-		clientApp.get.should.have.been.calledWith(sinon.match.regexp, service.resourceNotFound);
-		clientApp.get.should.have.been.calledWith('*', 'page-renderer');
+		expect(clientApp.get).toHaveBeenCalledTimes(2);
+		expect(clientApp.get).toHaveBeenCalledWith(expect.any(RegExp), service.resourceNotFound);
+		expect(clientApp.get).toHaveBeenCalledWith('*', 'page-renderer');
 
-		registerEndPoints.should.have.been.calledOnce;
-		registerEndPoints.should.have.been.calledWith(
+		expect(registerEndPoints).toHaveBeenCalledTimes(1);
+		expect(registerEndPoints).toHaveBeenCalledWith(
 			clientApp,
-			sinon.match({mockConfig: true, package: 'test-app', basepath: '/basepath/'}),
+			expect.objectContaining({mockConfig: true, package: 'test-app', basepath: '/basepath/'}),
 			params.interface
 		);
 
-		clientApp.use.callCount.should.be.equal(6);
-		clientApp.use.should.have.been.calledWith('staticMiddleware');
-		clientApp.use.should.have.been.calledWith('express-request-language-middleware');
-		clientApp.use.should.have.been.calledWith(cacheBusterMiddleware);
-		clientApp.use.should.have.been.calledWith(service.FORCE_ERROR_ROUTE, service.forceError);
-		clientApp.use.should.have.been.calledWith(service.ANONYMOUS_ROUTES, sinon.match.func);
-		clientApp.use.should.have.been.calledWith(service.AUTHENTICATED_ROUTES, sinon.match.func);
+		expect(clientApp.use.mock.calls.length).toEqual(6);
+		expect(clientApp.use).toHaveBeenCalledWith('staticMiddleware');
+		expect(clientApp.use).toHaveBeenCalledWith('express-request-language-middleware');
+		expect(clientApp.use).toHaveBeenCalledWith(cacheBusterMiddleware);
+		expect(clientApp.use).toHaveBeenCalledWith(service.FORCE_ERROR_ROUTE, service.forceError);
+		expect(clientApp.use).toHaveBeenCalledWith(service.ANONYMOUS_ROUTES, expect.any(Function));
+		expect(clientApp.use).toHaveBeenCalledWith(service.AUTHENTICATED_ROUTES, expect.any(Function));
 
 		const args = [{}, {}, {}];
-		for (let n = 0; n < clientApp.use.callCount; n++) {
-			const call = clientApp.use.getCall(n);
-			if (call.calledWith(service.ANONYMOUS_ROUTES) || call.calledWith(service.AUTHENTICATED_ROUTES)) {
-				call.args[1].apply(null, args);
+		for (let n = 0; n < clientApp.use.mock.calls.length; n++) {
+			const [param, fn] = clientApp.use.mock.calls[n];
+			if (param === service.ANONYMOUS_ROUTES || param === service.AUTHENTICATED_ROUTES) {
+				fn.apply(null, args);
 			}
 		}
 
-		sessionMockInstance.anonymousMiddleware.should.have.been.calledOnce;
-		sessionMockInstance.anonymousMiddleware.should.have.been.calledWithExactly(clientConfig.basepath, args[0], args[1], args[2]);
+		expect(sessionMockInstance.anonymousMiddleware).toHaveBeenCalledTimes(1);
+		expect(sessionMockInstance.anonymousMiddleware).toHaveBeenCalledWith(clientConfig.basepath, args[0], args[1], args[2]);
 
-		sessionMockInstance.middleware.should.have.been.calledOnce;
-		sessionMockInstance.middleware.should.have.been.calledWithExactly(clientConfig.basepath, args[0], args[1], args[2]);
+		expect(sessionMockInstance.middleware).toHaveBeenCalledTimes(1);
+		expect(sessionMockInstance.middleware).toHaveBeenCalledWith(clientConfig.basepath, args[0], args[1], args[2]);
 
-		getPageRenderer.should.have.been.calledOnce;
-		getPageRenderer.should.have.been.calledWith(clientConfigWithAssets, params.config, params.datacache, mockReg.render);
+		expect(getPageRenderer).toHaveBeenCalledTimes(1);
+		expect(getPageRenderer).toHaveBeenCalledWith(clientConfigWithAssets, params.config, params.datacache, mockReg.render, undefined);
 
-		process.send.should.not.have.been.called;
+		expect(process.send).not.toHaveBeenCalled();
 	});
 
 
-	it ('setupClient(): expectations (devmode)', () => {
+	test ('setupClient(): expectations (devmode)', () => {
 		const ONE_HOUR = '1 hour';
 		const mockReg = {
 			assets: 'mock/assets/path',
-			devmode: { start: sandbox.stub() },
-			render: sandbox.stub(),
-			sessionSetup: sandbox.stub()
+			devmode: { start: jest.fn() },
+			render: jest.fn(),
+			sessionSetup: jest.fn()
 		};
 
-		mock('test-app', {register: sandbox.stub().returns(mockReg)});
+		jest.doMock('test-app', () => ({register: jest.fn(() => mockReg)}), {virtual: true});
 
-		const service = mock.reRequire('../app-service');
+		const service = require('../app-service');
 		const clientApp = expressMock();
-		sandbox.stub(service, 'contextualize').returns(clientApp);
+		stub(service, 'contextualize', () => clientApp);
 
 		//the freeze ensures attempts at modifying it will explode.
 		const clientConfig = Object.freeze({
@@ -305,61 +303,61 @@ describe('lib/app-service', () => {
 			config: Object.freeze({mockConfig: true}),
 			datacache: Object.freeze({}),
 			interface: Object.freeze({}),
-			restartRequest: sandbox.stub()
+			restartRequest: jest.fn()
 		};
 
 		const ret = service.setupClient(clientConfig, params);
 
-		expect(ret).to.be.undefinded;
-		params.restartRequest.should.not.have.been.called;
+		expect(ret).not.toBeDefined();
+		expect(params.restartRequest).not.toHaveBeenCalled();
 
-		service.contextualize.should.have.been.called;
+		expect(service.contextualize).toHaveBeenCalled();
 
-		compressionMock.should.have.been.calledOnce;
-		compressionMock.should.have.been.calledWith(clientApp, mockReg.assets);
+		expect(compressionMock).toHaveBeenCalledTimes(1);
+		expect(compressionMock).toHaveBeenCalledWith(clientApp, mockReg.assets);
 
-		staticMock.should.have.been.calledOnce;
-		staticMock.should.have.been.calledWith(mockReg.assets);
-		staticMock.should.have.been.calledWith(mockReg.assets, sinon.match({maxAge: ONE_HOUR}));
+		expect(staticMock).toHaveBeenCalledTimes(1);
+		expect(staticMock).toHaveBeenCalledWith(mockReg.assets, expect.any(Object));
+		expect(staticMock).toHaveBeenCalledWith(mockReg.assets, expect.objectContaining({maxAge: ONE_HOUR}));
 
-		clientApp.get.should.have.been.calledTwice;
-		clientApp.get.should.have.been.calledWith(sinon.match.regexp, service.resourceNotFound);
-		clientApp.get.should.have.been.calledWith('*', 'page-renderer');
+		expect(clientApp.get).toHaveBeenCalledTimes(2);
+		expect(clientApp.get).toHaveBeenCalledWith(expect.any(RegExp), service.resourceNotFound);
+		expect(clientApp.get).toHaveBeenCalledWith('*', 'page-renderer');
 
-		registerEndPoints.should.have.been.calledOnce;
-		registerEndPoints.should.have.been.calledWith(
+		expect(registerEndPoints).toHaveBeenCalledTimes(1);
+		expect(registerEndPoints).toHaveBeenCalledWith(
 			clientApp,
-			sinon.match({mockConfig: true, package: 'test-app', basepath: '/basepath/'}),
+			expect.objectContaining({mockConfig: true, package: 'test-app', basepath: '/basepath/'}),
 			params.interface
 		);
 
-		clientApp.use.callCount.should.be.equal(6);
-		clientApp.use.should.have.been.calledWith('staticMiddleware');
-		clientApp.use.should.have.been.calledWith('express-request-language-middleware');
-		clientApp.use.should.have.been.calledWith(cacheBusterMiddleware);
-		clientApp.use.should.have.been.calledWith(service.FORCE_ERROR_ROUTE, service.forceError);
-		clientApp.use.should.have.been.calledWith(service.ANONYMOUS_ROUTES, sinon.match.func);
-		clientApp.use.should.have.been.calledWith(service.AUTHENTICATED_ROUTES, sinon.match.func);
+		expect(clientApp.use.mock.calls.length).toEqual(6);
+		expect(clientApp.use).toHaveBeenCalledWith('staticMiddleware');
+		expect(clientApp.use).toHaveBeenCalledWith('express-request-language-middleware');
+		expect(clientApp.use).toHaveBeenCalledWith(cacheBusterMiddleware);
+		expect(clientApp.use).toHaveBeenCalledWith(service.FORCE_ERROR_ROUTE, service.forceError);
+		expect(clientApp.use).toHaveBeenCalledWith(service.ANONYMOUS_ROUTES, expect.any(Function));
+		expect(clientApp.use).toHaveBeenCalledWith(service.AUTHENTICATED_ROUTES, expect.any(Function));
 
 		const args = [{}, {}, {}];
-		for (let n = 0; n < clientApp.use.callCount; n++) {
-			const call = clientApp.use.getCall(n);
-			if (call.calledWith(service.ANONYMOUS_ROUTES) || call.calledWith(service.AUTHENTICATED_ROUTES)) {
-				call.args[1].apply(null, args);
+		for (let n = 0; n < clientApp.use.mock.calls.length; n++) {
+			const [param, fn] = clientApp.use.mock.calls[n];
+			if (param === service.ANONYMOUS_ROUTES || param === service.AUTHENTICATED_ROUTES) {
+				fn.apply(null, args);
 			}
 		}
 
-		sessionMockInstance.anonymousMiddleware.should.have.been.calledOnce;
-		sessionMockInstance.anonymousMiddleware.should.have.been.calledWithExactly(clientConfig.basepath, args[0], args[1], args[2]);
+		expect(sessionMockInstance.anonymousMiddleware).toHaveBeenCalledTimes(1);
+		expect(sessionMockInstance.anonymousMiddleware).toHaveBeenCalledWith(clientConfig.basepath, args[0], args[1], args[2]);
 
-		sessionMockInstance.middleware.should.have.been.calledOnce;
-		sessionMockInstance.middleware.should.have.been.calledWithExactly(clientConfig.basepath, args[0], args[1], args[2]);
+		expect(sessionMockInstance.middleware).toHaveBeenCalledTimes(1);
+		expect(sessionMockInstance.middleware).toHaveBeenCalledWith(clientConfig.basepath, args[0], args[1], args[2]);
 
-		getPageRenderer.should.have.been.calledOnce;
-		getPageRenderer.should.have.been.calledWith(clientConfigWithAssets, params.config, params.datacache, mockReg.render);
+		expect(getPageRenderer).toHaveBeenCalledTimes(1);
+		expect(getPageRenderer).toHaveBeenCalledWith(clientConfigWithAssets, params.config, params.datacache, mockReg.render, undefined);
 
-		process.send.should.have.been.calledOnce;
-		process.send.should.have.been.calledWith(sinon.match({cmd: 'NOTIFY_DEVMODE'}));
-		mockReg.devmode.start.should.have.been.calledOnce;
+		expect(process.send).toHaveBeenCalledTimes(1);
+		expect(process.send).toHaveBeenCalledWith(expect.objectContaining({cmd: 'NOTIFY_DEVMODE'}));
+		expect(mockReg.devmode.start).toHaveBeenCalledTimes(1);
 	});
 });

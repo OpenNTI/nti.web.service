@@ -1,73 +1,70 @@
-/*globals expect*/
-/*eslint-env mocha*/
+/*eslint-env jest*/
 'use strict';
-const mock = require('mock-require');
-const sinon = require('sinon');
-const {ServiceStash} = require('nti-lib-interfaces');
+
+const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 describe('lib/session', () => {
-	let logger;
-	let sandbox;
+	let logger, ServiceStash;
 
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
-		logger = {
-			debug: sandbox.stub(),
-			error: sandbox.stub(),
-			info: sandbox.stub(),
-			warn: sandbox.stub(),
-			get: sandbox.stub().returns(logger)
-		};
-		mock('../../logger', logger);
+		jest.resetModules();
+		logger = require('../../logger');
+
+		stub(logger, 'get', () => logger);
+		stub(logger, 'attachToExpress');
+		stub(logger, 'debug');
+		stub(logger, 'error');
+		stub(logger, 'info');
+		stub(logger, 'warn');
+
+		ServiceStash = require('nti-lib-interfaces').ServiceStash;
 	});
 
 
 	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
+		jest.resetModules();
+	});
+
+	test ('Session is a Class', () => {
+		const Session = require('../index');
+
+		expect(Session).toEqual(expect.any(Function));
+		expect(Session.prototype).not.toBe(Object.prototype);
 	});
 
 
-	it ('Session is a Class', () => {
-		const Session = mock.reRequire('../index');
+	test ('Session constructor throws for no args', () => {
+		const Session = require('../index');
 
-		Session.should.be.a('function');
-		Session.prototype.should.not.equal(Object.prototype);
+		expect(() => new Session()).toThrow();
 	});
 
 
-	it ('Session constructor throws for no args', () => {
-		const Session = mock.reRequire('../index');
-
-		expect(() => new Session()).to.throw();
-	});
-
-
-	it ('Session constructor assigns server, and sessionSetup callback to self', () => {
-		const Session = mock.reRequire('../index');
+	test ('Session constructor assigns server, and sessionSetup callback to self', () => {
+		const Session = require('../index');
 		const server = { config: {} };
-		const sessionSetup = sandbox.stub();
+		const sessionSetup = jest.fn();
 		const session = new Session(server, sessionSetup);
 
-		session.server.should.be.equal(server);
-		session.config.should.be.equal(server.config);
-		session.sessionSetup.should.be.equal(sessionSetup);
-		sessionSetup.should.not.have.been.called;
+		expect(session.server).toEqual(server);
+		expect(session.config).toEqual(server.config);
+		expect(session.sessionSetup).toBe(sessionSetup);
+		expect(sessionSetup).not.toHaveBeenCalled();
 	});
 
 
-	it ('Session::getUser() - fulfills with the username of the active user (resolved from the Title of the User workspace on the service document)', () => {
+	test ('Session::getUser() - fulfills with the username of the active user (resolved from the Title of the User workspace on the service document)', () => {
 		const workspace = {Title: 'testuser'};
-		const Session = mock.reRequire('../index');
+		const Session = require('../index');
 		const session = new Session({});
-		const doc = {getUserWorkspace: sandbox.stub().returns(workspace)};
-		sandbox.stub(session, 'getServiceDocument').returns(Promise.resolve(doc));
+		const doc = {getUserWorkspace: jest.fn(() => workspace)};
+		stub(session, 'getServiceDocument', () => Promise.resolve(doc));
 
 		const test = (context) => session.getUser(context)
 			.then(name => {
-				name.should.be.equal(workspace.Title);
-				session.getServiceDocument.should.have.been.calledWithExactly(context);
-				doc.getUserWorkspace.should.have.been.calledWithExactly();
+				expect(name).toEqual(workspace.Title);
+				expect(session.getServiceDocument).toHaveBeenCalledWith(context);
+				expect(doc.getUserWorkspace).toHaveBeenCalledWith();
 			});
 
 		return Promise.resolve()//sequential not parallel!
@@ -76,18 +73,18 @@ describe('lib/session', () => {
 	});
 
 
-	it ('Session::getUser() - error case - no user workspace', () => {
-		const Session = mock.reRequire('../index');
+	test ('Session::getUser() - error case - no user workspace', () => {
+		const Session = require('../index');
 		const session = new Session({});
-		const doc = { getUserWorkspace: sandbox.stub() };
-		sandbox.stub(session, 'getServiceDocument').returns(Promise.resolve(doc));
+		const doc = { getUserWorkspace: jest.fn() };
+		stub(session, 'getServiceDocument', () => Promise.resolve(doc));
 
 		const test = (context) => session.getUser(context)
 			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
 			.catch(error => {
-				expect(error).to.equal('No user workspace');
-				session.getServiceDocument.should.have.been.calledWithExactly(context);
-				doc.getUserWorkspace.should.have.been.calledWithExactly();
+				expect(error).toEqual('No user workspace');
+				expect(session.getServiceDocument).toHaveBeenCalledWith(context);
+				expect(doc.getUserWorkspace).toHaveBeenCalledWith();
 			});
 
 		return Promise.resolve()//sequential not parallel!
@@ -96,72 +93,72 @@ describe('lib/session', () => {
 	});
 
 
-	it ('Session::getServiceDocument() - resolve the service document through a ping/handshake. Stash the logout-url.', () => {
-		const Session = mock.reRequire('../index');
+	test ('Session::getServiceDocument() - resolve the service document through a ping/handshake. Stash the logout-url.', () => {
+		const Session = require('../index');
 		const context = Object.create(null);
-		const pong = {getLink: sandbox.stub().withArgs('logon.logout').returns('lala')};
-		const ping = sandbox.stub().returns(Promise.resolve(pong));
-		const doc = {setLogoutURL: sandbox.stub()};
-		const getServiceDocument = sandbox.stub().returns(Promise.resolve(doc));
+		const pong = {getLink: jest.fn(x => x === 'logon.logout' ? 'lala' : void x)};
+		const ping = jest.fn(() => Promise.resolve(pong));
+		const doc = {setLogoutURL: jest.fn()};
+		const getServiceDocument = jest.fn(() => Promise.resolve(doc));
 		const session = new Session({getServiceDocument, ping});
 
 		return session.getServiceDocument(context)
 			.then(resolved => {
-				doc.should.equal(resolved);
-				doc.setLogoutURL.should.have.been.calledOnce;
-				doc.setLogoutURL.should.have.been.calledWithExactly('lala');
+				expect(doc).toEqual(resolved);
+				expect(doc.setLogoutURL).toHaveBeenCalledTimes(1);
+				expect(doc.setLogoutURL).toHaveBeenCalledWith('lala');
 
-				ping.should.have.been.calledOnce;
-				ping.should.have.been.calledWithExactly(void 0, context);
-				getServiceDocument.should.have.been.calledOnce;
-				getServiceDocument.should.have.been.calledWithExactly(context);
+				expect(ping).toHaveBeenCalledTimes(1);
+				expect(ping).toHaveBeenCalledWith(void 0, context);
+				expect(getServiceDocument).toHaveBeenCalledTimes(1);
+				expect(getServiceDocument).toHaveBeenCalledWith(context);
 
-				pong.getLink.should.have.been.calledOnce;
-				pong.getLink.should.have.been.calledWith('logon.logout');
+				expect(pong.getLink).toHaveBeenCalledTimes(1);
+				expect(pong.getLink).toHaveBeenCalledWith('logon.logout');
 			});
 	});
 
 
-	it ('Session::setupIntitalData() - get the service document, stash it on the context, call sessionSetup callback', () => {
-		const Session = mock.reRequire('../index');
-		const setup = sandbox.stub();
+	test ('Session::setupIntitalData() - get the service document, stash it on the context, call sessionSetup callback', () => {
+		const Session = require('../index');
+		const setup = jest.fn();
 		const handler = {
-			get: sandbox.stub(),
-			set: sandbox.stub().withArgs(sinon.match.object, ServiceStash).returns(true)
+			get: jest.fn(),
+			set: jest.fn((x, y) => y === ServiceStash || void y)
 		};
 		const context = new Proxy({url: '...'}, handler);
 		const service = {};
-		const getServiceDocument = sandbox.stub().returns(Promise.resolve(service));
+		const getServiceDocument = jest.fn(() => Promise.resolve(service));
 		const session = new Session({getServiceDocument}, setup);
 
 		return session.setupIntitalData(context)
 			.then(() => {
-				getServiceDocument.should.have.been.calledOnce;
-				getServiceDocument.should.have.been.calledWithExactly(context);
+				expect(getServiceDocument).toHaveBeenCalledTimes(1);
+				expect(getServiceDocument).toHaveBeenCalledWith(context);
 
-				setup.should.have.been.calledOnce;
-				setup.should.have.been.calledWith(service);
+				expect(setup).toHaveBeenCalledTimes(1);
+				expect(setup).toHaveBeenCalledWith(service);
 
-				handler.set.should.have.been.calledOnce;
-				handler.set.should.have.been.calledWith(sinon.match.object, ServiceStash, service);
+				expect(handler.set).toHaveBeenCalledTimes(1);
+				expect(handler.set).toHaveBeenCalledWith(expect.any(Object), ServiceStash, service, expect.any(Object));
 			});
 	});
 
 
-	it ('Session::middleware() - gets the user, assigns it to the request context, and setups up intital data', () => {
-		const Session = mock.reRequire('../index');
+	test ('Session::middleware() - gets the user, assigns it to the request context, and setups up intital data', () => {
+		const Session = require('../index');
 		const session = new Session({});
-		sandbox.stub(session, 'getUser').callsFake(() => Promise.resolve('testuser'));
-		sandbox.stub(session, 'setupIntitalData');
+		stub(session, 'getUser', () => Promise.resolve('testuser'));
+		stub(session, 'setupIntitalData');
 		//Continue the rejections...we will test this function by itself.
-		sandbox.stub(session, 'maybeRedircect').callsFake(() => (e => Promise.reject(e)));
+		stub(session, 'maybeRedircect', () => (e => Promise.reject(e)));
 
-		const next = sandbox.stub();
+		const next = jest.fn();
 		const basepath = '';
 
 		const resp = {
-			set: sandbox.stub(),
-			redirect: sandbox.stub()
+			set: jest.fn(),
+			redirect: jest.fn()
 		};
 
 		const req = {
@@ -169,47 +166,47 @@ describe('lib/session', () => {
 			originalUrl: 'original-url',
 
 			socket: {
-				setKeepAlive: sandbox.stub()
+				setKeepAlive: jest.fn()
 			},
 
-			emit: sandbox.stub(),
-			once: sandbox.stub(),
-			removeListener: sandbox.stub(),
-			setMaxListeners: sandbox.stub(),
+			emit: jest.fn(),
+			once: jest.fn(),
+			removeListener: jest.fn(),
+			setMaxListeners: jest.fn(),
 		};
 
 		return session.middleware(basepath, req, resp, next)
 			.then(() => {
-				req.setMaxListeners.should.have.been.calledOnce;
-				req.setMaxListeners.should.have.been.calledWith(1000);
+				expect(req.setMaxListeners).toHaveBeenCalledTimes(1);
+				expect(req.setMaxListeners).toHaveBeenCalledWith(1000);
 
-				req.socket.setKeepAlive.should.have.been.calledOnce;
-				req.socket.setKeepAlive.should.have.been.calledWith(true, 1000);
+				expect(req.socket.setKeepAlive).toHaveBeenCalledTimes(1);
+				expect(req.socket.setKeepAlive).toHaveBeenCalledWith(true, 1000);
 
-				session.getUser.should.have.been.calledOnce;
-				session.getUser.should.have.been.calledWith(req);
+				expect(session.getUser).toHaveBeenCalledTimes(1);
+				expect(session.getUser).toHaveBeenCalledWith(req);
 
-				req.username.should.equal('testuser');
+				expect(req.username).toEqual('testuser');
 
-				session.setupIntitalData.should.have.been.calledOnce;
-				session.setupIntitalData.should.have.been.calledWith(req);
+				expect(session.setupIntitalData).toHaveBeenCalledTimes(1);
+				expect(session.setupIntitalData).toHaveBeenCalledWith(req);
 
-				next.should.have.been.calledOnce;
-				next.should.have.been.calledWithExactly();
+				expect(next).toHaveBeenCalledTimes(1);
+				expect(next).toHaveBeenCalledWith();
 			});
 	});
 
 
-	it ('Session::middleware() - error case: closed connection', () => {
-		const Session = mock.reRequire('../index');
+	test ('Session::middleware() - error case: closed connection', () => {
+		const Session = require('../index');
 		const session = new Session({});
 
-		const next = sandbox.stub();
+		const next = jest.fn();
 		const basepath = '/';
 
 		const resp = {
-			set: sandbox.stub(),
-			redirect: sandbox.stub()
+			set: jest.fn(),
+			redirect: jest.fn()
 		};
 
 		const req = {
@@ -217,49 +214,49 @@ describe('lib/session', () => {
 			originalUrl: 'original-url',
 
 			socket: {
-				setKeepAlive: sandbox.stub()
+				setKeepAlive: jest.fn()
 			},
 
-			emit: sandbox.stub(),
+			emit: jest.fn(),
 			once (event, cb) {
 				if(event === 'close') {
 					req['____forceClose'] = cb;
 				}
 			},
-			removeListener: sandbox.stub(),
-			setMaxListeners: sandbox.stub(),
+			removeListener: jest.fn(),
+			setMaxListeners: jest.fn(),
 		};
 
-		sandbox.stub(session, 'getUser').callsFake(() => (req['____forceClose'](), Promise.resolve('testuser')));
-		sandbox.stub(session, 'setupIntitalData');
+		stub(session, 'getUser', () => (req['____forceClose'](), Promise.resolve('testuser')));
+		stub(session, 'setupIntitalData');
 		//Continue the rejections...we will test this function by itself.
-		sandbox.stub(session, 'maybeRedircect').callsFake(() => (e => Promise.reject(e)));
+		stub(session, 'maybeRedircect', () => (e => Promise.reject(e)));
 
 		return session.middleware(basepath, req, resp, next)
 			.then(() => {
-				session.getUser.should.have.been.calledOnce;
-				session.getUser.should.have.been.calledWith(req);
+				expect(session.getUser).toHaveBeenCalledTimes(1);
+				expect(session.getUser).toHaveBeenCalledWith(req);
 
-				req.username.should.equal('testuser');
+				expect(req.username).toEqual('testuser');
 
-				session.setupIntitalData.should.not.have.been.called;
+				expect(session.setupIntitalData).not.toHaveBeenCalled();
 
-				next.should.have.been.calledOnce;
-				next.should.have.been.calledWithExactly('aborted');
+				expect(next).toHaveBeenCalledTimes(1);
+				expect(next).toHaveBeenCalledWith('aborted');
 			});
 	});
 
 
-	it ('Session::middleware() - error case: getUser rejects', () => {
-		const Session = mock.reRequire('../index');
+	test ('Session::middleware() - error case: getUser rejects', () => {
+		const Session = require('../index');
 		const session = new Session({});
 
-		const next = sandbox.stub();
+		const next = jest.fn();
 		const basepath = '';
 
 		const resp = {
-			set: sandbox.stub(),
-			redirect: sandbox.stub()
+			set: jest.fn(),
+			redirect: jest.fn()
 		};
 
 		const req = {
@@ -267,43 +264,43 @@ describe('lib/session', () => {
 			originalUrl: 'original-url',
 
 			socket: {
-				setKeepAlive: sandbox.stub()
+				setKeepAlive: jest.fn()
 			},
 
-			emit: sandbox.stub(),
-			once: sandbox.stub(),
-			removeListener: sandbox.stub(),
-			setMaxListeners: sandbox.stub(),
+			emit: jest.fn(),
+			once: jest.fn(),
+			removeListener: jest.fn(),
+			setMaxListeners: jest.fn(),
 		};
 
-		sandbox.stub(session, 'getUser').callsFake(() => Promise.reject('Test'));
-		sandbox.stub(session, 'setupIntitalData');
+		stub(session, 'getUser', () => Promise.reject('Test'));
+		stub(session, 'setupIntitalData');
 		//Continue the rejections...we will test this function by itself.
-		sandbox.stub(session, 'maybeRedircect').callsFake(() => (e => Promise.reject(e)));
+		stub(session, 'maybeRedircect', () => (e => Promise.reject(e)));
 
 		return session.middleware(basepath, req, resp, next)
 			.then(() => {
-				session.getUser.should.have.been.calledOnce;
-				session.getUser.should.have.been.calledWith(req);
+				expect(session.getUser).toHaveBeenCalledTimes(1);
+				expect(session.getUser).toHaveBeenCalledWith(req);
 
-				session.setupIntitalData.should.not.have.been.called;
+				expect(session.setupIntitalData).not.toHaveBeenCalled();
 
-				next.should.have.been.calledOnce;
-				next.should.have.been.calledWithExactly('Test');
+				expect(next).toHaveBeenCalledTimes(1);
+				expect(next).toHaveBeenCalledWith('Test');
 			});
 	});
 
 
-	it ('Session::middleware() - error case: setupIntitalData rejects', () => {
-		const Session = mock.reRequire('../index');
+	test ('Session::middleware() - error case: setupIntitalData rejects', () => {
+		const Session = require('../index');
 		const session = new Session({});
 
-		const next = sandbox.stub();
+		const next = jest.fn();
 		const basepath = '';
 
 		const resp = {
-			set: sandbox.stub(),
-			redirect: sandbox.stub()
+			set: jest.fn(),
+			redirect: jest.fn()
 		};
 
 		const req = {
@@ -311,50 +308,50 @@ describe('lib/session', () => {
 			originalUrl: 'original-url',
 
 			socket: {
-				setKeepAlive: sandbox.stub()
+				setKeepAlive: jest.fn()
 			},
 
-			emit: sandbox.stub(),
+			emit: jest.fn(),
 			once (event, cb) {
 				if(event === 'close') {
 					req['____forceClose'] = cb;
 				}
 			},
-			removeListener: sandbox.stub(),
-			setMaxListeners: sandbox.stub(),
+			removeListener: jest.fn(),
+			setMaxListeners: jest.fn(),
 		};
 
-		sandbox.stub(session, 'getUser').callsFake(() => Promise.resolve('testuser'));
-		sandbox.stub(session, 'setupIntitalData').callsFake(() => Promise.reject('Ooops'));
+		stub(session, 'getUser', () => Promise.resolve('testuser'));
+		stub(session, 'setupIntitalData', () => Promise.reject('Ooops'));
 		//Continue the rejections...we will test this function by itself.
-		sandbox.stub(session, 'maybeRedircect').callsFake(() => (e => Promise.reject(e)));
+		stub(session, 'maybeRedircect', () => (e => Promise.reject(e)));
 
 		return session.middleware(basepath, req, resp, next)
 			.then(() => {
-				session.getUser.should.have.been.calledOnce;
-				session.getUser.should.have.been.calledWith(req);
+				expect(session.getUser).toHaveBeenCalledTimes(1);
+				expect(session.getUser).toHaveBeenCalledWith(req);
 
-				req.username.should.equal('testuser');
+				expect(req.username).toEqual('testuser');
 
-				session.setupIntitalData.should.have.been.calledOnce;
-				session.setupIntitalData.should.have.been.calledWith(req);
+				expect(session.setupIntitalData).toHaveBeenCalledTimes(1);
+				expect(session.setupIntitalData).toHaveBeenCalledWith(req);
 
-				next.should.have.been.calledOnce;
-				next.should.have.been.calledWithExactly('Ooops');
+				expect(next).toHaveBeenCalledTimes(1);
+				expect(next).toHaveBeenCalledWith('Ooops');
 			});
 	});
 
 
-	it ('Session::middleware() - failing to set headers does not kill the response', () => {
-		const Session = mock.reRequire('../index');
+	test ('Session::middleware() - failing to set headers does not kill the response', () => {
+		const Session = require('../index');
 		const session = new Session({});
 
-		const next = sandbox.stub();
+		const next = jest.fn();
 		const basepath = '';
 
 		const resp = {
-			set: sandbox.stub().throws('Shoot. :\'('),
-			redirect: sandbox.stub()
+			set: jest.fn(() => {throw new Error('Shoot. :\'(');}),
+			redirect: jest.fn()
 		};
 
 		const req = {
@@ -362,47 +359,47 @@ describe('lib/session', () => {
 			originalUrl: 'original-url',
 
 			socket: {
-				setKeepAlive: sandbox.stub()
+				setKeepAlive: jest.fn()
 			},
 
-			emit: sandbox.stub(),
-			once: sandbox.stub(),
-			removeListener: sandbox.stub(),
-			setMaxListeners: sandbox.stub(),
+			emit: jest.fn(),
+			once: jest.fn(),
+			removeListener: jest.fn(),
+			setMaxListeners: jest.fn(),
 		};
 
-		sandbox.stub(session, 'getUser').callsFake(() => Promise.resolve('testuser'));
-		sandbox.stub(session, 'setupIntitalData');
+		stub(session, 'getUser', () => Promise.resolve('testuser'));
+		stub(session, 'setupIntitalData');
 		//Continue the rejections...we will test this function by itself.
-		sandbox.stub(session, 'maybeRedircect').callsFake(() => (e => Promise.reject(e)));
+		stub(session, 'maybeRedircect', () => (e => Promise.reject(e)));
 
 		return session.middleware(basepath, req, resp, next)
 			.then(() => {
-				session.getUser.should.have.been.calledOnce;
-				session.getUser.should.have.been.calledWith(req);
+				expect(session.getUser).toHaveBeenCalledTimes(1);
+				expect(session.getUser).toHaveBeenCalledWith(req);
 
-				req.username.should.equal('testuser');
+				expect(req.username).toEqual('testuser');
 
-				session.setupIntitalData.should.have.been.calledOnce;
-				session.setupIntitalData.should.have.been.calledWith(req);
+				expect(session.setupIntitalData).toHaveBeenCalledTimes(1);
+				expect(session.setupIntitalData).toHaveBeenCalledWith(req);
 
-				next.should.have.been.calledOnce;
-				next.should.have.been.calledWithExactly();
+				expect(next).toHaveBeenCalledTimes(1);
+				expect(next).toHaveBeenCalledWith();
 			});
 	});
 
 
-	it ('Session::maybeRedircect() - go to login', () => {
-		const Session = mock.reRequire('../index');
+	test ('Session::maybeRedircect() - go to login', () => {
+		const Session = require('../index');
 		const session = new Session({});
 
-		const next = sandbox.stub();
+		const next = jest.fn();
 		const basepath = '/';
 		const scope = '';
 		const start = new Date();
 
 		const resp = {
-			redirect: sandbox.stub().returns('redirected')
+			redirect: jest.fn(() => 'redirected')
 		};
 
 		const req = {
@@ -414,25 +411,25 @@ describe('lib/session', () => {
 		const callback = session.maybeRedircect(basepath, scope, start, req, resp, next);
 
 		let ret;
-		expect(() => ret = callback()).to.not.throw();
-		ret.should.equal('redirected');
-		resp.redirect.should.have.been.calledOnce;
-		resp.redirect.should.have.been.calledWithExactly('/login/?return=original-url');
-		next.should.not.have.been.called;
+		expect(() => ret = callback()).not.toThrow();
+		expect(ret).toEqual('redirected');
+		expect(resp.redirect).toHaveBeenCalledTimes(1);
+		expect(resp.redirect).toHaveBeenCalledWith('/login/?return=original-url');
+		expect(next).not.toHaveBeenCalled();
 	});
 
 
-	it ('Session::maybeRedircect() - drop on dead', () => {
-		const Session = mock.reRequire('../index');
+	test ('Session::maybeRedircect() - drop on dead', () => {
+		const Session = require('../index');
 		const session = new Session({});
 
-		const next = sandbox.stub();
+		const next = jest.fn();
 		const basepath = '/';
 		const scope = '';
 		const start = new Date();
 
 		const resp = {
-			redirect: sandbox.stub().returns('redirected')
+			redirect: jest.fn(() => 'redirected')
 		};
 
 		const req = {
@@ -445,24 +442,24 @@ describe('lib/session', () => {
 
 		req.dead = true;
 		let ret;
-		expect(() => ret = callback()).to.not.throw();
-		expect(ret).to.be.an('undefined');
-		next.should.not.have.been.called;
+		expect(() => ret = callback()).not.toThrow();
+		expect(ret).toBe(undefined);
+		expect(next).not.toHaveBeenCalled();
 
 	});
 
 
-	it ('Session::maybeRedircect() - redirect to login without return param if at root', () => {
-		const Session = mock.reRequire('../index');
+	test ('Session::maybeRedircect() - redirect to login without return param if at root', () => {
+		const Session = require('../index');
 		const session = new Session({});
 
-		const next = sandbox.stub();
+		const next = jest.fn();
 		const basepath = '/';
 		const scope = '';
 		const start = new Date();
 
 		const resp = {
-			redirect: sandbox.stub().returns('redirected')
+			redirect: jest.fn(() => 'redirected')
 		};
 
 		const req = {
@@ -474,26 +471,26 @@ describe('lib/session', () => {
 		const callback = session.maybeRedircect(basepath, scope, start, req, resp, next);
 
 		let ret;
-		expect(() => ret = callback({statusCode: 401})).to.not.throw();
-		ret.should.equal('redirected');
-		resp.redirect.should.have.been.calledOnce;
-		resp.redirect.should.have.been.calledWithExactly('/login/');
-		next.should.not.have.been.called;
+		expect(() => ret = callback({statusCode: 401})).not.toThrow();
+		expect(ret).toEqual('redirected');
+		expect(resp.redirect).toHaveBeenCalledTimes(1);
+		expect(resp.redirect).toHaveBeenCalledWith('/login/');
+		expect(next).not.toHaveBeenCalled();
 
 	});
 
 
-	it ('Session::maybeRedircect() - does not redirect to login if route is login', () => {
-		const Session = mock.reRequire('../index');
+	test ('Session::maybeRedircect() - does not redirect to login if route is login', () => {
+		const Session = require('../index');
 		const session = new Session({});
 
-		const next = sandbox.stub();
+		const next = jest.fn();
 		const basepath = '/';
 		const scope = 'login';
 		const start = new Date();
 
 		const resp = {
-			redirect: sandbox.stub().returns('redirected')
+			redirect: jest.fn(() => 'redirected')
 		};
 
 		const req = {
@@ -506,24 +503,24 @@ describe('lib/session', () => {
 
 		return Promise.resolve(callback('123'))
 			.catch(reason => {
-				reason.should.equal('123');
-				resp.redirect.should.not.have.been.calledOnce;
-				next.should.not.have.been.called;
+				expect(reason).toEqual('123');
+				expect(resp.redirect).not.toHaveBeenCalledTimes(1);
+				expect(next).not.toHaveBeenCalled();
 			});
 	});
 
 
-	it ('Session::maybeRedircect() - does not redirect to login if route is api', () => {
-		const Session = mock.reRequire('../index');
+	test ('Session::maybeRedircect() - does not redirect to login if route is api', () => {
+		const Session = require('../index');
 		const session = new Session({});
 
-		const next = sandbox.stub();
+		const next = jest.fn();
 		const basepath = '/';
 		const scope = 'api';
 		const start = new Date();
 
 		const resp = {
-			redirect: sandbox.stub().returns('redirected')
+			redirect: jest.fn(() => 'redirected')
 		};
 
 		const req = {
@@ -536,24 +533,24 @@ describe('lib/session', () => {
 
 		return Promise.resolve(callback('123'))
 			.catch(reason => {
-				reason.should.equal('123');
-				resp.redirect.should.not.have.been.calledOnce;
-				next.should.not.have.been.called;
+				expect(reason).toEqual('123');
+				expect(resp.redirect).not.toHaveBeenCalledTimes(1);
+				expect(next).not.toHaveBeenCalled();
 			});
 	});
 
 
-	it ('Session::maybeRedircect() - calls next on Error', () => {
-		const Session = mock.reRequire('../index');
+	test ('Session::maybeRedircect() - calls next on Error', () => {
+		const Session = require('../index');
 		const session = new Session({});
 
-		const next = sandbox.stub();
+		const next = jest.fn();
 		const basepath = '/';
 		const scope = '';
 		const start = new Date();
 
 		const resp = {
-			redirect: sandbox.stub().returns('redirected')
+			redirect: jest.fn(() => 'redirected')
 		};
 
 		const req = {
@@ -565,24 +562,24 @@ describe('lib/session', () => {
 		const callback = session.maybeRedircect(basepath, scope, start, req, resp, next);
 
 		const error = new Error('Oh snap');
-		expect(callback(error)).to.be.an('undefined');
-		resp.redirect.should.not.have.been.called;
-		next.should.have.been.calledOnce;
-		next.should.have.been.calledWithExactly(error);
+		expect(callback(error)).toEqual(undefined);
+		expect(resp.redirect).not.toHaveBeenCalled();
+		expect(next).toHaveBeenCalledTimes(1);
+		expect(next).toHaveBeenCalledWith(error);
 	});
 
 
-	it ('Session::maybeRedircect() - logon action', () => {
-		const Session = mock.reRequire('../index');
+	test ('Session::maybeRedircect() - logon action', () => {
+		const Session = require('../index');
 		const session = new Session({});
 
-		const next = sandbox.stub();
+		const next = jest.fn();
 		const basepath = '/';
 		const scope = '';
 		const start = new Date();
 
 		const resp = {
-			redirect: sandbox.stub().returns('redirected')
+			redirect: jest.fn(() => 'redirected')
 		};
 
 		const req = {
@@ -594,24 +591,24 @@ describe('lib/session', () => {
 		const callback = session.maybeRedircect(basepath, scope, start, req, resp, next);
 
 		const reason = {isLoginAction: true, route: 'tos'};
-		expect(callback(reason)).to.be.equal('redirected');
-		resp.redirect.should.have.been.calledOnce;
-		resp.redirect.should.have.been.calledWithExactly('/tos');
-		next.should.not.have.been.called;
+		expect(callback(reason)).toEqual('redirected');
+		expect(resp.redirect).toHaveBeenCalledTimes(1);
+		expect(resp.redirect).toHaveBeenCalledWith('/tos');
+		expect(next).not.toHaveBeenCalled();
 	});
 
 
-	it ('Session::maybeRedircect() - logon action (preserve return url)', () => {
-		const Session = mock.reRequire('../index');
+	test ('Session::maybeRedircect() - logon action (preserve return url)', () => {
+		const Session = require('../index');
 		const session = new Session({});
 
-		const next = sandbox.stub();
+		const next = jest.fn();
 		const basepath = '/';
 		const scope = '';
 		const start = new Date();
 
 		const resp = {
-			redirect: sandbox.stub().returns('redirected')
+			redirect: jest.fn(() => 'redirected')
 		};
 
 		const req = {
@@ -623,24 +620,24 @@ describe('lib/session', () => {
 		const callback = session.maybeRedircect(basepath, scope, start, req, resp, next);
 
 		const reason = {isLoginAction: true, route: 'tos'};
-		expect(callback(reason)).to.be.equal('redirected');
-		resp.redirect.should.have.been.calledOnce;
-		resp.redirect.should.have.been.calledWithExactly('/tos?return=%2Fawesome-page');
-		next.should.not.have.been.called;
+		expect(callback(reason)).toEqual('redirected');
+		expect(resp.redirect).toHaveBeenCalledTimes(1);
+		expect(resp.redirect).toHaveBeenCalledWith('/tos?return=%2Fawesome-page');
+		expect(next).not.toHaveBeenCalled();
 	});
 
 
-	it ('Session::maybeRedircect() - logon action (nested route)', () => {
-		const Session = mock.reRequire('../index');
+	test ('Session::maybeRedircect() - logon action (nested route)', () => {
+		const Session = require('../index');
 		const session = new Session({});
 
-		const next = sandbox.stub();
+		const next = jest.fn();
 		const basepath = '/';
 		const scope = 'tos/fooboo';
 		const start = new Date();
 
 		const resp = {
-			redirect: sandbox.stub().returns('redirected')
+			redirect: jest.fn(() => 'redirected')
 		};
 
 		const req = {
@@ -652,24 +649,24 @@ describe('lib/session', () => {
 		const callback = session.maybeRedircect(basepath, scope, start, req, resp, next);
 
 		const reason = {isLoginAction: true, route: 'tos'};
-		expect(callback(reason)).to.be.an('undefined');
-		resp.redirect.should.not.have.been.called;
-		next.should.have.been.calledOnce;
-		next.should.have.been.calledWithExactly();
+		expect(callback(reason)).toEqual(undefined);
+		expect(resp.redirect).not.toHaveBeenCalled();
+		expect(next).toHaveBeenCalledTimes(1);
+		expect(next).toHaveBeenCalledWith();
 	});
 
 
-	it ('Session::anonymousMiddleware() - calls next() synchronously (no-ops for now)', () => {
-		const Session = mock.reRequire('../index');
-		const next = sandbox.stub();
+	test ('Session::anonymousMiddleware() - calls next() synchronously (no-ops for now)', () => {
+		const Session = require('../index');
+		const next = jest.fn();
 		const handler = {
-			get: sandbox.spy((s, prop) => s[prop])
+			get: jest.fn((s, prop) => s[prop])
 		};
 		const session = new Proxy(new Session({}), handler);
 
-		next.should.not.have.been.called;
-		expect(() => session.anonymousMiddleware(null, null, null, next)).to.not.throw();
-		next.should.have.been.called;
-		handler.get.should.have.been.calledOnce;
+		expect(next).not.toHaveBeenCalled();
+		expect(() => session.anonymousMiddleware(null, null, null, next)).not.toThrow();
+		expect(next).toHaveBeenCalled();
+		expect(handler.get).toHaveBeenCalledTimes(1);
 	});
 });

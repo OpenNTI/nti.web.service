@@ -1,10 +1,8 @@
-/* eslint no-console:0 */
+/* eslint-env jest */
 const request = require('supertest');
-const mock = require('mock-require');
-const sinon = require('sinon');
 const DataserverInterFace = require('nti-lib-interfaces');
 
-const logger = require('../lib/logger');
+const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 const commonConfigs = {
 	server: 'mock:/dataserver2/',
@@ -74,32 +72,32 @@ const mockInterface = Object.assign({}, DataserverInterFace, {
 });
 
 describe('Test End-to-End', () => {
-	let sandbox;
+	let logger;
 
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
+		jest.resetModules();
+		logger = require('../lib/logger');
 
-		sandbox.stub(logger, 'attachToExpress');
-		sandbox.stub(logger, 'info');
-		sandbox.stub(logger, 'error');
-		sandbox.stub(logger, 'warn');
-		sandbox.stub(logger, 'debug');
+		stub(logger, 'attachToExpress');
+		stub(logger, 'debug');
+		stub(logger, 'error');
+		stub(logger, 'info');
+		stub(logger, 'warn');
 
-		mock('nti-lib-interfaces', mockInterface);
-		mock.reRequire('../lib/app-service');
+		jest.doMock('nti-lib-interfaces', () => mockInterface);
 	});
+
 
 	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
+		jest.resetModules();
 	});
 
 
-	it ('Route File redirects to Route Dir', () => {
-		const {getApp} = mock.reRequire('../worker');
+	test ('Route File redirects to Route Dir', () => {
+		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
-				package: '../../../example',
+				package: '../../example',
 				basepath: '/test/'
 			}],
 		});
@@ -108,16 +106,16 @@ describe('Test End-to-End', () => {
 			.get('/test')
 			.expect(301)
 			.expect(res => {
-				res.headers.location.should.equal('/test/');
+				expect(res.headers.location).toEqual('/test/');
 			});
 	});
 
 
-	it ('Anonymous access redirects to login', () => {
-		const {getApp} = mock.reRequire('../worker');
+	test ('Anonymous access redirects to login', () => {
+		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
-				package: '../../../example',
+				package: '../../example',
 				basepath: '/app/'
 			}],
 		});
@@ -126,16 +124,16 @@ describe('Test End-to-End', () => {
 			.get('/app/')
 			.expect(302)
 			.expect(res => {
-				res.headers.location.should.equal('/app/login/');
+				expect(res.headers.location).toEqual('/app/login/');
 			});
 	});
 
 
-	it ('Authenticated access does not redirect', () => {
-		const {getApp} = mock.reRequire('../worker');
+	test ('Authenticated access does not redirect', () => {
+		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
-				package: '../../../example',
+				package: '../../example',
 				basepath: '/app/'
 			}],
 		});
@@ -146,17 +144,17 @@ describe('Test End-to-End', () => {
 			.set('Authentication', 'foobar')
 			.expect(200)
 			.expect(res => {
-				res.text.should.have.string('Page! at /app/');
+				expect(res.text).toEqual(expect.stringContaining('Page! at /app/'));
 			});
 	});
 
 
-	it ('Public access does not redirect', () => {
-		const {getApp} = mock.reRequire('../worker');
+	test ('Public access does not redirect', () => {
+		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
 				public: true,
-				package: '../../../example',
+				package: '../../example',
 				basepath: '/test/'
 			}],
 		});
@@ -165,17 +163,17 @@ describe('Test End-to-End', () => {
 			.get('/test/')
 			.expect(200)
 			.expect(res => {
-				res.text.should.have.string('Page! at /test/');
+				expect(res.text).toEqual(expect.stringContaining('Page! at /test/'));
 			});
 	});
 
 
-	it ('Render A Page', () => {
-		const {getApp} = mock.reRequire('../worker');
+	test ('Render A Page', () => {
+		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
 				public: true,
-				package: '../../../src/__test__/mock-app',
+				package: '../__test__/mock-app',
 				basepath: '/test/'
 			}],
 		});
@@ -184,35 +182,35 @@ describe('Test End-to-End', () => {
 			.get('/test/')
 			.expect(200)
 			.expect(res => {
-				res.text.should.have.string('Page! at /test/');
+				expect(res.text).toEqual(expect.stringContaining('Page! at /test/'));
 				//Variables injected:
-				res.text.should.have.string('<title>nextthought</title>');
-				res.text.should.not.have.string('"<[cfg:missing]>"');
-				res.text.should.have.string('"MissingConfigValue"');
+				expect(res.text).toEqual(expect.stringContaining('<title>nextthought</title>'));
+				expect(res.text).not.toEqual(expect.stringContaining('"<[cfg:missing]>"'));
+				expect(res.text).toEqual(expect.stringContaining('"MissingConfigValue"'));
 				//Rerooting should not effect absolute urls:
-				res.text.should.have.string('<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react.js"></script>');
+				expect(res.text).toEqual(expect.stringContaining('<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react.js"></script>'));
 				//Rerooted Urls:
-				res.text.should.not.have.string('"/resources/images/favicon.ico"');
-				res.text.should.have.string('"/test/resources/images/favicon.ico"');
+				expect(res.text).not.toEqual(expect.stringContaining('"/resources/images/favicon.ico"'));
+				expect(res.text).toEqual(expect.stringContaining('"/test/resources/images/favicon.ico"'));
 				//Styles:
-				res.text.should.not.have.string('"/resources/styles.css"');
-				res.text.should.have.string('"/test/resources/styles.css?rel=foobar.js"');
+				expect(res.text).not.toEqual(expect.stringContaining('"/resources/styles.css"'));
+				expect(res.text).toEqual(expect.stringContaining('"/test/resources/styles.css?rel=foobar.js"'));
 				//Modules:
-				res.text.should.not.have.string('<script src="/test/index.js" id="main-bundle" type="text/javascript"></script>');
-				res.text.should.have.string('<script src="/test/foobar.js" id="main-bundle" type="text/javascript"></script>');
+				expect(res.text).not.toEqual(expect.stringContaining('<script src="/test/index.js" id="main-bundle" type="text/javascript"></script>'));
+				expect(res.text).toEqual(expect.stringContaining('<script src="/test/foobar.js" id="main-bundle" type="text/javascript"></script>'));
 
 				//Check against double printing
-				res.text.match(/\$AppConfig/g).length.should.equal(1);
+				expect(res.text.match(/\$AppConfig/g).length).toEqual(1);
 			});
 	});
 
 
-	it ('Proper 404 for statics', () => {
-		const {getApp} = mock.reRequire('../worker');
+	test ('Proper 404 for statics', () => {
+		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
 				public: true,
-				package: '../../../src/__test__/mock-app',
+				package: '../__test__/mock-app',
 				basepath: '/test/'
 			}],
 		});
@@ -223,12 +221,12 @@ describe('Test End-to-End', () => {
 	});
 
 
-	it ('Proper 404 for non-app routes (controlled by app)', () => {
-		const {getApp} = mock.reRequire('../worker');
+	test ('Proper 404 for non-app routes (controlled by app)', () => {
+		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
 				public: true,
-				package: '../../../src/__test__/mock-app',
+				package: '../__test__/mock-app',
 				basepath: '/test/'
 			}],
 		});
@@ -239,12 +237,12 @@ describe('Test End-to-End', () => {
 	});
 
 
-	it ('Proper 404 for non-app routes (controlled by app) v2', () => {
-		const {getApp} = mock.reRequire('../worker');
+	test ('Proper 404 for non-app routes (controlled by app) v2', () => {
+		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
 				public: true,
-				package: '../../../src/__test__/mock-app',
+				package: '../__test__/mock-app',
 				basepath: '/test/'
 			}],
 		});
@@ -255,12 +253,12 @@ describe('Test End-to-End', () => {
 	});
 
 
-	it ('Proper 500 for app errors', () => {
-		const {getApp} = mock.reRequire('../worker');
+	test ('Proper 500 for app errors', () => {
+		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
 				public: true,
-				package: '../../../src/__test__/mock-app',
+				package: '../__test__/mock-app',
 				basepath: '/test/'
 			}],
 		});
@@ -269,17 +267,17 @@ describe('Test End-to-End', () => {
 			.get('/test/foo.500')
 			.expect(500)
 			.expect(r => {
-				r.text.should.have.string('App Error Page');
+				expect(r.text).toEqual(expect.stringContaining('App Error Page'));
 			});
 	});
 
 
-	it ('Service 500 for errors in app', () => {
-		const {getApp} = mock.reRequire('../worker');
+	test ('Service 500 for errors in app', () => {
+		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
 				public: true,
-				package: '../../../src/__test__/mock-app',
+				package: '../__test__/mock-app',
 				basepath: '/test/'
 			}],
 		});
@@ -288,18 +286,18 @@ describe('Test End-to-End', () => {
 			.get('/test/foo.throw')
 			.expect(500)
 			.expect(r => {
-				logger.error.should.have.been.called;
-				r.text.should.have.string('<title>Error</title>');
-				r.text.should.have.string('<div id="error">An error occurred.</div>');
+				expect(logger.error).toHaveBeenCalled();
+				expect(r.text).toEqual(expect.stringContaining('<title>Error</title>'));
+				expect(r.text).toEqual(expect.stringContaining('<div id="error">An error occurred.</div>'));
 			});
 	});
 
 
-	it ('Test Hooks: Session', () => {
-		const {getApp} = mock.reRequire('../worker');
+	test ('Test Hooks: Session', () => {
+		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
-				package: '../../../src/__test__/mock-app-with-hooks',
+				package: '../__test__/mock-app-with-hooks',
 				basepath: '/test/'
 			}],
 		});
@@ -309,7 +307,7 @@ describe('Test End-to-End', () => {
 			.set('Authentication', 'tos')
 			.expect(302)
 			.expect(res => {
-				res.headers.location.should.equal('/test/onboarding/tos');
+				expect(res.headers.location).toEqual('/test/onboarding/tos');
 			});
 	});
 
@@ -319,18 +317,18 @@ describe('Test End-to-End', () => {
 	defineRedirectTests('tos');
 
 
-	it ('Test Hooks: Invalid Hook', (done) => {
+	test ('Test Hooks: Invalid Hook', (done) => {
 		const Logger = logger.get('SessionManager');
 		const Session = require('../lib/session');
 
-		sandbox.stub(Logger, 'error').callsFake(() => 0);
-		sandbox.spy(Session.prototype, 'middleware');
+		stub(Logger, 'error');
+		jest.spyOn(Session.prototype, 'middleware');
 
 
-		const {getApp} = mock.reRequire('../worker');
+		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
-				package: '../../../src/__test__/mock-app-with-hooks',
+				package: '../__test__/mock-app-with-hooks',
 				basepath: '/test/'
 			}],
 		});
@@ -340,9 +338,11 @@ describe('Test End-to-End', () => {
 			.set('Cookie', 'language=en')
 			.end((e) => {
 				setTimeout(() => {
-					Session.prototype.middleware.should.have.been.called;
-					Logger.error.should.have.been.calledWith(
-						'Headers have already been sent. did next() get called after a redirect()/send()/end()? %s %s'
+					expect(Session.prototype.middleware).toHaveBeenCalled();
+					expect(Logger.error).toHaveBeenCalledWith(
+						'Headers have already been sent. did next() get called after a redirect()/send()/end()? %s %s',
+						expect.any(String),
+						expect.any(String)
 					);
 					done(e);
 				}, 100);
@@ -352,11 +352,11 @@ describe('Test End-to-End', () => {
 
 	function defineRedirectTests (user) {
 
-		it (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
-			const {getApp} = mock.reRequire('../worker');
+		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
+			const {getApp} = require('../worker');
 			const config = Object.assign({}, commonConfigs, {
 				apps: [{
-					package: '../../../src/__test__/mock-app-with-hooks',
+					package: '../__test__/mock-app-with-hooks',
 					basepath: '/test/'
 				}],
 			});
@@ -366,16 +366,16 @@ describe('Test End-to-End', () => {
 				.set('Authentication', user)
 				.expect(302)
 				.expect(res => {
-					res.headers.location.should.equal('/test/');
+					expect(res.headers.location).toEqual('/test/');
 				});
 		});
 
 
-		it (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
-			const {getApp} = mock.reRequire('../worker');
+		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
+			const {getApp} = require('../worker');
 			const config = Object.assign({}, commonConfigs, {
 				apps: [{
-					package: '../../../src/__test__/mock-app-with-hooks',
+					package: '../__test__/mock-app-with-hooks',
 					basepath: '/test/'
 				}],
 			});
@@ -385,16 +385,16 @@ describe('Test End-to-End', () => {
 				.set('Authentication', user)
 				.expect(302)
 				.expect(res => {
-					res.headers.location.should.equal('/test/catalog/code/token');
+					expect(res.headers.location).toEqual('/test/catalog/code/token');
 				});
 		});
 
 
-		it (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
-			const {getApp} = mock.reRequire('../worker');
+		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
+			const {getApp} = require('../worker');
 			const config = Object.assign({}, commonConfigs, {
 				apps: [{
-					package: '../../../src/__test__/mock-app-with-hooks',
+					package: '../__test__/mock-app-with-hooks',
 					basepath: '/test/'
 				}],
 			});
@@ -404,16 +404,16 @@ describe('Test End-to-End', () => {
 				.set('Authentication', user)
 				.expect(302)
 				.expect(res => {
-					res.headers.location.should.equal('/test/catalog/item/NTI-CourseInfo-iLed_iLed_001/...');
+					expect(res.headers.location).toEqual('/test/catalog/item/NTI-CourseInfo-iLed_iLed_001/...');
 				});
 		});
 
 
-		it (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
-			const {getApp} = mock.reRequire('../worker');
+		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
+			const {getApp} = require('../worker');
 			const config = Object.assign({}, commonConfigs, {
 				apps: [{
-					package: '../../../src/__test__/mock-app-with-hooks',
+					package: '../__test__/mock-app-with-hooks',
 					basepath: '/test/'
 				}],
 			});
@@ -423,16 +423,16 @@ describe('Test End-to-End', () => {
 				.set('Authentication', user)
 				.expect(302)
 				.expect(res => {
-					res.headers.location.should.equal('/test/catalog/redeem/NTI-CourseInfo-Spring2015_LSTD_1153/code');
+					expect(res.headers.location).toEqual('/test/catalog/redeem/NTI-CourseInfo-Spring2015_LSTD_1153/code');
 				});
 		});
 
 
-		it (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
-			const {getApp} = mock.reRequire('../worker');
+		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
+			const {getApp} = require('../worker');
 			const config = Object.assign({}, commonConfigs, {
 				apps: [{
-					package: '../../../src/__test__/mock-app-with-hooks',
+					package: '../__test__/mock-app-with-hooks',
 					basepath: '/test/'
 				}],
 			});
@@ -442,16 +442,16 @@ describe('Test End-to-End', () => {
 				.set('Authentication', user)
 				.expect(302)
 				.expect(res => {
-					res.headers.location.should.equal('/test/object/unknown-OID-0x021cae18%3A5573657273%3AV0wWNR9EBJd');
+					expect(res.headers.location).toEqual('/test/object/unknown-OID-0x021cae18%3A5573657273%3AV0wWNR9EBJd');
 				});
 		});
 
 
-		it (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
-			const {getApp} = mock.reRequire('../worker');
+		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
+			const {getApp} = require('../worker');
 			const config = Object.assign({}, commonConfigs, {
 				apps: [{
-					package: '../../../src/__test__/mock-app-with-hooks',
+					package: '../__test__/mock-app-with-hooks',
 					basepath: '/test/'
 				}],
 			});
@@ -461,7 +461,7 @@ describe('Test End-to-End', () => {
 				.set('Authentication', user)
 				.expect(302)
 				.expect(res => {
-					res.headers.location.should.equal('/test/object/unknown-OID-0x021cae18%3A5573657273%3AV0wWNR9EBJd');
+					expect(res.headers.location).toEqual('/test/object/unknown-OID-0x021cae18%3A5573657273%3AV0wWNR9EBJd');
 				});
 		});
 	}

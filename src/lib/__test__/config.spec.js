@@ -1,26 +1,25 @@
-/*globals expect*/
-/*eslint-env mocha*/
+/*eslint-env jest*/
 'use strict';
-const mock = require('mock-require');
-const sinon = require('sinon');
-const {SiteName, ServiceStash} = require('nti-lib-interfaces');
+
+const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
+
 
 describe ('lib/config', () => {
+	let SiteName, ServiceStash;
 	let logger;
-	let sandbox;
 	let yargs;
 
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
-		logger = {
-			attachToExpress: sandbox.stub(),
-			debug: sandbox.stub(),
-			error: sandbox.stub(),
-			info: sandbox.stub(),
-			warn: sandbox.stub(),
-		};
-		mock('../logger', logger);
-		mock.reRequire('../site-mapping');
+		jest.resetModules();
+		global.fetch = () => {};
+		logger = require('../logger');
+
+		stub(logger, 'get', () => logger);
+		stub(logger, 'attachToExpress');
+		stub(logger, 'debug');
+		stub(logger, 'error');
+		stub(logger, 'info');
+		stub(logger, 'warn');
 
 		yargs = {
 			argv: {
@@ -33,143 +32,148 @@ describe ('lib/config', () => {
 			options () { return this; }
 		};
 
-		mock('yargs', yargs);
+		jest.doMock('yargs', () => yargs);
+
+		const iface = require('nti-lib-interfaces');
+		SiteName = iface.SiteName;
+		ServiceStash = iface.ServiceStash;
 	});
+
 
 	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
+		delete global.fetch;
+		jest.resetModules();
 	});
 
 
-	it ('loadConfig(): missing config', () => {
+	test ('loadConfig(): missing config', () => {
 		yargs.argv.config = void 0;
-		mock('yargs', yargs);
-		const {loadConfig} = mock.reRequire('../config');
+		jest.doMock('yargs', () => yargs);
+		const {loadConfig} = require('../config');
 
 		return loadConfig()
 			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
 			.catch(e => {
-				e.should.equal('No config file specified');
+				expect(e).toBe('No config file specified');
 			});
 	});
 
 
-	it ('loadConfig(): local config file (not found)', () => {
+	test ('loadConfig(): local config file (not found)', () => {
 		yargs.argv.config = './mock/config.json';
-		const readFileSync = sandbox.stub().throws(new Error('File Not Found'));
-		mock('yargs', yargs);
-		mock('fs', {readFileSync});
-		const {loadConfig} = mock.reRequire('../config');
+		const readFileSync = jest.fn(() => { throw new Error('File Not Found');});
+		jest.doMock('yargs', () => yargs);
+		jest.doMock('fs', () => ({readFileSync}));
+		const {loadConfig} = require('../config');
 
 		return loadConfig()
 			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
 			.catch(e => {
-				e.should.equal('Config Failed to load');
-				readFileSync.should.have.been.calledThrice;
+				expect(e).toBe('Config Failed to load');
+				expect(readFileSync).toHaveBeenCalledTimes(3);
 			});
 	});
 
 
-	it ('loadConfig(): file:// local config file (not found)', () => {
+	test ('loadConfig(): file:// local config file (not found)', () => {
 		yargs.argv.config = 'file:///mock/config.json';
-		const readFileSync = sandbox.stub().throws(new Error('File Not Found'));
-		mock('yargs', yargs);
-		mock('fs', {readFileSync});
-		const {loadConfig} = mock.reRequire('../config');
+		const readFileSync = jest.fn(() => { throw new Error('File Not Found');});
+		jest.doMock('yargs', () => yargs);
+		jest.doMock('fs', () => ({readFileSync}));
+		const {loadConfig} = require('../config');
 
 		return loadConfig()
 			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
 			.catch(e => {
-				e.should.equal('Config Failed to load');
-				readFileSync.should.have.been.calledThrice;
+				expect(e).toBe('Config Failed to load');
+				expect(readFileSync).toHaveBeenCalledTimes(3);
 			});
 	});
 
 
-	it ('loadConfig(): local config file', () => {
+	test ('loadConfig(): local config file', () => {
 		yargs.argv.config = './mock/config.json';
-		const readFileSync = sandbox.stub().returns('{"mock": true}');
-		mock('yargs', yargs);
-		mock('fs', {readFileSync});
+		const readFileSync = jest.fn(() => '{"mock": true}');
+		jest.doMock('yargs', () => yargs);
+		jest.doMock('fs', () => ({readFileSync}));
 
-		const cfg = mock.reRequire('../config');
-		sandbox.stub(cfg, 'config');
+		const cfg = require('../config');
+		stub(cfg, 'config');
 
 		return cfg.loadConfig()
 			.then(() => {
-				cfg.config.should.have.been.calledOnce;
-				cfg.config.should.have.been.calledWithExactly({mock: true});
+				expect(cfg.config).toHaveBeenCalledTimes(1);
+				expect(cfg.config).toHaveBeenCalledWith({mock: true});
 			});
 	});
 
 
-	it ('loadConfig(): file:// local config file', () => {
+	test ('loadConfig(): file:// local config file', () => {
 		yargs.argv.config = 'file:///mock/config.json';
-		const readFileSync = sandbox.stub().returns('{"mock": true}');
-		mock('yargs', yargs);
-		mock('fs', {readFileSync});
+		const readFileSync = jest.fn(() => '{"mock": true}');
+		jest.doMock('yargs', () => yargs);
+		jest.doMock('fs', () => ({readFileSync}));
 
-		const cfg = mock.reRequire('../config');
-		sandbox.stub(cfg, 'config');
+		const cfg = require('../config');
+		stub(cfg, 'config');
 
 		return cfg.loadConfig()
 			.then(() => {
-				cfg.config.should.have.been.calledOnce;
-				cfg.config.should.have.been.calledWithExactly({mock: true});
+				expect(cfg.config).toHaveBeenCalledTimes(1);
+				expect(cfg.config).toHaveBeenCalledWith({mock: true});
 			});
 	});
 
 
-	it ('loadConfig(): remote config file (bad)', () => {
+	test ('loadConfig(): remote config file (bad)', () => {
 		yargs.argv.config = 'http://lala/mock/config.json';
-		mock('yargs', yargs);
+		jest.doMock('yargs', () => yargs);
 
-		sandbox.stub(global, 'fetch').returns(Promise.resolve({ok: false, statusText: 'Not Found'}));
+		stub(global, 'fetch', () => Promise.resolve({ok: false, statusText: 'Not Found'}));
 
-		const cfg = mock.reRequire('../config');
-		sandbox.stub(cfg, 'config');
+		const cfg = require('../config');
+		stub(cfg, 'config');
 
 		return cfg.loadConfig()
 			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
 			.catch(e => {
-				cfg.config.should.not.have.been.called;
-				expect(e).to.equal('Not Found');
+				expect(cfg.config).not.toHaveBeenCalled();
+				expect(e).toBe('Not Found');
 			});
 	});
 
 
-	it ('loadConfig(): remote config file (good)', () => {
+	test ('loadConfig(): remote config file (good)', () => {
 		yargs.argv.config = 'http://lala/mock/config.json';
-		mock('yargs', yargs);
+		jest.doMock('yargs', () => yargs);
 		const o = {};
-		sandbox.stub(global, 'fetch').returns(Promise.resolve({ok: true, json: () => o}));
+		stub(global, 'fetch', () => Promise.resolve({ok: true, json: () => o}));
 
-		const cfg = mock.reRequire('../config');
-		sandbox.stub(cfg, 'config');
+		const cfg = require('../config');
+		stub(cfg, 'config');
 
 		return cfg.loadConfig()
 			.then(() => {
-				cfg.config.should.have.been.calledOnce;
-				cfg.config.should.have.been.calledWithExactly(o);
+				expect(cfg.config).toHaveBeenCalledTimes(1);
+				expect(cfg.config).toHaveBeenCalledWith(o);
 			});
 	});
 
 
-	it ('showFlags(): no flags', () => {
-		const {showFlags} = mock.reRequire('../config');
+	test ('showFlags(): no flags', () => {
+		const {showFlags} = require('../config');
 		const o = {};
 
-		expect(() => showFlags()).to.throw();
-		expect(() => showFlags(o)).not.to.throw();
+		expect(() => showFlags()).toThrow();
+		expect(() => showFlags(o)).not.toThrow();
 
-		logger.info.should.have.been.calledOnce;
-		logger.info.should.have.been.calledWithExactly('No flags configured.');
+		expect(logger.info).toHaveBeenCalledTimes(1);
+		expect(logger.info).toHaveBeenCalledWith('No flags configured.');
 	});
 
 
-	it ('showFlags(): prints flags in the config', () => {
-		const {showFlags} = mock.reRequire('../config');
+	test ('showFlags(): prints flags in the config', () => {
+		const {showFlags} = require('../config');
 		const o = {
 			flags: {
 				'flag1': true,
@@ -180,33 +184,33 @@ describe ('lib/config', () => {
 			}
 		};
 
-		expect(() => showFlags(o)).not.to.throw();
+		expect(() => showFlags(o)).not.toThrow();
 
-		logger.info.should.have.been.calledThrice;
-		logger.info.should.have.been.calledWithExactly('Resolved Flag: (Global) %s = %s', 'flag1', true);
-		logger.info.should.have.been.calledWithExactly('Resolved Flag: (%s) %s = %s', 'some.site.nextthought.com', 'abc', true);
-		logger.info.should.have.been.calledWithExactly('Resolved Flag: (%s) %s = %s', 'some.site.nextthought.com', 'flag1', false);
+		expect(logger.info).toHaveBeenCalledTimes(3);
+		expect(logger.info).toHaveBeenCalledWith('Resolved Flag: (Global) %s = %s', 'flag1', true);
+		expect(logger.info).toHaveBeenCalledWith('Resolved Flag: (%s) %s = %s', 'some.site.nextthought.com', 'abc', true);
+		expect(logger.info).toHaveBeenCalledWith('Resolved Flag: (%s) %s = %s', 'some.site.nextthought.com', 'flag1', false);
 
 	});
 
 
-	it ('config(): fails if no env specified', () => {
+	test ('config(): fails if no env specified', () => {
 		yargs.argv.env = 'nope';
-		mock('yargs', yargs);
-		const {config} = mock.reRequire('../config');
+		jest.doMock('yargs', () => yargs);
+		const {config} = require('../config');
 
 		return config({})
 			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
 			.catch(e => {
-				expect(e.reason).to.equal('Missing Environment key');
+				expect(e.reason).toBe('Missing Environment key');
 			});
 	});
 
 
-	it ('config(): fails if no apps are configured.', () => {
+	test ('config(): fails if no apps are configured.', () => {
 		yargs.argv.env = 'test';
-		mock('yargs', yargs);
-		const {config} = mock.reRequire('../config');
+		jest.doMock('yargs', () => yargs);
+		const {config} = require('../config');
 
 		const env = {
 			development: {},
@@ -216,13 +220,13 @@ describe ('lib/config', () => {
 		return config(env)
 			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
 			.catch(e => {
-				expect(e.reason).to.equal('No apps key in config.');
+				expect(e.reason).toBe('No apps key in config.');
 			});
 	});
 
 
-	it ('config(): fails a bad port is configured.', () => {
-		const {config} = mock.reRequire('../config');
+	test ('config(): fails a bad port is configured.', () => {
+		const {config} = require('../config');
 
 		const env = {
 			development: {
@@ -233,14 +237,14 @@ describe ('lib/config', () => {
 		return config(env)
 			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
 			.catch(e => {
-				expect(e.reason).to.equal('Bad Port');
+				expect(e.reason).toBe('Bad Port');
 			});
 	});
 
 
-	it ('config(): normal case', () => {
-		const {config} = mock.reRequire('../config');
-		mock('foo/package.json', {name: 'foo.net', version: '123'});
+	test ('config(): normal case', () => {
+		const {config} = require('../config');
+		jest.doMock('foo/package.json', () => ({name: 'foo.net', version: '123'}), {virtual: true});
 
 		const env = {
 			development: {
@@ -257,13 +261,14 @@ describe ('lib/config', () => {
 
 		return Promise.resolve(config(env))
 			.then(c => {
-				expect(c).to.be.an('object');
+				expect(c).toEqual(expect.any(Object));
 
 				for (let x = 0; x < c.apps.length; x++ ) {
-					expect(c.apps[x].appId).be.ok;
+					expect(c.apps[x].appId).toBeTruthy();
+					expect(c.apps[x].appId).toEqual(expect.any(String));
 				}
 
-				expect(c.apps.map(x => x.basepath)).to.deep.equal([
+				expect(c.apps.map(x => x.basepath)).toEqual([
 					'/foo/baz/',
 					'/foo/buz/',
 					'/bar/',
@@ -272,26 +277,26 @@ describe ('lib/config', () => {
 
 				const i = c.apps.findIndex(x => x.appId === 'foo.net');
 
-				expect(i).to.not.equal(-1);
-				expect(c.apps[i].appId).to.equal('foo.net');
-				expect(c.apps[i].appName).to.equal('foo.net');
-				expect(c.apps[i].appVersion).to.equal('123');
+				expect(i).not.toBe(-1);
+				expect(c.apps[i].appId).toBe('foo.net');
+				expect(c.apps[i].appName).toBe('foo.net');
+				expect(c.apps[i].appVersion).toBe('123');
 
-				expect(c['site-mappings']).to.be.ok;
+				expect(c['site-mappings']).toBeTruthy();
 
-				expect(logger.warn).to.have.been.calledWith('Could not fill in package values for app %s, because: %s', 'bar');
+				expect(logger.warn).toHaveBeenCalledWith('Could not fill in package values for app %s, because: %s', 'bar', expect.anything());
 			});
 	});
 
 
-	it ('config(): override server', () => {
+	test ('config(): override server', () => {
 		Object.assign(yargs.argv, {
 			'dataserver-host': 'lalaland',
 			'dataserver-port': 1234
 		});
-		mock('yargs', yargs);
+		jest.doMock('yargs', () => yargs);
 
-		const {config} = mock.reRequire('../config');
+		const {config} = require('../config');
 
 		const env = {
 			development: {
@@ -303,21 +308,21 @@ describe ('lib/config', () => {
 
 		return Promise.resolve(config(env))
 			.then(c => {
-				expect(c).to.be.an('object');
+				expect(c).toEqual(expect.any(Object));
 
-				c.server.should.not.equal(env.development.server);
-				c.server.should.equal('http://lalaland:1234/dataserver2/');
+				expect(c.server).not.toBe(env.development.server);
+				expect(c.server).toBe('http://lalaland:1234/dataserver2/');
 			});
 	});
 
 
-	it ('config(): override server (host only)', () => {
+	test ('config(): override server (host only)', () => {
 		Object.assign(yargs.argv, {
 			'dataserver-host': 'lalaland',
 		});
-		mock('yargs', yargs);
+		jest.doMock('yargs', () => yargs);
 
-		const {config} = mock.reRequire('../config');
+		const {config} = require('../config');
 
 		const env = {
 			development: {
@@ -329,21 +334,21 @@ describe ('lib/config', () => {
 
 		return Promise.resolve(config(env))
 			.then(c => {
-				expect(c).to.be.an('object');
+				expect(c).toEqual(expect.any(Object));
 
-				c.server.should.not.equal(env.development.server);
-				c.server.should.equal('http://lalaland:80012/dataserver2/');
+				expect(c.server).not.toBe(env.development.server);
+				expect(c.server).toBe('http://lalaland:80012/dataserver2/');
 			});
 	});
 
 
-	it ('config(): override server (port only)', () => {
+	test ('config(): override server (port only)', () => {
 		Object.assign(yargs.argv, {
 			'dataserver-port': 1234
 		});
-		mock('yargs', yargs);
+		jest.doMock('yargs', () => yargs);
 
-		const {config} = mock.reRequire('../config');
+		const {config} = require('../config');
 
 		const env = {
 			development: {
@@ -355,19 +360,19 @@ describe ('lib/config', () => {
 
 		return Promise.resolve(config(env))
 			.then(c => {
-				expect(c).to.be.an('object');
+				expect(c).toEqual(expect.any(Object));
 
-				c.server.should.not.equal(env.development.server);
-				c.server.should.equal('http://localhost:1234/dataserver2/');
+				expect(c.server).not.toBe(env.development.server);
+				expect(c.server).toBe('http://localhost:1234/dataserver2/');
 			});
 	});
 
 
-	it ('config(): prints environment warning (only once)', () => {
+	test ('config(): prints environment warning (only once)', () => {
 		delete yargs.argv.env;
-		mock('yargs', yargs);
-		const {config} = mock.reRequire('../config');
-		mock('bar/package.json', {});
+		jest.doMock('yargs', () => yargs);
+		jest.doMock('bar/package.json', () => ({}), {virtual: true});
+		const {config} = require('../config');
 		const env = {
 			development: {
 				port: 8081,
@@ -377,18 +382,18 @@ describe ('lib/config', () => {
 
 		return Promise.resolve(config(env))
 			.then(() => {
-				logger.warn.should.have.been.calledWith('In default "development" mode. Consider --env "production" or setting NODE_ENV="production"');
-				logger.warn.reset();
+				expect(logger.warn).toHaveBeenCalledWith('In default "development" mode. Consider --env "production" or setting NODE_ENV="production"');
+				logger.warn.mockClear();
 				return config(env);
 			})
 			.then(() => {
-				logger.warn.should.not.have.been.called;
+				expect(logger.warn).not.toHaveBeenCalled();
 			});
 	});
 
 
-	it ('clientConfig(): filters server-side-only value of out config', () => {
-		const {clientConfig} = mock.reRequire('../config');
+	test ('clientConfig(): filters server-side-only value of out config', () => {
+		const {clientConfig} = require('../config');
 		const context = {
 			username: 'foobar',
 			[SiteName]: 'some.site.nextthought.com',
@@ -414,42 +419,41 @@ describe ('lib/config', () => {
 
 		const res = clientConfig(config, context.username, 'abc', context);
 
-		res.should.be.ok;
-		res.html.should.be.a('string');
-		res.config.siteName.should.equal('test');
-		res.config.siteTitle.should.equal('Testing');
-		res.config.username.should.equal(context.username);
-		res.config.should.not.have.property('webpack');
-		res.config.should.not.have.property('port');
-		res.config.should.not.have.property('protocol');
-		res.config.should.not.have.property('address');
-		res.config.should.not.have.property('apps');
-		res.config.should.not.have.property('site-mappings');
-		res.config.nodeService.should.be.ok;
-		res.config.nodeService.should.equal(context[ServiceStash]);
+		expect(res).toBeTruthy();
+		expect(res.html).toEqual(expect.any(String));
+		expect(res.config.siteName).toBe('test');
+		expect(res.config.siteTitle).toBe('Testing');
+		expect(res.config.username).toBe(context.username);
+		expect(res.config).not.toHaveProperty('webpack');
+		expect(res.config).not.toHaveProperty('port');
+		expect(res.config).not.toHaveProperty('protocol');
+		expect(res.config).not.toHaveProperty('address');
+		expect(res.config).not.toHaveProperty('apps');
+		expect(res.config).not.toHaveProperty('site-mappings');
+		expect(res.config.nodeService).toBeTruthy();
+		expect(res.config.nodeService).toBe(context[ServiceStash]);
 	});
 
 
-
-	it ('clientConfig(): blows up if no service on context', () => {
-		const {clientConfig} = mock.reRequire('../config');
+	test ('clientConfig(): blows up if no service on context', () => {
+		const {clientConfig} = require('../config');
 		const context = {};
 		const config = {};
 
 		let out;
-		expect(() => out = clientConfig(config, context.username, 'abc', context)).to.not.throw();
+		expect(() => out = clientConfig(config, context.username, 'abc', context)).not.toThrow();
 
 		return Promise.resolve(out.config.nodeService)
 			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
 			.catch(e => {
-				e.should.be.an.instanceOf(Error);
-				e.message.should.equal('No Service.');
+				expect(e).toEqual(expect.any(Error));
+				expect(e.message).toBe('No Service.');
 			});
 	});
 
 
-	it ('nodeConfigAsClientConfig(): fakes clientConfig with full server-side config (for serverside rendering)', () => {
-		const {nodeConfigAsClientConfig} = mock.reRequire('../config');
+	test ('nodeConfigAsClientConfig(): fakes clientConfig with full server-side config (for serverside rendering)', () => {
+		const {nodeConfigAsClientConfig} = require('../config');
 		const context = {
 			username: 'foobar',
 			[SiteName]: 'some.site.nextthought.com',
@@ -475,28 +479,28 @@ describe ('lib/config', () => {
 
 		const res = nodeConfigAsClientConfig(config, 'abc', context);
 
-		res.should.be.ok;
-		res.html.should.be.equal('');
-		res.config.siteName.should.equal('test');
-		res.config.username.should.equal(context.username);
-		res.config.nodeService.should.be.ok;
-		res.config.nodeService.should.equal(context[ServiceStash]);
+		expect(res).toBeTruthy();
+		expect(res.html).toBe('');
+		expect(res.config.siteName).toBe('test');
+		expect(res.config.username).toBe(context.username);
+		expect(res.config.nodeService).toBeTruthy();
+		expect(res.config.nodeService).toBe(context[ServiceStash]);
 	});
 
 
-	it ('nodeConfigAsClientConfig(): blows up if no service on context', () => {
-		const {nodeConfigAsClientConfig} = mock.reRequire('../config');
+	test ('nodeConfigAsClientConfig(): blows up if no service on context', () => {
+		const {nodeConfigAsClientConfig} = require('../config');
 		const context = {};
 		const config = {};
 
 		let out;
-		expect(() => out = nodeConfigAsClientConfig(config, 'abc', context)).to.not.throw();
+		expect(() => out = nodeConfigAsClientConfig(config, 'abc', context)).not.toThrow();
 
 		return Promise.resolve(out.config.nodeService)
 			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
 			.catch(e => {
-				e.should.be.an.instanceOf(Error);
-				e.message.should.equal('No Service.');
+				expect(e).toEqual(expect.any(Error));
+				expect(e.message).toBe('No Service.');
 			});
 	});
 });

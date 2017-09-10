@@ -1,21 +1,28 @@
 /*eslint-env jest*/
 'use strict';
 
+const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
+
 describe('Bootstraps', () => {
 
 	beforeEach(() => {
 		jest.resetModules();
+		jest.dontMock('cluster');
 		const logger = require('../lib/logger');
-		const noop = () => {};
-		jest.spyOn(logger, 'debug').mockImplementation(noop);
-		jest.spyOn(logger, 'error').mockImplementation(noop);
-		jest.spyOn(logger, 'info').mockImplementation(noop);
-		jest.spyOn(logger, 'warn').mockImplementation(noop);
+		stub(logger, 'debug');
+		stub(logger, 'error');
+		stub(logger, 'info');
+		stub(logger, 'warn');
 
-		jest.mock('../polyfills', () => {});
+		jest.doMock('../polyfills');
 	});
 
-	it ('isMaster: true, master bootstraps. not worker.', () => {
+	afterEach(() => {
+		jest.resetModules();
+		jest.dontMock('cluster');
+	});
+
+	test ('isMaster: true, master bootstraps. not worker.', () => {
 		const master = jest.fn();
 		const worker = jest.fn();
 		jest.doMock('cluster', () => ({isMaster: true}));
@@ -30,7 +37,7 @@ describe('Bootstraps', () => {
 		expect(worker).not.toHaveBeenCalled();
 	});
 
-	it ('isMaster: false, worker bootstraps. not master.', () => {
+	test ('isMaster: false, worker bootstraps. not master.', () => {
 		const master = jest.fn();
 		const worker = jest.fn();
 		jest.doMock('cluster', () => ({isMaster: false}));

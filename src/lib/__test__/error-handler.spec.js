@@ -1,199 +1,198 @@
-/*globals expect*/
-/*eslint-env mocha*/
+/*eslint-env jest*/
 'use strict';
-const fs = require('fs');
 
-const mock = require('mock-require');
-const sinon = require('sinon');
+const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
+
 
 describe('lib/error-handler (middleware)', () => {
-	let logger, sandbox;
+	let logger;
 
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
-		logger = {
-			debug: sandbox.stub(),
-			error: sandbox.stub(),
-			info: sandbox.stub(),
-			warn: sandbox.stub(),
-		};
+		jest.resetModules();
+		logger = require('../logger');
 
-		mock('../logger', logger);
-		mock('uuid/v4', () => 'some-guid');
+		stub(logger, 'get', () => logger);
+		stub(logger, 'attachToExpress');
+		stub(logger, 'debug');
+		stub(logger, 'error');
+		stub(logger, 'info');
+		stub(logger, 'warn');
+
+		jest.doMock('uuid/v4', () => () => 'some-guid');
 	});
+
 
 	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
+		jest.resetModules();
 	});
 
 
-	it ('expected exported api', () => {
-		const use = sandbox.stub();
-		const {middleware, setupErrorHandler} = mock.reRequire('../error-handler');
+	test ('expected exported api', () => {
+		const use = jest.fn();
+		const {middleware, setupErrorHandler} = require('../error-handler');
 
-		setupErrorHandler.should.be.a('function');
+		expect(setupErrorHandler).toEqual(expect.any(Function));
 
 		setupErrorHandler({use}, {});
 
-		use.should.have.been.calledWithExactly(middleware);
+		expect(use).toHaveBeenCalledWith(middleware);
 	});
 
 
-	it ('middleware is a function with 4 arguments (express error handler)', () => {
-		const {middleware: fn} = mock.reRequire('../error-handler');
+	test ('middleware is a function with 4 arguments (express error handler)', () => {
+		const {middleware: fn} = require('../error-handler');
 
-		fn.should.be.a('function');
-		fn.length.should.be.equal(4);
+		expect(fn).toEqual(expect.any(Function));
+		expect(fn.length).toEqual(4);
 	});
 
 
-	it ('the error middleware function does not call next()', () => {
-		const {middleware: fn} = mock.reRequire('../error-handler');
-		const next = sandbox.stub();
+	test ('the error middleware function does not call next()', () => {
+		const {middleware: fn} = require('../error-handler');
+		const next = jest.fn();
 		const res = {
 			end () {return this;},
 			send () {return this;},
 			status () {return this;}
 		};
 
-		sandbox.spy(res, 'end');
-		sandbox.spy(res, 'send');
-		sandbox.spy(res, 'status');
+		jest.spyOn(res, 'end');
+		jest.spyOn(res, 'send');
+		jest.spyOn(res, 'status');
 
-		expect(() => fn(new Error(), null, res, next)).to.not.throw().and.to.equal(void 0);
+		expect(() => fn(new Error(), null, res, next)).not.toThrow(); //and .toEqual(undefined)
 
-		next.should.have.not.been.called;
+		expect(next).not.toHaveBeenCalled();
 	});
 
 
-	it ('the error middleware function: error implements toJSON...', () => {
-		const {middleware: fn} = mock.reRequire('../error-handler');
-		const next = sandbox.stub();
+	test ('the error middleware function: error implements toJSON...', () => {
+		const {middleware: fn} = require('../error-handler');
+		const next = jest.fn();
 		const res = {
 			end () {return this;},
 			send () {return this;},
 			status () {return this;}
 		};
 
-		sandbox.spy(res, 'end');
-		sandbox.spy(res, 'send');
-		sandbox.spy(res, 'status');
+		jest.spyOn(res, 'end');
+		jest.spyOn(res, 'send');
+		jest.spyOn(res, 'status');
 
 		const json = {abc: '123'};
 		const err = {toJSON: () => json};
-		sandbox.spy(err, 'toJSON');
+		jest.spyOn(err, 'toJSON');
 
-		expect(() => fn(err, null, res, next)).to.not.throw().and.to.equal(void 0);
+		expect(() => fn(err, null, res, next)).not.toThrow(); //and .toEqual(undefined)
 
-		err.toJSON.should.have.been.calledOnce;
-		res.status.should.have.been.calledOnce;
-		res.status.should.have.been.calledWith(500);
+		expect(err.toJSON).toHaveBeenCalledOnce;
+		expect(res.status).toHaveBeenCalledOnce;
+		expect(res.status).toHaveBeenCalledWith(500);
 	});
 
 
-	it ('the error middleware function: error thats a JSO', () => {
-		const {middleware: fn} = mock.reRequire('../error-handler');
-		const next = sandbox.stub();
+	test ('the error middleware function: error thats a JSO', () => {
+		const {middleware: fn} = require('../error-handler');
+		const next = jest.fn();
 		const res = {
 			end () {return this;},
 			send () {return this;},
 			status () {return this;}
 		};
 
-		sandbox.spy(res, 'end');
-		sandbox.spy(res, 'send');
-		sandbox.spy(res, 'status');
+		jest.spyOn(res, 'end');
+		jest.spyOn(res, 'send');
+		jest.spyOn(res, 'status');
 
 		const err = {abc: '123'};
 
-		expect(() => fn(err, null, res, next)).to.not.throw().and.to.equal(void 0);
+		expect(() => fn(err, null, res, next)).not.toThrow(); //and .toEqual(undefined)
 
-		res.status.should.have.been.calledOnce;
-		res.status.should.have.been.calledWith(500);
+		expect(res.status).toHaveBeenCalledOnce;
+		expect(res.status).toHaveBeenCalledWith(500);
 	});
 
 
-	it ('the error middleware function: handles aborted', () => {
-		const {middleware: fn} = mock.reRequire('../error-handler');
-		const next = sandbox.stub();
+	test ('the error middleware function: handles aborted', () => {
+		const {middleware: fn} = require('../error-handler');
+		const next = jest.fn();
 		const res = {
 			end () {return this;},
 			send () {return this;},
 			status () {return this;}
 		};
 
-		sandbox.spy(res, 'end');
-		sandbox.spy(res, 'send');
-		sandbox.spy(res, 'status');
+		jest.spyOn(res, 'end');
+		jest.spyOn(res, 'send');
+		jest.spyOn(res, 'status');
 
-		expect(() => fn('aborted', null, res, next)).to.not.throw().and.to.equal(void 0);
+		expect(() => fn('aborted', null, res, next)).not.toThrow(); //and .toEqual(undefined)
 
-		res.status.should.have.been.calledWithExactly(204);
-		res.end.should.have.been.called;
-		res.send.should.not.have.been.called;
+		expect(res.status).toHaveBeenCalledWith(204);
+		expect(res.end).toHaveBeenCalled();
+		expect(res.send).not.toHaveBeenCalled();
 	});
 
 
-	it ('the error middleware function: handles missing errors', () => {
-		const handler = mock.reRequire('../error-handler');
-		const next = sandbox.stub();
+	test ('the error middleware function: handles missing errors', () => {
+		const handler = require('../error-handler');
+		const next = jest.fn();
 		const res = {
 			end () {return this;},
 			render () {return this;},
 			status () {return this;}
 		};
 
-		sandbox.spy(res, 'end');
-		sandbox.spy(res, 'render');
-		sandbox.spy(res, 'status');
+		jest.spyOn(res, 'end');
+		jest.spyOn(res, 'render');
+		jest.spyOn(res, 'status');
 
-		expect(() => handler.middleware(null, null, res, next)).to.not.throw().and.to.equal(void 0);
+		expect(() => handler.middleware(null, null, res, next)).not.toThrow(); //and .toEqual(undefined)
 
-		res.status.should.have.been.calledWithExactly(500);
-		res.render.should.have.been.calledWithExactly('error', { contact: '', err: 'Unknown Error', errorid: 'some-guid', message: ''});
-		res.end.should.not.have.been.called;
+		expect(res.status).toHaveBeenCalledWith(500);
+		expect(res.render).toHaveBeenCalledWith('error', { contact: '', err: 'Unknown Error', errorid: 'some-guid', message: ''});
+		expect(res.end).not.toHaveBeenCalled();
 	});
 
 
-	it ('the error middleware function: handles 503', () => {
-		const {middleware: fn} = mock.reRequire('../error-handler');
-		const next = sandbox.stub();
+	test ('the error middleware function: handles 503', () => {
+		const {middleware: fn} = require('../error-handler');
+		const next = jest.fn();
 		const res = {
 			end () {return this;},
 			send () {return this;},
 			status () {return this;}
 		};
 
-		sandbox.spy(res, 'end');
-		sandbox.spy(res, 'send');
-		sandbox.spy(res, 'status');
+		jest.spyOn(res, 'end');
+		jest.spyOn(res, 'send');
+		jest.spyOn(res, 'status');
 
-		expect(() => fn({statusCode: 503, message: '__'}, null, res, next)).to.not.throw().and.to.equal(void 0);
+		expect(() => fn({statusCode: 503, message: '__'}, null, res, next)).not.toThrow(); //and .toEqual(undefined)
 
-		res.status.should.have.been.calledWithExactly(503);
-		res.send.should.have.been.calledWithExactly('__');
-		res.end.should.not.have.been.called;
+		expect(res.status).toHaveBeenCalledWith(503);
+		expect(res.send).toHaveBeenCalledWith('__');
+		expect(res.end).not.toHaveBeenCalled();
 	});
 
 
-	it ('the error middleware function: handles implicit 503', () => {
-		const {middleware: fn} = mock.reRequire('../error-handler');
-		const next = sandbox.stub();
+	test ('the error middleware function: handles implicit 503', () => {
+		const {middleware: fn} = require('../error-handler');
+		const next = jest.fn();
 		const res = {
 			end () {return this;},
 			send () {return this;},
 			status () {return this;}
 		};
 
-		sandbox.spy(res, 'end');
-		sandbox.spy(res, 'send');
-		sandbox.spy(res, 'status');
+		jest.spyOn(res, 'end');
+		jest.spyOn(res, 'send');
+		jest.spyOn(res, 'status');
 
-		expect(() => fn({message: 'Service Unavailable'}, null, res, next)).to.not.throw().and.to.equal(void 0);
+		expect(() => fn({message: 'Service Unavailable'}, null, res, next)).not.toThrow(); //and .toEqual(undefined)
 
-		res.status.should.have.been.calledWithExactly(503);
-		res.send.should.have.been.calledWithExactly('Service Unavailable');
-		res.end.should.not.have.been.called;
+		expect(res.status).toHaveBeenCalledWith(503);
+		expect(res.send).toHaveBeenCalledWith('Service Unavailable');
+		expect(res.end).not.toHaveBeenCalled();
 	});
 });

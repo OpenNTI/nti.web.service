@@ -1,117 +1,111 @@
-/*eslint-env mocha*/
+/*eslint-env jest*/
 'use strict';
-const mock = require('mock-require');
-const sinon = require('sinon');
+
+const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 describe('Master', () => {
-	let logger, sandbox;
+	let logger;
 
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
-
-		logger = {
-			debug: sandbox.stub(),
-			error: sandbox.stub(),
-			info: sandbox.stub(),
-			warn: sandbox.stub(),
-		};
-
-		mock('../lib/logger', logger);
+		jest.resetModules();
+		jest.dontMock('cluster');
+		logger = require('../lib/logger');
+		stub(logger, 'debug');
+		stub(logger, 'error');
+		stub(logger, 'info');
+		stub(logger, 'warn');
 	});
+
 
 	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
+		// jest.restoreAllMocks();
+		jest.resetModules();
+		jest.dontMock('cluster');
 	});
 
 
-	it ('start() adds listeners and calls load()', () => {
-		sandbox.spy(process, 'on');
+	test ('start() adds listeners and calls load()', () => {
+		stub(process, 'on');
 		const cluster = {
-			on: sandbox.stub()
+			on: jest.fn()
 		};
-		mock('cluster', cluster);
-		const master = mock.reRequire('../master');
+		jest.doMock('cluster', () => cluster);
+		const master = require('../master');
 
-		sandbox.stub(master, 'load');
+		stub(master, 'load');
 
 		master.start();
 
-		master.load.should.have.been.calledOnce;
+		expect(master.load).toHaveBeenCalledTimes(1);
 
-		process.on.should.have.been.called;
-		process.on.should.have.been.calledWith('SIGHUP', master.load);
+		expect(process.on).toHaveBeenCalled();
+		expect(process.on).toHaveBeenCalledWith('SIGHUP', master.load);
 
-		cluster.on.should.have.been.calledWith('message', master.handleMessage);
-		cluster.on.should.have.been.calledWith('exit', master.onWorkerExit);
+		expect(cluster.on).toHaveBeenCalledWith('message', master.handleMessage);
+		expect(cluster.on).toHaveBeenCalledWith('exit', master.onWorkerExit);
 	});
 
 
-	it ('load() calls loadConfig() and init(config)', (done) => {
+	test ('load() calls loadConfig() and init(config)', () => {
 		const p = Promise.resolve({});
 		const config = {
-			loadConfig: sandbox.stub().returns(p)
+			loadConfig: jest.fn(() => p)
 		};
-		mock('../lib/config', config);
-		const master = mock.reRequire('../master');
-		sandbox.stub(master, 'init');
+		jest.doMock('../lib/config', () => config);
+		const master = require('../master');
+		stub(master, 'init');
 
-		master.load()
+		return master.load()
 			.then(() => {
-				config.loadConfig.should.have.been.calledOnce;
-				master.init.should.have.been.calledOnce;
-				done();
-			})
-			.catch(done);
+				expect(config.loadConfig).toHaveBeenCalledTimes(1);
+				expect(master.init).toHaveBeenCalledTimes(1);
+			});
 	});
 
 
-	it ('if fails loadConfig() does not call init()', (done) => {
-
+	test ('if fails loadConfig() does not call init()', () => {
 		const config = {
-			loadConfig: sandbox.stub().returns(Promise.reject())
+			loadConfig: jest.fn(() => Promise.reject())
 		};
-		mock('../lib/config', config);
-		const master = mock.reRequire('../master');
-		sandbox.stub(master, 'init');
+		jest.doMock('../lib/config', () => config);
+		const master = require('../master');
+		stub(master, 'init');
 
-		master.load()
+		return master.load()
 			.then(() => {
-				config.loadConfig.should.have.been.calledOnce;
-				master.init.should.not.have.been.called;
-				done();
-			})
-			.catch(done);
+				expect(config.loadConfig).toHaveBeenCalledTimes(1);
+				expect(master.init).not.toHaveBeenCalled();
+			});
 	});
 
 
-	it ('init() prints config flags, and applys config with setConfig()', () => {
+	test ('init() prints config flags, and applys config with setConfig()', () => {
 		const config = {
-			showFlags: sandbox.stub()
+			showFlags: jest.fn()
 		};
 		const utils = {
-			setConfig: sandbox.stub(),
+			setConfig: jest.fn(),
 			getActiveWorkers: () => []
 		};
 
 		const mockConfig = {};
 
-		mock('../lib/config', config);
-		mock('../lib/master-utils', utils);
+		jest.doMock('../lib/config', () => config);
+		jest.doMock('../lib/master-utils', () => utils);
 
-		const master = mock.reRequire('../master');
+		const master = require('../master');
 
-		sandbox.stub(master, 'maintainWorkerCount');
-		sandbox.stub(master, 'restartWorkers');
+		stub(master, 'maintainWorkerCount');
+		stub(master, 'restartWorkers');
 
 		master.init(mockConfig);
 
-		config.showFlags.should.have.been.called;
-		utils.setConfig.should.have.been.calledWithExactly(mockConfig);
+		expect(config.showFlags).toHaveBeenCalled();
+		expect(utils.setConfig).toHaveBeenCalledWith(mockConfig);
 	});
 
 
-	it ('init() adds our version to the config', () => {
+	test ('init() adds our version to the config', () => {
 		const config = { showFlags () {} };
 		const utils = {
 			setConfig () {},
@@ -120,23 +114,23 @@ describe('Master', () => {
 
 		const mockConfig = {versions: {}};
 
-		mock('../lib/config', config);
-		mock('../lib/master-utils', utils);
+		jest.doMock('../lib/config', () => config);
+		jest.doMock('../lib/master-utils', () => utils);
 
-		const master = mock.reRequire('../master');
+		const master = require('../master');
 
-		sandbox.stub(master, 'maintainWorkerCount');
-		sandbox.stub(master, 'restartWorkers');
+		stub(master, 'maintainWorkerCount');
+		stub(master, 'restartWorkers');
 
-		mockConfig.versions.should.not.have.property('service');
+		expect(mockConfig).not.toHaveProperty('versions.service');
 
 		master.init(mockConfig);
 
-		mockConfig.versions.should.have.property('service');
+		expect(mockConfig).toHaveProperty('versions.service');
 	});
 
 
-	it ('init() if the config does not have "versions" defined, it adds it', () => {
+	test ('init() if the config does not have "versions" defined, it adds it', () => {
 		const config = { showFlags () {} };
 		const utils = {
 			setConfig () {},
@@ -145,23 +139,23 @@ describe('Master', () => {
 
 		const mockConfig = {};
 
-		mock('../lib/config', config);
-		mock('../lib/master-utils', utils);
+		jest.doMock('../lib/config', () => config);
+		jest.doMock('../lib/master-utils', () => utils);
 
-		const master = mock.reRequire('../master');
+		const master = require('../master');
 
-		sandbox.stub(master, 'maintainWorkerCount');
-		sandbox.stub(master, 'restartWorkers');
+		stub(master, 'maintainWorkerCount');
+		stub(master, 'restartWorkers');
 
-		mockConfig.should.not.have.property('versions');
+		expect(mockConfig).not.toHaveProperty('versions');
 
 		master.init(mockConfig);
 
-		mockConfig.versions.should.have.property('service');
+		expect(mockConfig).toHaveProperty('versions.service');
 	});
 
 
-	it ('init() starts workers, if non are running', () => {
+	test ('init() starts workers, if non are running', () => {
 		const config = { showFlags () {} };
 		const utils = {
 			setConfig () {},
@@ -170,22 +164,22 @@ describe('Master', () => {
 
 		const mockConfig = {};
 
-		mock('../lib/config', config);
-		mock('../lib/master-utils', utils);
+		jest.doMock('../lib/config', () => config);
+		jest.doMock('../lib/master-utils', () => utils);
 
-		const master = mock.reRequire('../master');
+		const master = require('../master');
 
-		sandbox.stub(master, 'maintainWorkerCount');
-		sandbox.stub(master, 'restartWorkers');
+		stub(master, 'maintainWorkerCount');
+		stub(master, 'restartWorkers');
 
 		master.init(mockConfig);
 
-		master.maintainWorkerCount.should.have.been.calledOnce;
-		master.restartWorkers.should.not.have.been.called;
+		expect(master.maintainWorkerCount).toHaveBeenCalledTimes(1);
+		expect(master.restartWorkers).not.toHaveBeenCalled();
 	});
 
 
-	it ('init() restarts workers, if some are running', () => {
+	test ('init() restarts workers, if some are running', () => {
 		const config = { showFlags () {} };
 		const utils = {
 			setConfig () {},
@@ -194,50 +188,49 @@ describe('Master', () => {
 
 		const mockConfig = {};
 
-		mock('../lib/config', config);
-		mock('../lib/master-utils', utils);
+		jest.doMock('../lib/config', () => config);
+		jest.doMock('../lib/master-utils', () => utils);
 
-		const master = mock.reRequire('../master');
+		const master = require('../master');
 
-		sandbox.stub(master, 'maintainWorkerCount');
-		sandbox.stub(master, 'restartWorkers');
+		stub(master, 'maintainWorkerCount');
+		stub(master, 'restartWorkers');
 
 		master.init(mockConfig);
 
-		master.maintainWorkerCount.should.not.have.been.called;
-		master.restartWorkers.should.have.been.calledOnce;
+		expect(master.maintainWorkerCount).not.toHaveBeenCalled();
+		expect(master.restartWorkers).toHaveBeenCalledTimes(1);
 	});
 
 
-	it ('startWorker() forks a new process and sends it the config', () => {
+	test ('startWorker() forks a new process and sends it the config', () => {
 		const cfg = {};
 		const utils = {
-			getConfig: sandbox.stub().returns(cfg)
+			getConfig: jest.fn(() => cfg)
 		};
 		const w = {
-			send: sandbox.stub()
+			send: jest.fn()
 		};
 		const cluster = {
-			fork: sandbox.stub().returns(w)
+			fork: jest.fn(() => w)
 		};
 
-		mock('cluster', cluster);
-		mock('../lib/master-utils', utils);
+		jest.doMock('cluster', () => cluster);
+		jest.doMock('../lib/master-utils', () => utils);
 
-		const master = mock.reRequire('../master');
+		const master = require('../master');
 
 		const res = master.startWorker();
 
-		cluster.fork.should.have.been.calledOnce;
-		w.send.should.have.been.calledOnce;
-		w.send.should.have.been.calledWith({cmd: 'init', config: cfg});
+		expect(cluster.fork).toHaveBeenCalledTimes(1);
+		expect(w.send).toHaveBeenCalledTimes(1);
+		expect(w.send).toHaveBeenCalledWith({cmd: 'init', config: cfg});
 
-		res.should.be.equal(w);
-
+		expect(res).toBe(w);
 	});
 
 
-	it ('maintainWorkerCount() starts workers and stops', () => {
+	test ('maintainWorkerCount() starts workers and stops', () => {
 		let continueEventCallback;
 
 		const newWorker = {};
@@ -251,9 +244,9 @@ describe('Master', () => {
 				}
 			},
 			listeners () {}, //just getby, we'll test that next
-			removeListener: sandbox.stub()
+			removeListener: jest.fn()
 		};
-		sandbox.spy(cluster, 'on');
+		jest.spyOn(cluster, 'on');
 
 		const utils = {
 			getConfig: () => ({port}),
@@ -261,33 +254,33 @@ describe('Master', () => {
 			getActiveWorkers: () => active,
 		};
 
-		mock('cluster', cluster);
-		mock('../lib/master-utils', utils);
+		jest.doMock('cluster', () => cluster);
+		jest.doMock('../lib/master-utils', () => utils);
 
-		const master = mock.reRequire('../master');
+		const master = require('../master');
 
-		sandbox.stub(master, 'startWorker').returns(newWorker);
+		jest.spyOn(master, 'startWorker').mockImplementation(() => newWorker);
 
 		//kick off
 		master.maintainWorkerCount();
 
-		cluster.on.should.have.been.called;
-		cluster.on.should.have.been.calledWith('listening', continueEventCallback);
-		continueEventCallback.should.be.a('function');
+		expect(cluster.on).toHaveBeenCalled;
+		expect(cluster.on).toHaveBeenCalledWith('listening', continueEventCallback);
+		expect(continueEventCallback).toEqual(expect.any(Function));
 
-		cluster.removeListener.should.not.have.been.called;
+		expect(cluster.removeListener).not.toHaveBeenCalled();
 
-		master.startWorker.should.have.been.called;
+		expect(master.startWorker).toHaveBeenCalled();
 		active.push(newWorker);
 
 		continueEventCallback(newWorker, address);
 
-		cluster.removeListener.should.have.been.called;
-		cluster.removeListener.should.have.been.calledWith('listening', continueEventCallback);
+		expect(cluster.removeListener).toHaveBeenCalled();
+		expect(cluster.removeListener).toHaveBeenCalledWith('listening', continueEventCallback);
 	});
 
 
-	it ('maintainWorkerCount() may do nothing', () => {
+	test ('maintainWorkerCount() may do nothing', () => {
 		let continueEventCallback;
 
 		const newWorker = {};
@@ -300,9 +293,9 @@ describe('Master', () => {
 				}
 			},
 			listeners () {}, //just getby, we'll test that next
-			removeListener: sandbox.stub()
+			removeListener: jest.fn()
 		};
-		sandbox.spy(cluster, 'on');
+		jest.spyOn(cluster, 'on');
 
 		const utils = {
 			getConfig: () => ({port}),
@@ -310,28 +303,28 @@ describe('Master', () => {
 			getActiveWorkers: () => active,
 		};
 
-		mock('cluster', cluster);
-		mock('../lib/master-utils', utils);
+		jest.doMock('cluster', () => cluster);
+		jest.doMock('../lib/master-utils', () => utils);
 
-		const master = mock.reRequire('../master');
+		const master = require('../master');
 
-		sandbox.stub(master, 'startWorker').returns(newWorker);
+		jest.spyOn(master, 'startWorker').mockImplementation(() => newWorker);
 
 		//kick off
 		master.maintainWorkerCount();
 
-		cluster.on.should.have.been.called;
-		cluster.on.should.have.been.calledWith('listening', continueEventCallback);
-		continueEventCallback.should.be.a('function');
+		expect(cluster.on).toHaveBeenCalled;
+		expect(cluster.on).toHaveBeenCalledWith('listening', continueEventCallback);
+		expect(continueEventCallback).toEqual(expect.any(Function));
 
-		cluster.removeListener.should.have.been.called;
-		cluster.removeListener.should.have.been.calledWith('listening', continueEventCallback);
+		expect(cluster.removeListener).toHaveBeenCalled;
+		expect(cluster.removeListener).toHaveBeenCalledWith('listening', continueEventCallback);
 
-		master.startWorker.should.not.have.been.called;
+		expect(master.startWorker).not.toHaveBeenCalled;
 	});
 
 
-	it ('maintainWorkerCount() interrupts previous invocation by removing the old listeners', () => {
+	test ('maintainWorkerCount() interrupts previous invocation by removing the old listeners', () => {
 		const port = 1234;
 		const active = [{}];
 
@@ -341,8 +334,8 @@ describe('Master', () => {
 
 		const cluster = {
 			listeners: () => listening,
-			on: sandbox.stub(),
-			removeListener: sandbox.stub()
+			on: jest.fn(),
+			removeListener: jest.fn()
 		};
 
 		const utils = {
@@ -351,21 +344,21 @@ describe('Master', () => {
 			getActiveWorkers: () => active,
 		};
 
-		mock('cluster', cluster);
-		mock('../lib/master-utils', utils);
+		jest.doMock('cluster', () => cluster);
+		jest.doMock('../lib/master-utils', () => utils);
 
-		const master = mock.reRequire('../master');
+		const master = require('../master');
 
-		sandbox.stub(master, 'startWorker').returns();
+		stub(master, 'startWorker');
 
 		//kick off
 		master.maintainWorkerCount();
 
-		cluster.removeListener.callCount.should.be.equal(listening.length + 1); //the plus 1 is the finish
+		expect(cluster.removeListener).toHaveBeenCalledTimes(listening.length + 1); //the plus 1 is the finish
 	});
 
 
-	it ('maintainWorkerCount() :: startAnother ignores other workers and ports', () => {
+	test ('maintainWorkerCount() :: startAnother ignores other workers and ports', () => {
 		let continueEventCallback;
 
 		const newWorker = {};
@@ -378,159 +371,163 @@ describe('Master', () => {
 				}
 			},
 			listeners () {}, //just getby, we'll test that next
-			removeListener: sandbox.stub()
+			removeListener: jest.fn()
 		};
-		sandbox.spy(cluster, 'on');
+		jest.spyOn(cluster, 'on');
 
 		const utils = {
 			getConfig: () => ({port}),
 			getConfiguredWorkerCount: () => 2,
 			getActiveWorkers: () => active,
 		};
-		sandbox.spy(utils, 'getConfiguredWorkerCount');
-		sandbox.spy(utils, 'getActiveWorkers');
+		jest.spyOn(utils, 'getConfiguredWorkerCount');
+		jest.spyOn(utils, 'getActiveWorkers');
 
-		mock('cluster', cluster);
-		mock('../lib/master-utils', utils);
+		jest.doMock('cluster', () => cluster);
+		jest.doMock('../lib/master-utils', () => utils);
 
-		const master = mock.reRequire('../master');
+		const master = require('../master');
 
-		sandbox.stub(master, 'startWorker').returns(newWorker);
+		jest.spyOn(master, 'startWorker').mockImplementation(() => newWorker);
 
 		//kick off
 		master.maintainWorkerCount();
 
 		active.push(newWorker);
 
-		cluster.on.should.have.been.called;
-		cluster.on.should.have.been.calledWith('listening', continueEventCallback);
-		continueEventCallback.should.be.a('function');
+		expect(cluster.on).toHaveBeenCalled();
+		expect(cluster.on).toHaveBeenCalledWith('listening', continueEventCallback);
+		expect(continueEventCallback).toEqual(expect.any(Function));
 
-		utils.getConfiguredWorkerCount.reset();
-		utils.getActiveWorkers.reset();
+		utils.getConfiguredWorkerCount.mockClear();
+		utils.getActiveWorkers.mockClear();
 
 		continueEventCallback();
-		utils.getConfiguredWorkerCount.should.not.have.been.called;
-		utils.getActiveWorkers.should.not.have.been.called;
+		expect(utils.getConfiguredWorkerCount).not.toHaveBeenCalled();
+		expect(utils.getActiveWorkers).not.toHaveBeenCalled();
 
 		continueEventCallback({}, {port});
-		utils.getConfiguredWorkerCount.should.not.have.been.called;
-		utils.getActiveWorkers.should.not.have.been.called;
+		expect(utils.getConfiguredWorkerCount).not.toHaveBeenCalled();
+		expect(utils.getActiveWorkers).not.toHaveBeenCalled();
 
 		continueEventCallback(newWorker, {port: 21312});
-		utils.getConfiguredWorkerCount.should.not.have.been.called;
-		utils.getActiveWorkers.should.not.have.been.called;
+		expect(utils.getConfiguredWorkerCount).not.toHaveBeenCalled();
+		expect(utils.getActiveWorkers).not.toHaveBeenCalled();
 
-		cluster.removeListener.should.not.have.been.called;
+		expect(cluster.removeListener).not.toHaveBeenCalled();
 
 		continueEventCallback(newWorker, {port});
-		utils.getConfiguredWorkerCount.should.have.been.called;
-		utils.getActiveWorkers.should.have.been.called;
+		expect(utils.getConfiguredWorkerCount).toHaveBeenCalled();
+		expect(utils.getActiveWorkers).toHaveBeenCalled();
 
-		cluster.removeListener.should.have.been.called;
+		expect(cluster.removeListener).toHaveBeenCalled();
 	});
 
 
-	it ('Handles "unknown" message', () => {
-		const master = mock.reRequire('../master');
+	test ('Handles "unknown" message', () => {
+		const master = require('../master');
 		master.handleMessage({id: 'mock'}, {});
 
-		logger.error.should.have.been.calledOnce;
+		expect(logger.error).toHaveBeenCalledTimes(1);
 	});
 
 
-	it ('Handles "NOTIFY_DEVMODE" message', () => {
+	test ('Handles "NOTIFY_DEVMODE" message', () => {
 		const utils = {
-			setConfiguredWorkerCount: sandbox.stub().returns(1)
+			setConfiguredWorkerCount: jest.fn(() => 1)
 		};
-		mock('../lib/master-utils', utils);
-		const master = mock.reRequire('../master');
+		jest.doMock('../lib/master-utils', () => utils);
+		const master = require('../master');
 		master.handleMessage({id: 'mock'}, {cmd: 'NOTIFY_DEVMODE'});
 
-		utils.setConfiguredWorkerCount.should.have.been.calledOnce;
-		utils.setConfiguredWorkerCount.should.have.been.calledWith(1);
-		logger.error.should.not.have.been.called;
+		expect(utils.setConfiguredWorkerCount).toHaveBeenCalledTimes(1);
+		expect(utils.setConfiguredWorkerCount).toHaveBeenCalledWith(1);
+		expect(logger.error).not.toHaveBeenCalled();
 	});
 
 
-	it ('Handles unknown "WORKER_WANTS_TO_RESTART_THE_POOL"', () => {
-		const master = mock.reRequire('../master');
-		sandbox.stub(master, 'restartWorkers');
+	test ('Handles unknown "WORKER_WANTS_TO_RESTART_THE_POOL"', () => {
+		const master = require('../master');
+		stub(master, 'restartWorkers');
 		master.handleMessage({id: 'mock'}, {cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL'});
 
-		master.restartWorkers.should.have.been.called;
-		logger.error.should.not.have.been.called;
+		expect(master.restartWorkers).toHaveBeenCalled();
+		expect(logger.error).not.toHaveBeenCalled();
 	});
 
 
-	it ('Handles unknown "FATAL_ERROR"', () => {
-		const master = mock.reRequire('../master');
+	test ('Handles unknown "FATAL_ERROR"', () => {
+		const master = require('../master');
 		master.handleMessage({id: 'mock'}, {cmd: 'FATAL_ERROR'});
 
-		logger.error.should.have.been.called;
+		expect(logger.error).toHaveBeenCalled();
 	});
 
 
-	it ('onWorkerExit() logs, and queues up new workers', () => {
-		const master = mock.reRequire('../master');
-		sandbox.stub(master, 'maintainWorkerCount');
+	test ('onWorkerExit() logs, and queues up new workers', () => {
+		const master = require('../master');
+		stub(master, 'maintainWorkerCount');
 
 		master.onWorkerExit({process: {pid: 'mock'}}, 1, 'ERROR'); //error code, maintainWorkerCount should not be called.
-		logger.info.should.have.been.called;
-		master.maintainWorkerCount.should.not.have.been.called;
+		expect(logger.info).toHaveBeenCalled();
+		expect(master.maintainWorkerCount).not.toHaveBeenCalled();
 
-		logger.info.reset();
-		master.maintainWorkerCount.reset();
+		logger.info.mockClear();
+		master.maintainWorkerCount.mockClear();
 
 		master.onWorkerExit({process: {pid: 'mock'}}, 1); //error code, maintainWorkerCount should not be called.
-		logger.info.should.have.been.called;
-		master.maintainWorkerCount.should.not.have.been.called;
+		expect(logger.info).toHaveBeenCalled();
+		expect(master.maintainWorkerCount).not.toHaveBeenCalled();
 
-		logger.info.reset();
-		master.maintainWorkerCount.reset();
+		logger.info.mockClear();
+		master.maintainWorkerCount.mockClear();
 
 		master.onWorkerExit({process: {pid: 'mock'}}, 0); //no error code (clean exit), maintainWorkerCount should be called.
-		logger.info.should.have.been.called;
-		master.maintainWorkerCount.should.have.been.called;
+		expect(logger.info).toHaveBeenCalled();
+		expect(master.maintainWorkerCount).toHaveBeenCalled();
 	});
 
 
-	it ('restartWorkers() should send all curent workers the close message, but only one at a time', () => {
-		const once = sandbox.stub();
+	test ('restartWorkers() should send all curent workers the close message, but only one at a time', () => {
+		const once = jest.fn();
 		const fakeWorkers = Array.from({length: 2}).map(() => ({
 			isConnected: () => true,
-			send: sandbox.mock().once().withArgs({cmd: 'close'})
+			send: jest.fn()
 		}));
 		const utils = {
-			getConfiguredWorkerCount: sandbox.stub().returns(1),
-			getActiveWorkers: sandbox.stub().returns(fakeWorkers.slice()),
+			getConfiguredWorkerCount: jest.fn(() => 1),
+			getActiveWorkers: jest.fn(() => fakeWorkers.slice()),
 		};
 
-		mock('cluster', {once});
-		mock('../lib/master-utils', utils);
-		const master = mock.reRequire('../master');
+		jest.doMock('cluster', () => ({once}));
+		jest.doMock('../lib/master-utils', () => utils);
+		const master = require('../master');
 
 		master.restartWorkers();
 		master.restartWorkers();
 
-		fakeWorkers[0].send.verify();
-		fakeWorkers[1].send.should.not.have.been.called;
-		utils.getActiveWorkers.should.have.been.called;
-		utils.getConfiguredWorkerCount.should.have.been.called;
+		const verify = x => {
+			expect(x).toHaveBeenCalledTimes(1);
+			expect(x).toHaveBeenCalledWith({cmd: 'close'});
+		};
 
-		once.should.have.been.calledOnce;
-		once.should.have.been.calledWith('exit');
+		verify(fakeWorkers[0].send);
+		expect(fakeWorkers[1].send).not.toHaveBeenCalled();
+		expect(utils.getActiveWorkers).toHaveBeenCalled();
+		expect(utils.getConfiguredWorkerCount).toHaveBeenCalled();
 
-		const [, continueEventCallback] = once.getCall(0).args;
+		expect(once).toHaveBeenCalledTimes(1);
+		expect(once).toHaveBeenCalledWith('exit', expect.any(Function));
+
+		const [, continueEventCallback] = once.mock.calls[0];
 		continueEventCallback();
 
 		continueEventCallback(); //should noop (we only have two items)
 
-		fakeWorkers[0].send.verify();
-		fakeWorkers[1].send.verify();
+		fakeWorkers.map(x => verify(x.send));
 
-		once.should.have.been.calledTwice;
-		once.should.have.been.calledWith('listening');
+		expect(once).toHaveBeenCalledTimes(2);
+		expect(once).toHaveBeenCalledWith('listening', expect.any(Function));
 
 	});
 

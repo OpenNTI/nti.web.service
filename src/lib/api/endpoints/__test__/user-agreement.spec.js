@@ -1,65 +1,65 @@
-/*globals expect*/
-/*eslint-env mocha*/
+/*eslint-env jest*/
 'use strict';
-const mock = require('mock-require');
-const sinon = require('sinon');
-const {TOS_NOT_ACCEPTED} = require('nti-lib-interfaces');
 
+const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 describe ('lib/api/endpoints/user-agreement', () => {
-	let sandbox;
+	let TOS_NOT_ACCEPTED;
 
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
+		jest.resetModules();
+		global.fetch = () => {};
+
+		TOS_NOT_ACCEPTED = require('nti-lib-interfaces').TOS_NOT_ACCEPTED;
 	});
 
 
 	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
+		delete global.fetch;
+		jest.resetModules();
 	});
 
 
-	it ('registers user-agreement', () => {
-		const UA = mock.reRequire('../user-agreement');
-		const handler = sandbox.stub();
-		sandbox.stub(UA, 'getServeUserAgreement').callsFake(() => handler);
+	test ('registers user-agreement', () => {
+		const UA = require('../user-agreement');
+		const handler = jest.fn();
+		stub(UA, 'getServeUserAgreement', () => handler);
 		const {default: register} = UA;
-		const api = {get: sandbox.stub()};
+		const api = {get: jest.fn()};
 
 		const config = {config: 1};
 		const server = {server: 1};
-		expect(() => register(api, config, server)).to.not.throw();
-		api.get.should.have.been.calledOnce;
-		api.get.should.have.been.calledWithExactly(sinon.match.regexp, sinon.match.func);
-		const [, callback] = api.get.getCall(0).args;
+		expect(() => register(api, config, server)).not.toThrow();
+		expect(api.get).toHaveBeenCalledTimes(1);
+		expect(api.get).toHaveBeenCalledWith(expect.any(RegExp), expect.any(Function));
+		const [, callback] = api.get.mock.calls[0];
 
-		UA.getServeUserAgreement.should.have.been.calledOnce;
-		UA.getServeUserAgreement.should.have.been.calledWithExactly(config, server);
+		expect(UA.getServeUserAgreement).toHaveBeenCalledTimes(1);
+		expect(UA.getServeUserAgreement).toHaveBeenCalledWith(config, server);
 
-		handler.should.not.have.been.called;
-		expect(() => callback(1, 2)).to.not.throw();
-		handler.should.have.been.calledOnce;
-		handler.should.have.been.calledWithExactly(1, 2);
+		expect(handler).not.toHaveBeenCalled;
+		expect(() => callback(1, 2)).not.toThrow();
+		expect(handler).toHaveBeenCalledTimes(1);
+		expect(handler).toHaveBeenCalledWith(1, 2);
 	});
 
 
-	it ('getServeUserAgreement(): returns a handler fuction', () => {
-		const UA = mock.reRequire('../user-agreement');
+	test ('getServeUserAgreement(): returns a handler fuction', () => {
+		const UA = require('../user-agreement');
 
 		const handler = UA.getServeUserAgreement();
-		handler.should.be.a('function');
+		expect(handler).toEqual(expect.any(Function));
 	});
 
 
-	it ('getServeUserAgreement(): handler behavior', () => {
+	test ('getServeUserAgreement(): handler behavior', () => {
 		const context = {context: 1};
-		const UA = mock.reRequire('../user-agreement');
-		sandbox.stub(UA, 'resolveUrl').callsFake(() => Promise.resolve({url: '...', context}));
-		sandbox.stub(UA, 'handleFetch').callsFake(() => () => Promise.resolve({fetch: 1}));
-		sandbox.stub(UA, 'handleFetchResponse').callsFake(() => Promise.resolve({fetchResponse: 1}));
-		sandbox.stub(UA, 'processAndRespond').callsFake(() => () => Promise.resolve({processed: 1}));
-		sandbox.stub(UA, 'handleError').callsFake(() => {});
+		const UA = require('../user-agreement');
+		stub(UA, 'resolveUrl', () => Promise.resolve({url: '...', context}));
+		stub(UA, 'handleFetch', () => () => Promise.resolve({fetch: 1}));
+		stub(UA, 'handleFetchResponse', () => Promise.resolve({fetchResponse: 1}));
+		stub(UA, 'processAndRespond', () => () => Promise.resolve({processed: 1}));
+		stub(UA, 'handleError', () => {});
 
 		const config = {config: 1};
 		const server = {server: 1};
@@ -70,32 +70,32 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		const res = {res: 1};
 		return handler(req, res)
 			.then(() => {
-				UA.resolveUrl.should.have.been.calledOnce;
-				UA.resolveUrl.should.have.been.calledWithExactly(req, config, server);
+				expect(UA.resolveUrl).toHaveBeenCalledTimes(1);
+				expect(UA.resolveUrl).toHaveBeenCalledWith(req, config, server);
 
-				UA.handleFetch.should.have.been.calledOnce;
-				UA.handleFetch.should.have.been.calledWithExactly(req, res);
+				expect(UA.handleFetch).toHaveBeenCalledTimes(1);
+				expect(UA.handleFetch).toHaveBeenCalledWith(req, res);
 
-				UA.handleFetchResponse.should.have.been.calledOnce;
-				UA.handleFetchResponse.should.have.been.calledWithExactly({fetch: 1});
+				expect(UA.handleFetchResponse).toHaveBeenCalledTimes(1);
+				expect(UA.handleFetchResponse).toHaveBeenCalledWith({fetch: 1});
 
-				UA.processAndRespond.should.have.been.calledOnce;
-				UA.processAndRespond.should.have.been.calledWithExactly(res);
+				expect(UA.processAndRespond).toHaveBeenCalledTimes(1);
+				expect(UA.processAndRespond).toHaveBeenCalledWith(res);
 
-				UA.handleError.should.have.been.calledOnce;
-				UA.handleError.should.have.been.calledWithExactly(res);
+				expect(UA.handleError).toHaveBeenCalledTimes(1);
+				expect(UA.handleError).toHaveBeenCalledWith(res);
 			});
 	});
 
 
-	it ('getServeUserAgreement(): handler rejects if no url', () => {
-		const UA = mock.reRequire('../user-agreement');
-		const errorHandler = sandbox.stub();
-		sandbox.stub(UA, 'resolveUrl').callsFake(() => Promise.resolve());
-		sandbox.stub(UA, 'handleFetch').callsFake(() => () => Promise.resolve({fetch: 1}));
-		sandbox.stub(UA, 'handleFetchResponse').callsFake(() => Promise.resolve({fetchResponse: 1}));
-		sandbox.stub(UA, 'processAndRespond').callsFake(() => () => Promise.resolve({processed: 1}));
-		sandbox.stub(UA, 'handleError').callsFake(() => errorHandler);
+	test ('getServeUserAgreement(): handler rejects if no url', () => {
+		const UA = require('../user-agreement');
+		const errorHandler = jest.fn();
+		stub(UA, 'resolveUrl', () => Promise.resolve());
+		stub(UA, 'handleFetch', () => () => Promise.resolve({fetch: 1}));
+		stub(UA, 'handleFetchResponse', () => Promise.resolve({fetchResponse: 1}));
+		stub(UA, 'processAndRespond', () => () => Promise.resolve({processed: 1}));
+		stub(UA, 'handleError', () => errorHandler);
 
 		const config = {config: 1};
 		const server = {server: 1};
@@ -106,17 +106,17 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		const res = {res: 1};
 		return handler(req, res)
 			.then(() => {
-				UA.handleError.should.have.been.calledOnce;
-				UA.handleError.should.have.been.calledWithExactly(res);
+				expect(UA.handleError).toHaveBeenCalledTimes(1);
+				expect(UA.handleError).toHaveBeenCalledWith(res);
 
-				errorHandler.should.have.been.calledOnce;
-				errorHandler.should.have.been.calledWithExactly(sinon.match.instanceOf(Error));
+				expect(errorHandler).toHaveBeenCalledTimes(1);
+				expect(errorHandler).toHaveBeenCalledWith(expect.any(Error));
 			});
 	});
 
 
-	it ('resolveUrl(): server defines url', () => {
-		const {resolveUrl} = mock.reRequire('../user-agreement');
+	test ('resolveUrl(): server defines url', () => {
+		const {resolveUrl} = require('../user-agreement');
 
 		const pong = {
 			Links: [
@@ -128,7 +128,7 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		};
 
 		const server = {
-			get: sandbox.stub().withArgs('logon.ping').returns(Promise.resolve(pong))
+			get: jest.fn(x => x === 'logon.ping' ? Promise.resolve(pong) : void 0)
 		};
 
 		const config = {
@@ -140,23 +140,23 @@ describe ('lib/api/endpoints/user-agreement', () => {
 
 		return resolveUrl(request, config, server)
 			.then(o => {
-				o.url.should.be.a('string');
-				o.url.startsWith(config.server).should.be.true;
+				expect(o.url).toEqual(expect.any(String));
+				expect(o.url.startsWith(config.server)).toBeTruthy();
 
-				o.context.should.be.ok;
-				o.context.should.have.property('headers');
-				o.context.should.have.property('redirect');
+				expect(o.context).toBeTruthy();
+				expect(o.context).toHaveProperty('headers');
+				expect(o.context).toHaveProperty('redirect');
 			});
 	});
 
 
-	it ('resolveUrl(): config fallback url', () => {
-		const {resolveUrl} = mock.reRequire('../user-agreement');
+	test ('resolveUrl(): config fallback url', () => {
+		const {resolveUrl} = require('../user-agreement');
 
 		const pong = {};
 
 		const server = {
-			get: sandbox.stub().withArgs('logon.ping').returns(Promise.resolve(pong))
+			get: jest.fn(x => x === 'logon.ping' ? Promise.resolve(pong) : void 0)
 		};
 
 		const config = {
@@ -168,32 +168,32 @@ describe ('lib/api/endpoints/user-agreement', () => {
 
 		return resolveUrl(request, config, server)
 			.then(o => {
-				o.url.should.be.a('string');
-				o.url.startsWith(config.server).should.be.false;
-				o.url.startsWith(config['user-agreement']).should.be.true;
+				expect(o.url).toEqual(expect.any(String));
+				expect(o.url.startsWith(config.server)).toBeFalsy();
+				expect(o.url.startsWith(config['user-agreement'])).toBeTruthy();
 
-				expect(o.context).to.be.an('undefined');
+				expect(o.context).toEqual(undefined);
 			});
 	});
 
 
-	it ('resolveUrl(): error case', () => {
-		const {resolveUrl} = mock.reRequire('../user-agreement');
+	test ('resolveUrl(): error case', () => {
+		const {resolveUrl} = require('../user-agreement');
 		const request = {request: 1};
 		const server = {
-			get: sandbox.stub().withArgs('logon.ping').returns(Promise.resolve())
+			get: jest.fn(x => x === 'logon.ping' ? Promise.resolve() : void x)
 		};
 
 
 		return resolveUrl(request, null, server)
 			.then(o => {
-				expect(o).to.be.an('undefined');
+				expect(o).toEqual(undefined);
 			});
 	});
 
 
-	it ('copyRequestHeaders(): copies all headers except the blacklisted', () => {
-		const {copyRequestHeaders} = mock.reRequire('../user-agreement');
+	test ('copyRequestHeaders(): copies all headers except the blacklisted', () => {
+		const {copyRequestHeaders} = require('../user-agreement');
 
 		const req = {
 			headers: {
@@ -206,56 +206,56 @@ describe ('lib/api/endpoints/user-agreement', () => {
 			}
 		};
 
-		expect(() => copyRequestHeaders()).to.not.throw();
+		expect(() => copyRequestHeaders()).not.toThrow();
 
 		const newHeaders = copyRequestHeaders(req);
 		//is not the same ref, and is a new object
-		expect(newHeaders).to.not.equal(req.headers);
+		expect(newHeaders).not.toBe(req.headers);
 
 		//has less properties than the original
-		expect(Object.keys(newHeaders)).to.have.length.below(Object.keys(req.headers).length);
+		expect(Object.keys(newHeaders).length).toBeLessThan(Object.keys(req.headers).length);
 
 		//no new headers
 		for (let header of Object.keys(newHeaders)) {
-			req.headers.should.have.a.property(header);
+			expect(req.headers).toHaveProperty(header);
 		}
 
 	});
 
 
-	it ('handleError(): returns a handler', () => {
-		const {handleError} = mock.reRequire('../user-agreement');
+	test ('handleError(): returns a handler', () => {
+		const {handleError} = require('../user-agreement');
 
 		const handler = handleError();
-		handler.should.be.a('function');
+		expect(handler).toEqual(expect.any(Function));
 	});
 
 
-	it ('handleError(): handler sets status to 500, sends a json body, and closes the request', () => {
-		const {handleError} = mock.reRequire('../user-agreement');
+	test ('handleError(): handler sets status to 500, sends a json body, and closes the request', () => {
+		const {handleError} = require('../user-agreement');
 		const responseMock = {
-			status: sandbox.stub(),
-			json: sandbox.stub(),
-			end: sandbox.stub()
+			status: jest.fn(),
+			json: jest.fn(),
+			end: jest.fn()
 		};
 		const handler = handleError(responseMock);
 
 		handler({error: 1});
 
-		responseMock.status.should.have.been.calledOnce;
-		responseMock.status.should.have.been.calledWithExactly(500);
+		expect(responseMock.status).toHaveBeenCalledTimes(1);
+		expect(responseMock.status).toHaveBeenCalledWith(500);
 
-		responseMock.json.should.have.been.calledOnce;
-		responseMock.json.should.have.been.calledWithExactly({body: {error: 1}});
+		expect(responseMock.json).toHaveBeenCalledTimes(1);
+		expect(responseMock.json).toHaveBeenCalledWith({body: {error: 1}});
 
-		responseMock.end.should.have.been.calledOnce;
-		responseMock.end.should.have.been.calledWithExactly();
+		expect(responseMock.end).toHaveBeenCalledTimes(1);
+		expect(responseMock.end).toHaveBeenCalledWith();
 	});
 
 
-	it ('handleFetch(): normal', () => {
-		const {handleFetch} = mock.reRequire('../user-agreement');
-		sandbox.stub(global, 'fetch');
+	test ('handleFetch(): normal', () => {
+		const {handleFetch} = require('../user-agreement');
+		stub(global, 'fetch');
 
 		const url = 'test';
 		const context = {context: 1};
@@ -265,92 +265,95 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		const handler = handleFetch(req, resp);
 		handler({url, context});
 
-		fetch.should.have.been.calledOnce;
-		fetch.should.have.been.calledWithExactly(url, context);
+		expect(fetch).toHaveBeenCalledTimes(1);
+		expect(fetch).toHaveBeenCalledWith(url, context);
 	});
 
 
-	it ('handleFetch(): redirect', () => {
-		const {handleFetch} = mock.reRequire('../user-agreement');
+	test ('handleFetch(): redirect', () => {
+		const {handleFetch} = require('../user-agreement');
 
 		const url = 'test';
 		const context = {context: 1};
 		const req = {url: 'some-url/view'};
 		const resp = {
-			redirect: sandbox.stub()
+			redirect: jest.fn()
 		};
 
 		const handler = handleFetch(req, resp);
 		handler({url, context});
 
-		resp.redirect.should.have.been.calledOnce;
-		resp.redirect.should.have.been.calledWithExactly(url);
+		expect(resp.redirect).toHaveBeenCalledTimes(1);
+		expect(resp.redirect).toHaveBeenCalledWith(url);
 	});
 
 
-	it ('handleFetchResponse(): normal', () => {
-		const {handleFetchResponse} = mock.reRequire('../user-agreement');
+	test ('handleFetchResponse(): normal', () => {
+		const {handleFetchResponse} = require('../user-agreement');
 
 		const responseMock = {
 			ok: true,
-			text: sandbox.stub().returns('response-text')
+			text: jest.fn(() => 'response-text')
 		};
 
 		return Promise.resolve(handleFetchResponse(responseMock))
 			.then(text => {
-				text.should.equal('response-text');
+				expect(text).toEqual('response-text');
 			});
 	});
 
 
-	it ('handleFetchResponse(): redirect', () => {
-		const {handleFetchResponse} = mock.reRequire('../user-agreement');
+	test ('handleFetchResponse(): redirect', () => {
+		const {handleFetchResponse} = require('../user-agreement');
 
-		const get = sandbox.stub();
-		get.withArgs('location').returns('new-place');
+		const get = jest.fn(x => x === 'location' ? 'new-place' : void x);
 
-		sandbox.stub(global, 'fetch');
-		fetch.returns(Promise.resolve({ok: false, status: 404, statusText: 'Not Found'}));
-		fetch.withArgs('new-place').returns(Promise.resolve({
-			ok: true,
-			text: sandbox.stub().returns('response-text')
-		}));
+		stub(global, 'fetch', (x) => {
+			if (x === 'new-place') {
+				return Promise.resolve({
+					ok: true,
+					text: jest.fn(() => 'response-text')
+				});
+			}
+
+			return Promise.resolve({ok: false, status: 404, statusText: 'Not Found'});
+		});
 
 
 		return Promise.resolve(handleFetchResponse({ok: false, status: 302, headers: {get}}))
 			.then(text => {
-				text.should.equal('response-text');
+				expect(text).toEqual('response-text');
 			});
 	});
 
 
-	it ('handleFetchResponse(): error', () => {
-		const {handleFetchResponse} = mock.reRequire('../user-agreement');
+	test ('handleFetchResponse(): error', () => {
+		const {handleFetchResponse} = require('../user-agreement');
 
 		return Promise.resolve(handleFetchResponse({ok: false, status: 404, statusText: 'Not Found'}))
 			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
 			.catch(er => {
-				er.should.be.an.instanceOf(Error);
-				er.message.should.equal('Not Found');
+				expect(er).toEqual(expect.any(Error));
+				expect(er.message).toEqual('Not Found');
 			});
 
 	});
 
 
-	it ('processAndRespond(): returns a handler', () => {
-		const {processAndRespond} = mock.reRequire('../user-agreement');
+	test ('processAndRespond(): returns a handler', () => {
+		const {processAndRespond} = require('../user-agreement');
 
 		const handler = processAndRespond();
-		handler.should.be.a('function');
+		expect(handler).toEqual(expect.any(Function));
 	});
 
 
-	it ('processAndRespond(): encodes a {body, styles} data structure, body string is stripped of script and style tags, style string is the sum of all style tags contents.', () => {
-		const {processAndRespond} = mock.reRequire('../user-agreement');
+	test ('processAndRespond(): encodes a {body, styles} data structure, body string is stripped of script and style tags, style string is the sum of all style tags contents.', () => {
+		const {processAndRespond} = require('../user-agreement');
 		const responseMock = {
-			status: sandbox.stub(),
-			json: sandbox.stub(),
-			end: sandbox.stub()
+			status: jest.fn(),
+			json: jest.fn(),
+			end: jest.fn()
 		};
 
 		const handler = processAndRespond(responseMock);
@@ -375,24 +378,24 @@ describe ('lib/api/endpoints/user-agreement', () => {
 
 		handler(raw);
 
-		responseMock.status.should.have.been.calledOnce;
-		responseMock.status.should.have.been.calledWithExactly(200);
+		expect(responseMock.status).toHaveBeenCalledTimes(1);
+		expect(responseMock.status).toHaveBeenCalledWith(200);
 
 
-		responseMock.json.should.have.been.calledOnce;
-		responseMock.json.should.have.been.calledWithExactly({body: sinon.match.string, styles: sinon.match.string});
-		const [data] = responseMock.json.getCall(0).args;
+		expect(responseMock.json).toHaveBeenCalledTimes(1);
+		expect(responseMock.json).toHaveBeenCalledWith({body: expect.any(String), styles: expect.any(String)});
+		const [data] = responseMock.json.mock.calls[0];
 
-		data.body.should.not.have.string('<script');
-		data.body.should.not.have.string('</script>');
-		data.body.should.not.have.string('<style');
-		data.body.should.not.have.string('</style>');
+		expect(data.body).not.toEqual(expect.stringContaining('<script'));
+		expect(data.body).not.toEqual(expect.stringContaining('</script>'));
+		expect(data.body).not.toEqual(expect.stringContaining('<style'));
+		expect(data.body).not.toEqual(expect.stringContaining('</style>'));
 
-		data.styles.should.have.string('#test1');
-		data.styles.should.have.string('#test2');
+		expect(data.styles).toEqual(expect.stringContaining('#test1'));
+		expect(data.styles).toEqual(expect.stringContaining('#test2'));
 
-		responseMock.end.should.have.been.calledOnce;
-		responseMock.end.should.have.been.calledWithExactly();
+		expect(responseMock.end).toHaveBeenCalledTimes(1);
+		expect(responseMock.end).toHaveBeenCalledWith();
 
 
 	});

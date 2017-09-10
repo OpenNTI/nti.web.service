@@ -1,148 +1,162 @@
-/*globals expect*/
-/*eslint-env mocha*/
+/*eslint-env jest*/
 'use strict';
-const mock = require('mock-require');
-const sinon = require('sinon');
+
+const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 describe('lib/master-utils', () => {
-	let sandbox;
+	let logger;
 
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
-		mock('cluster', {workers: []});
+		jest.resetModules();
+		logger = require('../logger');
+
+		stub(logger, 'get', () => logger);
+		stub(logger, 'attachToExpress');
+		stub(logger, 'debug');
+		stub(logger, 'error');
+		stub(logger, 'info');
+		stub(logger, 'warn');
+
+		jest.doMock('cluster', () => ({workers: []}));
 	});
+
 
 	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
+		jest.dontMock('cluster');
+		jest.resetModules();
 	});
 
-	it ('getConfig/setConfig work as expected', () => {
+
+	test ('getConfig/setConfig work as expected', () => {
 		const cfg = {test:'abc'};
 		const copy = Object.assign({}, cfg);
-		const {getConfig, setConfig} = mock.reRequire('../master-utils');
+		const {getConfig, setConfig} = require('../master-utils');
 		//starts out unset
-		expect(getConfig()).to.be.undefined;
+		expect(getConfig()).toEqual(undefined);
 
 		//safe on no input
-		expect(() => setConfig()).to.not.throw();
+		expect(() => setConfig()).not.toThrow();
 		//safe on null input
-		expect(() => setConfig(null)).to.not.throw();
+		expect(() => setConfig(null)).not.toThrow();
 		//safe on object
-		expect(() => setConfig(cfg)).to.not.throw();
+		expect(() => setConfig(cfg)).not.toThrow();
 		//returns the thing given
 
-		getConfig().should.be.equal(cfg);
+		expect(getConfig()).toBe(cfg);
 
 		//does not modify thing? is this important?
-		getConfig().should.be.deep.equal(copy);
+		expect(getConfig()).toEqual(copy);
 	});
 
 
-	it ('isValidWorkerCount() only accepts finite positive integers', () => {
-		const {isValidWorkerCount} = mock.reRequire('../master-utils');
+	test ('isValidWorkerCount() only accepts finite positive integers', () => {
+		const {isValidWorkerCount} = require('../master-utils');
 
-		isValidWorkerCount().should.be.false;
-		isValidWorkerCount(null).should.be.false;
-		isValidWorkerCount(NaN).should.be.false;
-		isValidWorkerCount(Infinity).should.be.false;
-		isValidWorkerCount(-Infinity).should.be.false;
-		isValidWorkerCount(-12).should.be.false;
-		isValidWorkerCount(-0.21).should.be.false;
-		isValidWorkerCount(0).should.be.false;
-		isValidWorkerCount(0.21).should.be.false;
-		isValidWorkerCount(10.21).should.be.false;
-		isValidWorkerCount('abc').should.be.false;
-		isValidWorkerCount('901').should.be.false;
+		expect(isValidWorkerCount()).toBe(false);
+		expect(isValidWorkerCount(null)).toBe(false);
+		expect(isValidWorkerCount(NaN)).toBe(false);
+		expect(isValidWorkerCount(Infinity)).toBe(false);
+		expect(isValidWorkerCount(-Infinity)).toBe(false);
+		expect(isValidWorkerCount(-12)).toBe(false);
+		expect(isValidWorkerCount(-0.21)).toBe(false);
+		expect(isValidWorkerCount(0)).toBe(false);
+		expect(isValidWorkerCount(0.21)).toBe(false);
+		expect(isValidWorkerCount(10.21)).toBe(false);
+		expect(isValidWorkerCount('abc')).toBe(false);
+		expect(isValidWorkerCount('901')).toBe(false);
 
-		isValidWorkerCount(1).should.be.true;
-		isValidWorkerCount(100).should.be.true;
-		isValidWorkerCount(1000).should.be.true;
+		expect(isValidWorkerCount(1)).toBe(true);
+		expect(isValidWorkerCount(100)).toBe(true);
+		expect(isValidWorkerCount(1000)).toBe(true);
 
 	});
 
-	it ('getConfiguredWorkerCount() returns the value of `workers` as an integer, if valid, otherwise 1, ignores argument', () => {
-		const {setConfig, getConfiguredWorkerCount} = mock.reRequire('../master-utils');
+
+	test ('getConfiguredWorkerCount() returns the value of `workers` as an integer, if valid, otherwise 1, ignores argument', () => {
+		const {setConfig, getConfiguredWorkerCount} = require('../master-utils');
 
 		const goodValues = [{workers: 2}, {workers: '2'}, {workers: '10'}, {workers: 10}, {workers: 1}, {workers: 300}];
 		for (let v of goodValues) {
 			const c = parseInt(v.workers, 10);
 			setConfig(v);
-			getConfiguredWorkerCount().should.be.equal(c);
+			expect(getConfiguredWorkerCount()).toEqual(c);
 			//ingnores argument
-			getConfiguredWorkerCount(54).should.be.equal(c);
+			expect(getConfiguredWorkerCount(54)).toEqual(c);
 		}
 
 		const badValues = [void 0, null, {}, {workers: ''}, {workers: 'abc'}, {workers: 0}, {workers: '-9'}];
 		for (let v of badValues) {
 			setConfig(v);
-			getConfiguredWorkerCount().should.be.equal(1);
+			expect(getConfiguredWorkerCount()).toEqual(1);
 			//ingnores argument
-			getConfiguredWorkerCount(54).should.be.equal(1);
+			expect(getConfiguredWorkerCount(54)).toEqual(1);
 		}
 	});
 
-	it ('setConfiguredWorkerCount()', () => {
-		const {getConfig, getConfiguredWorkerCount, setConfiguredWorkerCount} = mock.reRequire('../master-utils');
+
+	test ('setConfiguredWorkerCount()', () => {
+		const {getConfig, getConfiguredWorkerCount, setConfiguredWorkerCount} = require('../master-utils');
 		// starts out unset
-		expect(getConfig()).to.be.undefined;
+		expect(getConfig()).toEqual(undefined);
 		// base values
-		getConfiguredWorkerCount().should.be.equal(1);
+		expect(getConfiguredWorkerCount()).toEqual(1);
 
 		// set to a valid 2
-		expect(() => setConfiguredWorkerCount(2)).to.not.throw();
+		expect(() => setConfiguredWorkerCount(2)).not.toThrow();
 		const config = getConfig();
 
 		// config was undefined, it should now be defined.
-		config.should.not.be.undefined;
+		expect(config).toBeDefined();
 		// with a value for property workers.
-		config.should.have.a.property('workers', 2);
+		expect(config).toHaveProperty('workers', 2);
 		// getConfiguredWorkerCount should now return 2
-		getConfiguredWorkerCount().should.be.equal(2);
+		expect(getConfiguredWorkerCount()).toEqual(2);
 
 		// now we're starting with a non-nully config...so we're updating workers.
 		// set to a valid '2' (string)
-		expect(() => setConfiguredWorkerCount('2')).to.not.throw();
-		config.should.be.equal(getConfig()); //they should remain the same (eg: "===") object
-		config.should.have.a.property('workers', '2');
-		getConfiguredWorkerCount().should.be.equal(2);
+		expect(() => setConfiguredWorkerCount('2')).not.toThrow();
+		expect(config).toEqual(getConfig()); //they should remain the same (eg: "===") object
+		expect(config).toHaveProperty('workers', '2');
+		expect(getConfiguredWorkerCount()).toEqual(2);
 
 		// anther update...to the config.
 		// set to an invalid string
-		expect(() => setConfiguredWorkerCount('foobar')).to.not.throw();
-		config.should.be.equal(getConfig()); //they should remain the same (eg: "===") object
-		config.should.have.a.property('workers', 'foobar');
-		getConfiguredWorkerCount().should.be.equal(1);
+		expect(() => setConfiguredWorkerCount('foobar')).not.toThrow();
+		expect(config).toEqual(getConfig()); //they should remain the same (eg: "===") object
+		expect(config).toHaveProperty('workers', 'foobar');
+		expect(getConfiguredWorkerCount()).toEqual(1);
 	});
 
-	it ('getActiveWorkers() is safe', () => {
-		mock('cluster', {});
-		const {getActiveWorkers} = mock.reRequire('../master-utils');
+
+	test ('getActiveWorkers() is safe', () => {
+		jest.doMock('cluster', () => ({}));
+		const {getActiveWorkers} = require('../master-utils');
 
 		//safe (the workers property is not defined)
-		expect(() => getActiveWorkers()).not.to.throw();
+		expect(() => getActiveWorkers()).not.toThrow();
 
-		getActiveWorkers().should.be.an('Array');
+		expect(getActiveWorkers()).toEqual(expect.any(Array));
 
 		//the return value should always be new
-		getActiveWorkers().should.not.equal(getActiveWorkers());
+		expect(getActiveWorkers()).not.toBe(getActiveWorkers());
 
 	});
 
-	it ('getActiveWorkers() returns active workers', () => {
-		mock('cluster', {workers: [
+
+	test ('getActiveWorkers() returns active workers', () => {
+		jest.doMock('cluster', () => ({workers: [
 			{isDead: () => true},
 			{isDead: () => false},
 			{isDead: () => true},
 			{}, // <= unexpected value
-		]});
-		const {getActiveWorkers} = mock.reRequire('../master-utils');
+		]}));
+		const {getActiveWorkers} = require('../master-utils');
 
 		//safe (note the empty object in the workers list)
-		expect(() => getActiveWorkers()).not.to.throw();
+		expect(() => getActiveWorkers()).not.toThrow();
 
 		const active = getActiveWorkers();
-		active.length.should.equal(1);
+		expect(active.length).toEqual(1);
 	});
 
 });

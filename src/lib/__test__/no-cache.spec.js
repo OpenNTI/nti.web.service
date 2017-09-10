@@ -1,65 +1,65 @@
-/*globals expect*/
-/*eslint-env mocha*/
+/*eslint-env jest*/
 'use strict';
-const mock = require('mock-require');
-const sinon = require('sinon');
+
 
 describe('lib/no-cache (middleware)', () => {
-	let sandbox;
 
 	beforeEach(() => {
-		sandbox = sinon.sandbox.create();
+		jest.resetModules();
 	});
+
 
 	afterEach(() => {
-		sandbox.restore();
-		mock.stopAll();
-	});
-
-	it ('exports a middleware function', () => {
-		const fn = mock.reRequire('../no-cache');
-
-		fn.should.be.a('function');
-		fn.length.should.be.equal(3);
+		jest.resetModules();
 	});
 
 
-	it ('the middleware function calls next()', () => {
-		const fn = mock.reRequire('../no-cache');
-		const next = sandbox.stub();
-		const res = {setHeader: sandbox.stub()};
+	test ('exports a middleware function', () => {
+		const fn = require('../no-cache');
 
-		expect(() => fn(null, res, next)).to.not.throw().and.to.equal(void 0);
-
-		next.should.have.been.calledOnce;
-		next.should.have.been.calledWithExactly();
+		expect(fn).toEqual(expect.any(Function));
+		expect(fn.length).toEqual(3);
 	});
 
 
-	it ('the middleware function sets no-cache headers on the response', () => {
+	test ('the middleware function calls next()', () => {
+		const fn = require('../no-cache');
+		const next = jest.fn();
+		const res = {setHeader: jest.fn()};
+
+		expect(() => fn(null, res, next)).not.toThrow();
+		expect(fn(null, res, jest.fn())).toEqual(void 0);
+
+		expect(next).toHaveBeenCalledTimes(1);
+		expect(next).toHaveBeenCalledWith();
+	});
+
+
+	test ('the middleware function sets no-cache headers on the response', () => {
 		const next = () => ({});
-		const fn = mock.reRequire('../no-cache');
-		const res = {setHeader: sandbox.stub()};
+		const fn = require('../no-cache');
+		const res = {setHeader: jest.fn()};
 
-		expect(() => fn(null, res, next)).to.not.throw().and.to.equal(void 0);
+		expect(() => fn(null, res, next)).not.toThrow();
 
-		res.setHeader.should.have.been.calledThrice
-			.and.calledWithExactly('Cache-Control', 'private, no-cache, no-store, ' +
+
+		expect(res.setHeader).toHaveBeenCalledTimes(3);
+		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-cache, no-store, ' +
 													'must-revalidate, max-stale=0, ' +
-													'post-check=0, pre-check=0')
-			.and.calledWithExactly('Expires', '-1')
-			.and.calledWithExactly('Pragma', 'no-cache');
+													'post-check=0, pre-check=0');
+		expect(res.setHeader).toHaveBeenCalledWith('Expires', '-1');
+		expect(res.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
 	});
 
 
-	it ('does not call setHeader if headers already sent.', () => {
+	test ('does not call setHeader if headers already sent.', () => {
 		const next = () => ({});
-		const fn = mock.reRequire('../no-cache');
-		const res = {headersSent: true, setHeader: sandbox.stub()};
+		const fn = require('../no-cache');
+		const res = {headersSent: true, setHeader: jest.fn()};
 
-		expect(() => fn(null, res, next)).to.not.throw().and.to.equal(void 0);
+		expect(() => fn(null, res, next)).not.toThrow();
 
-		res.setHeader.should.not.have.been.called;
+		expect(res.setHeader).not.toHaveBeenCalled();
 	});
 
 });

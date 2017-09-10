@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node ./src --protocol http --config ./config/env.json.example",
     "test": "eslint ./src && jest -c ./src/__test__/__jest.config.ci.js",
-    "prepack": "eslint ./src && jest",
+    "prepack": "npm test",
     "release": "./release.sh"
   },
   "repository": {

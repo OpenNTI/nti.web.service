@@ -47,8 +47,5 @@
   },
   "jest": {
     "testEnvironment": "node"
-  },
-  "jest-junit": {
-    "JEST_JUNIT_OUTPUT": "reports/test-results/index.xml"
   }
 }

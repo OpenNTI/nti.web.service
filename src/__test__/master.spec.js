@@ -468,16 +468,16 @@ describe('Master', () => {
 		const master = require('../master');
 		stub(master, 'maintainWorkerCount');
 
-		master.onWorkerExit({process: {pid: 'mock'}}, 1, 'ERROR'); //error code, maintainWorkerCount should not be called.
+		master.onWorkerExit({process: {pid: 'mock'}}, 1, 'ERROR'); //error code, maintainWorkerCount should be called.
 		expect(logger.info).toHaveBeenCalled();
-		expect(master.maintainWorkerCount).not.toHaveBeenCalled();
+		expect(master.maintainWorkerCount).toHaveBeenCalled();
 
 		logger.info.mockClear();
 		master.maintainWorkerCount.mockClear();
 
-		master.onWorkerExit({process: {pid: 'mock'}}, 1); //error code, maintainWorkerCount should not be called.
+		master.onWorkerExit({process: {pid: 'mock'}}, 1); //error code, maintainWorkerCount should be called.
 		expect(logger.info).toHaveBeenCalled();
-		expect(master.maintainWorkerCount).not.toHaveBeenCalled();
+		expect(master.maintainWorkerCount).toHaveBeenCalled();
 
 		logger.info.mockClear();
 		master.maintainWorkerCount.mockClear();

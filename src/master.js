@@ -178,9 +178,8 @@ function restartWorkers () {
 
 function onWorkerExit (worker, code, signal) {
 	logger.info('worker %d exited (code: %s%s)', worker.process.pid, code, signal ? `, signal: ${signal}` : '');
-	if (!code) {
-		self.maintainWorkerCount();
-	}
+
+	self.maintainWorkerCount();
 }
 
 

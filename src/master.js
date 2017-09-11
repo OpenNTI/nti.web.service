@@ -1,8 +1,9 @@
 const cluster = require('cluster');
+const fs = require('fs');
 
 const pkg = require('../package.json');
 
-const {getStackOrMessage, getErrorMessage} = require('./lib/util');
+const {getStackOrMessage, getErrorMessage, callThresholdMet} = require('./lib/util');
 const {loadConfig, showFlags} = require('./lib/config');
 const logger = require('./lib/logger');
 const {
@@ -85,11 +86,26 @@ function init (config) {
 
 
 function startWorker () {
-	logger.info('Starting Worker...');
-	const config = getConfig();
-	const worker = cluster.fork();
-	worker.send({cmd: 'init', config});
-	return worker;
+	try {
+		logger.info('Starting Worker...');
+
+		if (callThresholdMet(startWorker, 10)) {
+			logger.error('Too many worker cycles in a second');
+			return process.exit(1);
+		}
+
+		fs.accessSync(__filename);
+
+		const config = getConfig();
+		const worker = cluster.fork();
+		worker.send({cmd: 'init', config});
+		return worker;
+	} catch (e) {
+		logger.warn('MISSING CODE: Cannot start a worker.');
+		logger.debug('MISSING CODE: Cannot access "%s"', __filename);
+		clearTimeout(self.missingCode);
+		self.missingCode = setTimeout(self.maintainWorkerCount, 300);
+	}
 }
 
 

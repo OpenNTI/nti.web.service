@@ -1,4 +1,4 @@
 {
-  "name": "mock app",
+  "name": "mock app with hooks",
   "main": "index.js"
 }

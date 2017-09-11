@@ -2,6 +2,7 @@ const cluster = require('cluster');
 
 const pkg = require('../package.json');
 
+const {getStackOrMessage, getErrorMessage} = require('./lib/util');
 const {loadConfig, showFlags} = require('./lib/config');
 const logger = require('./lib/logger');
 const {
@@ -166,8 +167,7 @@ function restartWorkers () {
 					worker.send({cmd: 'close'});
 				}
 			} catch (e) {
-				/* istanbul ignore next */
-				logger.error(e.stack || e.message || e);
+				logger.error(getStackOrMessage(e));
 			}
 		}
 	}
@@ -177,7 +177,7 @@ function restartWorkers () {
 
 
 function onWorkerExit (worker, code, signal) {
-	logger.info('worker %d exited (%s)', worker.process.pid, signal || code);
+	logger.info('worker %d exited (code: %s%s)', worker.process.pid, code, signal ? `, signal: ${signal}` : '');
 	if (!code) {
 		self.maintainWorkerCount();
 	}
@@ -191,7 +191,7 @@ function handleMessage (worker, msg) {
 		return;
 	} catch (e) {
 		/* istanbul ignore next */
-		logger.error('Could not handle message. %o', e.message || e.stack || e);
+		logger.error('Could not handle message. %o', getErrorMessage(e));
 		return;
 	}
 }

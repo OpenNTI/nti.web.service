@@ -3,6 +3,8 @@ const Url = require('url');
 
 const {TOS_NOT_ACCEPTED, getLink} = require('nti-lib-interfaces');
 
+const {getStackOrMessage} = require('../../util');
+
 const tagPattern = tag => new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)</' + tag + '>', 'ig');
 const BODY_REGEX = /<body[^>]*>([\s\S]*)<\/body/i;//no g
 const SHOULD_REDIRECT = RegExp.prototype.test.bind(/\/view/);
@@ -84,7 +86,7 @@ function copyRequestHeaders (req) {
 function handleError (response) {
 	return (e) => {
 		response.status(500);
-		response.json({body: e.stack || e.message || e});
+		response.json({body: getStackOrMessage(e)});
 		response.end();
 	};
 }

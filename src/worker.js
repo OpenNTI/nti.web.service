@@ -13,6 +13,7 @@ const htmlTemplates = require('./lib/htmlTemplates');
 const {restart} = require('./lib/restart');
 const {setupApplication} = require('./lib/app-service');
 const {setupErrorHandler} = require('./lib/error-handler');
+const {getStackOrMessage, getErrorMessage} = require('./lib/util');
 
 const sendErrorMessage = e => process.send({cmd: 'FATAL_ERROR', error: e});
 
@@ -32,8 +33,7 @@ const MESSAGE_HANDLERS = {
 			this.server = self.init(msg.config);
 		} catch (e) {
 			process.exitCode = 1;
-			/* istanbul ignore next */
-			logger.error(e.message || e);
+			logger.error(getStackOrMessage(e));
 			sendErrorMessage(e);
 			this.close();
 		}
@@ -108,8 +108,7 @@ function messageHandler (msg) {
 		MESSAGE_HANDLERS[msg.cmd](msg);
 		return;
 	} catch (e) {
-		/* istanbul ignore next */
-		logger.error('Could not handle message. %o', e.message || e.stack || e);
+		logger.error('Could not handle message. %o', getErrorMessage(e));
 		return;
 	}
 }

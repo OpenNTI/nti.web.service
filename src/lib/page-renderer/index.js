@@ -5,6 +5,7 @@ const url = require('url');
 const {URL: {join: urlJoin}} = require('nti-commons');
 
 const logger = require('../logger');
+const {getErrorMessage} = require('../util');
 
 const {resolveTemplateFile, getModules, getTemplate} = require('./utils');
 
@@ -30,7 +31,7 @@ function getRenderer (assets, renderContent) {
 	function warnAboutChunks (e) {
 		if (!warnedAboutChunks) {
 			warnedAboutChunks = true;
-			logger.warn('Could not resolve chunk names: %s', e.message || e);
+			logger.warn('Could not resolve chunk names: %s', getErrorMessage(e));
 		}
 	}
 

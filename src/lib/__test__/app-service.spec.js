@@ -221,61 +221,63 @@ describe('lib/app-service', () => {
 			restartRequest: jest.fn()
 		};
 
-		const ret = await service.setupClient(clientConfig, params);
+		return service.setupClient(clientConfig, params)
+			.then(ret => {
 
-		expect(ret).not.toBeDefined();
-		expect(params.restartRequest).not.toHaveBeenCalled();
+				expect(ret).not.toBeDefined();
+				expect(params.restartRequest).not.toHaveBeenCalled();
 
-		expect(service.contextualize).toHaveBeenCalled();
+				expect(service.contextualize).toHaveBeenCalled();
 
-		expect(compressionMock).toHaveBeenCalledTimes(1);
-		expect(compressionMock).toHaveBeenCalledWith(clientApp, mockReg.assets);
+				expect(compressionMock).toHaveBeenCalledTimes(1);
+				expect(compressionMock).toHaveBeenCalledWith(clientApp, mockReg.assets);
 
-		expect(staticMock).toHaveBeenCalledTimes(1);
-		expect(staticMock).toHaveBeenCalledWith(mockReg.assets, expect.any(Object));
-		expect(staticMock).toHaveBeenCalledWith(mockReg.assets, expect.objectContaining({maxAge: ONE_HOUR}));
+				expect(staticMock).toHaveBeenCalledTimes(1);
+				expect(staticMock).toHaveBeenCalledWith(mockReg.assets, expect.any(Object));
+				expect(staticMock).toHaveBeenCalledWith(mockReg.assets, expect.objectContaining({maxAge: ONE_HOUR}));
 
-		expect(clientApp.get).toHaveBeenCalledTimes(2);
-		expect(clientApp.get).toHaveBeenCalledWith(expect.any(RegExp), service.resourceNotFound);
-		expect(clientApp.get).toHaveBeenCalledWith('*', 'page-renderer');
+				expect(clientApp.get).toHaveBeenCalledTimes(2);
+				expect(clientApp.get).toHaveBeenCalledWith(expect.any(RegExp), service.resourceNotFound);
+				expect(clientApp.get).toHaveBeenCalledWith('*', 'page-renderer');
 
-		expect(registerEndPoints).toHaveBeenCalledTimes(1);
-		expect(registerEndPoints).toHaveBeenCalledWith(
-			clientApp,
-			expect.objectContaining({mockConfig: true, package: 'test-app', basepath: '/basepath/'}),
-			params.interface
-		);
+				expect(registerEndPoints).toHaveBeenCalledTimes(1);
+				expect(registerEndPoints).toHaveBeenCalledWith(
+					clientApp,
+					expect.objectContaining({mockConfig: true, package: 'test-app', basepath: '/basepath/'}),
+					params.interface
+				);
 
-		expect(clientApp.use.mock.calls.length).toEqual(6);
-		expect(clientApp.use).toHaveBeenCalledWith('staticMiddleware');
-		expect(clientApp.use).toHaveBeenCalledWith('express-request-language-middleware');
-		expect(clientApp.use).toHaveBeenCalledWith(cacheBusterMiddleware);
-		expect(clientApp.use).toHaveBeenCalledWith(service.FORCE_ERROR_ROUTE, service.forceError);
-		expect(clientApp.use).toHaveBeenCalledWith(service.ANONYMOUS_ROUTES, expect.any(Function));
-		expect(clientApp.use).toHaveBeenCalledWith(service.AUTHENTICATED_ROUTES, expect.any(Function));
+				expect(clientApp.use.mock.calls.length).toEqual(6);
+				expect(clientApp.use).toHaveBeenCalledWith('staticMiddleware');
+				expect(clientApp.use).toHaveBeenCalledWith('express-request-language-middleware');
+				expect(clientApp.use).toHaveBeenCalledWith(cacheBusterMiddleware);
+				expect(clientApp.use).toHaveBeenCalledWith(service.FORCE_ERROR_ROUTE, service.forceError);
+				expect(clientApp.use).toHaveBeenCalledWith(service.ANONYMOUS_ROUTES, expect.any(Function));
+				expect(clientApp.use).toHaveBeenCalledWith(service.AUTHENTICATED_ROUTES, expect.any(Function));
 
-		const args = [{}, {}, {}];
-		for (let n = 0; n < clientApp.use.mock.calls.length; n++) {
-			const [param, fn] = clientApp.use.mock.calls[n];
-			if (param === service.ANONYMOUS_ROUTES || param === service.AUTHENTICATED_ROUTES) {
-				fn.apply(null, args);
-			}
-		}
+				const args = [{}, {}, {}];
+				for (let n = 0; n < clientApp.use.mock.calls.length; n++) {
+					const [param, fn] = clientApp.use.mock.calls[n];
+					if (param === service.ANONYMOUS_ROUTES || param === service.AUTHENTICATED_ROUTES) {
+						fn.apply(null, args);
+					}
+				}
 
-		expect(sessionMockInstance.anonymousMiddleware).toHaveBeenCalledTimes(1);
-		expect(sessionMockInstance.anonymousMiddleware).toHaveBeenCalledWith(clientConfig.basepath, args[0], args[1], args[2]);
+				expect(sessionMockInstance.anonymousMiddleware).toHaveBeenCalledTimes(1);
+				expect(sessionMockInstance.anonymousMiddleware).toHaveBeenCalledWith(clientConfig.basepath, args[0], args[1], args[2]);
 
-		expect(sessionMockInstance.middleware).toHaveBeenCalledTimes(1);
-		expect(sessionMockInstance.middleware).toHaveBeenCalledWith(clientConfig.basepath, args[0], args[1], args[2]);
+				expect(sessionMockInstance.middleware).toHaveBeenCalledTimes(1);
+				expect(sessionMockInstance.middleware).toHaveBeenCalledWith(clientConfig.basepath, args[0], args[1], args[2]);
 
-		expect(getPageRenderer).toHaveBeenCalledTimes(1);
-		expect(getPageRenderer).toHaveBeenCalledWith(clientConfigWithAssets, params.config, params.datacache, mockReg.render, undefined);
+				expect(getPageRenderer).toHaveBeenCalledTimes(1);
+				expect(getPageRenderer).toHaveBeenCalledWith(clientConfigWithAssets, params.config, params.datacache, mockReg.render, undefined);
 
-		expect(process.send).not.toHaveBeenCalled();
+				expect(process.send).not.toHaveBeenCalled();
+			});
 	});
 
 
-	test ('setupClient(): expectations (devmode)', async () => {
+	test ('setupClient(): expectations (devmode)', () => {
 		const ONE_HOUR = '1 hour';
 		const mockReg = {
 			assets: 'mock/assets/path',
@@ -306,58 +308,60 @@ describe('lib/app-service', () => {
 			restartRequest: jest.fn()
 		};
 
-		const ret = await service.setupClient(clientConfig, params);
+		return service.setupClient(clientConfig, params)
+			.then(ret => {
 
-		expect(ret).not.toBeDefined();
-		expect(params.restartRequest).not.toHaveBeenCalled();
+				expect(ret).not.toBeDefined();
+				expect(params.restartRequest).not.toHaveBeenCalled();
 
-		expect(service.contextualize).toHaveBeenCalled();
+				expect(service.contextualize).toHaveBeenCalled();
 
-		expect(compressionMock).toHaveBeenCalledTimes(1);
-		expect(compressionMock).toHaveBeenCalledWith(clientApp, mockReg.assets);
+				expect(compressionMock).toHaveBeenCalledTimes(1);
+				expect(compressionMock).toHaveBeenCalledWith(clientApp, mockReg.assets);
 
-		expect(staticMock).toHaveBeenCalledTimes(1);
-		expect(staticMock).toHaveBeenCalledWith(mockReg.assets, expect.any(Object));
-		expect(staticMock).toHaveBeenCalledWith(mockReg.assets, expect.objectContaining({maxAge: ONE_HOUR}));
+				expect(staticMock).toHaveBeenCalledTimes(1);
+				expect(staticMock).toHaveBeenCalledWith(mockReg.assets, expect.any(Object));
+				expect(staticMock).toHaveBeenCalledWith(mockReg.assets, expect.objectContaining({maxAge: ONE_HOUR}));
 
-		expect(clientApp.get).toHaveBeenCalledTimes(2);
-		expect(clientApp.get).toHaveBeenCalledWith(expect.any(RegExp), service.resourceNotFound);
-		expect(clientApp.get).toHaveBeenCalledWith('*', 'page-renderer');
+				expect(clientApp.get).toHaveBeenCalledTimes(2);
+				expect(clientApp.get).toHaveBeenCalledWith(expect.any(RegExp), service.resourceNotFound);
+				expect(clientApp.get).toHaveBeenCalledWith('*', 'page-renderer');
 
-		expect(registerEndPoints).toHaveBeenCalledTimes(1);
-		expect(registerEndPoints).toHaveBeenCalledWith(
-			clientApp,
-			expect.objectContaining({mockConfig: true, package: 'test-app', basepath: '/basepath/'}),
-			params.interface
-		);
+				expect(registerEndPoints).toHaveBeenCalledTimes(1);
+				expect(registerEndPoints).toHaveBeenCalledWith(
+					clientApp,
+					expect.objectContaining({mockConfig: true, package: 'test-app', basepath: '/basepath/'}),
+					params.interface
+				);
 
-		expect(clientApp.use.mock.calls.length).toEqual(6);
-		expect(clientApp.use).toHaveBeenCalledWith('staticMiddleware');
-		expect(clientApp.use).toHaveBeenCalledWith('express-request-language-middleware');
-		expect(clientApp.use).toHaveBeenCalledWith(cacheBusterMiddleware);
-		expect(clientApp.use).toHaveBeenCalledWith(service.FORCE_ERROR_ROUTE, service.forceError);
-		expect(clientApp.use).toHaveBeenCalledWith(service.ANONYMOUS_ROUTES, expect.any(Function));
-		expect(clientApp.use).toHaveBeenCalledWith(service.AUTHENTICATED_ROUTES, expect.any(Function));
+				expect(clientApp.use.mock.calls.length).toEqual(6);
+				expect(clientApp.use).toHaveBeenCalledWith('staticMiddleware');
+				expect(clientApp.use).toHaveBeenCalledWith('express-request-language-middleware');
+				expect(clientApp.use).toHaveBeenCalledWith(cacheBusterMiddleware);
+				expect(clientApp.use).toHaveBeenCalledWith(service.FORCE_ERROR_ROUTE, service.forceError);
+				expect(clientApp.use).toHaveBeenCalledWith(service.ANONYMOUS_ROUTES, expect.any(Function));
+				expect(clientApp.use).toHaveBeenCalledWith(service.AUTHENTICATED_ROUTES, expect.any(Function));
 
-		const args = [{}, {}, {}];
-		for (let n = 0; n < clientApp.use.mock.calls.length; n++) {
-			const [param, fn] = clientApp.use.mock.calls[n];
-			if (param === service.ANONYMOUS_ROUTES || param === service.AUTHENTICATED_ROUTES) {
-				fn.apply(null, args);
-			}
-		}
+				const args = [{}, {}, {}];
+				for (let n = 0; n < clientApp.use.mock.calls.length; n++) {
+					const [param, fn] = clientApp.use.mock.calls[n];
+					if (param === service.ANONYMOUS_ROUTES || param === service.AUTHENTICATED_ROUTES) {
+						fn.apply(null, args);
+					}
+				}
 
-		expect(sessionMockInstance.anonymousMiddleware).toHaveBeenCalledTimes(1);
-		expect(sessionMockInstance.anonymousMiddleware).toHaveBeenCalledWith(clientConfig.basepath, args[0], args[1], args[2]);
+				expect(sessionMockInstance.anonymousMiddleware).toHaveBeenCalledTimes(1);
+				expect(sessionMockInstance.anonymousMiddleware).toHaveBeenCalledWith(clientConfig.basepath, args[0], args[1], args[2]);
 
-		expect(sessionMockInstance.middleware).toHaveBeenCalledTimes(1);
-		expect(sessionMockInstance.middleware).toHaveBeenCalledWith(clientConfig.basepath, args[0], args[1], args[2]);
+				expect(sessionMockInstance.middleware).toHaveBeenCalledTimes(1);
+				expect(sessionMockInstance.middleware).toHaveBeenCalledWith(clientConfig.basepath, args[0], args[1], args[2]);
 
-		expect(getPageRenderer).toHaveBeenCalledTimes(1);
-		expect(getPageRenderer).toHaveBeenCalledWith(clientConfigWithAssets, params.config, params.datacache, mockReg.render, undefined);
+				expect(getPageRenderer).toHaveBeenCalledTimes(1);
+				expect(getPageRenderer).toHaveBeenCalledWith(clientConfigWithAssets, params.config, params.datacache, mockReg.render, undefined);
 
-		expect(process.send).toHaveBeenCalledTimes(1);
-		expect(process.send).toHaveBeenCalledWith(expect.objectContaining({cmd: 'NOTIFY_DEVMODE'}));
-		expect(mockReg.devmode.start).toHaveBeenCalledTimes(1);
+				expect(process.send).toHaveBeenCalledTimes(1);
+				expect(process.send).toHaveBeenCalledWith(expect.objectContaining({cmd: 'NOTIFY_DEVMODE'}));
+				expect(mockReg.devmode.start).toHaveBeenCalledTimes(1);
+			});
 	});
 });

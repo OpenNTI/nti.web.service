@@ -190,7 +190,7 @@ describe('lib/app-service', () => {
 	});
 
 
-	test ('setupClient(): expectations (production)', async () => {
+	test ('setupClient(): expectations (production)', () => {
 		const ONE_HOUR = '1 hour';
 		const mockReg = {
 			assets: 'mock/assets/path',

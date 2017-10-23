@@ -190,7 +190,7 @@ describe('lib/app-service', () => {
 	});
 
 
-	test ('setupClient(): expectations (production)', () => {
+	test ('setupClient(): expectations (production)', async () => {
 		const ONE_HOUR = '1 hour';
 		const mockReg = {
 			assets: 'mock/assets/path',
@@ -221,7 +221,7 @@ describe('lib/app-service', () => {
 			restartRequest: jest.fn()
 		};
 
-		const ret = service.setupClient(clientConfig, params);
+		const ret = await service.setupClient(clientConfig, params);
 
 		expect(ret).not.toBeDefined();
 		expect(params.restartRequest).not.toHaveBeenCalled();
@@ -275,7 +275,7 @@ describe('lib/app-service', () => {
 	});
 
 
-	test ('setupClient(): expectations (devmode)', () => {
+	test ('setupClient(): expectations (devmode)', async () => {
 		const ONE_HOUR = '1 hour';
 		const mockReg = {
 			assets: 'mock/assets/path',
@@ -306,7 +306,7 @@ describe('lib/app-service', () => {
 			restartRequest: jest.fn()
 		};
 
-		const ret = service.setupClient(clientConfig, params);
+		const ret = await service.setupClient(clientConfig, params);
 
 		expect(ret).not.toBeDefined();
 		expect(params.restartRequest).not.toHaveBeenCalled();

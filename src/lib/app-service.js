@@ -92,64 +92,66 @@ function setupClient (client, {config, server, datacache, interface: _interface,
 	const clientRoute = self.contextualize(basepath, server);
 	logger.info('mount-point: %s', basepath);
 
-	const {
-		assets,
-		devmode,
-		locales,
-		render,
-		renderContent,
-		sessionSetup
-	} = register(clientRoute, flatConfig, restartRequest);
+	return Promise.resolve(register(clientRoute, flatConfig, restartRequest))
+		.then(({
+			assets,
+			devmode,
+			locales,
+			render,
+			renderContent,
+			sessionSetup
+		}) => {
 
-	client = Object.assign({}, client, {assets});//add the assets path to the client object (keep it out of the config)
+			client = Object.assign({}, client, {assets});//add the assets path to the client object (keep it out of the config)
 
-	const session = new Session(_interface, sessionSetup);
+			const session = new Session(_interface, sessionSetup);
 
-	clientRoute.use(requestLanguage({
-		languages: [...(locales || ['en'])],
-		queryName: 'locale', // ?locale=zh-CN will set the language to 'zh-CN'
-		cookie: {
-			name: 'language',
-			options: {
-				maxAge: 24 * 3600 * 1000
+			clientRoute.use(requestLanguage({
+				languages: [...(locales || ['en'])],
+				queryName: 'locale', // ?locale=zh-CN will set the language to 'zh-CN'
+				cookie: {
+					name: 'language',
+					options: {
+						maxAge: 24 * 3600 * 1000
+					}
+				}
+			}));
+
+			setupCompression(clientRoute, assets);
+			logger.info('Static Assets: %s', assets);
+
+			//Static files...
+			clientRoute.use(staticFiles(assets, {
+				maxAge: '1 hour',
+				setHeaders: self.neverCacheManifestFiles
+			}));//static files
+
+			//Do not let requests for static assets (that are not found) fall through to page rendering.
+			clientRoute.get(/^\/(js|resources)\//i, self.resourceNotFound);
+
+			clientRoute.use(cacheBuster);
+
+			clientRoute.use(FORCE_ERROR_ROUTE, self.forceError);
+
+
+			registerEndPoints(
+				clientRoute, //express instance
+				flatConfig,
+				_interface); //interface
+
+			clientRoute.use(ANONYMOUS_ROUTES, (r, q, n) => void session.anonymousMiddleware(basepath, r, q, n));
+
+			if (flatConfig.public !== true) {
+			//Session manager...
+				clientRoute.use(AUTHENTICATED_ROUTES, (r, q, n) => void session.middleware(basepath, r, q, n));
 			}
-		}
-	}));
 
-	setupCompression(clientRoute, assets);
-	logger.info('Static Assets: %s', assets);
+			//HTML Renderer...
+			clientRoute.get('*', getPageRenderer(client, config, datacache, render, renderContent));
 
-	//Static files...
-	clientRoute.use(staticFiles(assets, {
-		maxAge: '1 hour',
-		setHeaders: self.neverCacheManifestFiles
-	}));//static files
-
-	//Do not let requests for static assets (that are not found) fall through to page rendering.
-	clientRoute.get(/^\/(js|resources)\//i, self.resourceNotFound);
-
-	clientRoute.use(cacheBuster);
-
-	clientRoute.use(FORCE_ERROR_ROUTE, self.forceError);
-
-
-	registerEndPoints(
-		clientRoute, //express instance
-		flatConfig,
-		_interface); //interface
-
-	clientRoute.use(ANONYMOUS_ROUTES, (r, q, n) => void session.anonymousMiddleware(basepath, r, q, n));
-
-	if (flatConfig.public !== true) {
-		//Session manager...
-		clientRoute.use(AUTHENTICATED_ROUTES, (r, q, n) => void session.middleware(basepath, r, q, n));
-	}
-
-	//HTML Renderer...
-	clientRoute.get('*', getPageRenderer(client, config, datacache, render, renderContent));
-
-	if (devmode) {
-		process.send({cmd: 'NOTIFY_DEVMODE'});
-		devmode.start();
-	}
+			if (devmode) {
+				process.send({cmd: 'NOTIFY_DEVMODE'});
+				devmode.start();
+			}
+		});
 }

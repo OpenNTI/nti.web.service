@@ -24,4 +24,4 @@ NEXT=$NEXT-alpha
 npm version $NEXT > /dev/null
 git tag -d v$NEXT > /dev/null
 git push
-git push origin tag v$NEW
+git push origin tag $NEW

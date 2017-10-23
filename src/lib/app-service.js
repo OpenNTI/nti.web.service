@@ -153,5 +153,9 @@ function setupClient (client, {config, server, datacache, interface: _interface,
 				process.send({cmd: 'NOTIFY_DEVMODE'});
 				devmode.start();
 			}
+		})
+		.catch(e => {
+			logger.error(e.stack);
+			process.exit(1);
 		});
 }

@@ -44,10 +44,8 @@ describe('lib/no-cache (middleware)', () => {
 
 
 		expect(res.setHeader).toHaveBeenCalledTimes(3);
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-cache, no-store, ' +
-													'must-revalidate, max-stale=0, ' +
-													'post-check=0, pre-check=0');
-		expect(res.setHeader).toHaveBeenCalledWith('Expires', '-1');
+		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+		expect(res.setHeader).toHaveBeenCalledWith('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT');
 		expect(res.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
 	});
 

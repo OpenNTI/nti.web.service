@@ -7,10 +7,11 @@
     "web-service": "src/index.js"
   },
   "scripts": {
-    "start": "node ./src --protocol http --config ./config/env.json.example",
-    "test": "eslint ./src && jest -c ./src/__test__/__jest.config.ci.js",
+    "fix": "nti-lib-scripts fix",
     "prepack": "npm test",
-    "release": "./release.sh"
+    "release": "nti-lib-scripts release",
+    "test": "eslint ./src && jest -c ./src/__test__/__jest.config.ci.js",
+    "start": "node ./src --protocol http --config ./config/env.json.example"
   },
   "repository": {
     "type": "git",
@@ -43,6 +44,7 @@
     "eslint-config-nti-codestyle-js": "^1.1.0",
     "jest": "^21.0.2",
     "jest-junit": "^3.0.0",
+    "nti-lib-scripts": "^1.0.53",
     "supertest": "^3.0.0"
   },
   "jest": {

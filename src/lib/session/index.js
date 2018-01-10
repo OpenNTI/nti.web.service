@@ -109,7 +109,7 @@ module.exports = exports = class SessionManager {
 			.then(()=> logger.debug('SESSION [VALID] %s %s', req.method, url))
 			.then(()=> !req.dead && this.setupIntitalData(req))
 			.then(finish)
-			.catch(this.maybeRedircect(basepath, scope, start, req, res, x => next(x)))
+			.catch(this.maybeRedirect(basepath, scope, start, req, res, x => next(x)))
 			.catch(er => {
 				logger.error('SESSION [ERROR] %s %s (%s, %dms)',
 					req.method, url, er, Date.now() - start);
@@ -120,7 +120,7 @@ module.exports = exports = class SessionManager {
 	}
 
 
-	maybeRedircect (basepath, scope, start, req, res, next) {
+	maybeRedirect (basepath, scope, start, req, res, next) {
 		const url = req.originalUrl;
 
 		function redirect (uri) {

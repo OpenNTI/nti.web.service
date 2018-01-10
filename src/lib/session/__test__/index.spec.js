@@ -151,7 +151,7 @@ describe('lib/session', () => {
 		stub(session, 'getUser', () => Promise.resolve('testuser'));
 		stub(session, 'setupIntitalData');
 		//Continue the rejections...we will test this function by itself.
-		stub(session, 'maybeRedircect', () => (e => Promise.reject(e)));
+		stub(session, 'maybeRedirect', () => (e => Promise.reject(e)));
 
 		const next = jest.fn();
 		const basepath = '';
@@ -230,7 +230,7 @@ describe('lib/session', () => {
 		stub(session, 'getUser', () => (req['____forceClose'](), Promise.resolve('testuser')));
 		stub(session, 'setupIntitalData');
 		//Continue the rejections...we will test this function by itself.
-		stub(session, 'maybeRedircect', () => (e => Promise.reject(e)));
+		stub(session, 'maybeRedirect', () => (e => Promise.reject(e)));
 
 		return session.middleware(basepath, req, resp, next)
 			.then(() => {
@@ -276,7 +276,7 @@ describe('lib/session', () => {
 		stub(session, 'getUser', () => Promise.reject('Test'));
 		stub(session, 'setupIntitalData');
 		//Continue the rejections...we will test this function by itself.
-		stub(session, 'maybeRedircect', () => (e => Promise.reject(e)));
+		stub(session, 'maybeRedirect', () => (e => Promise.reject(e)));
 
 		return session.middleware(basepath, req, resp, next)
 			.then(() => {
@@ -324,7 +324,7 @@ describe('lib/session', () => {
 		stub(session, 'getUser', () => Promise.resolve('testuser'));
 		stub(session, 'setupIntitalData', () => Promise.reject('Ooops'));
 		//Continue the rejections...we will test this function by itself.
-		stub(session, 'maybeRedircect', () => (e => Promise.reject(e)));
+		stub(session, 'maybeRedirect', () => (e => Promise.reject(e)));
 
 		return session.middleware(basepath, req, resp, next)
 			.then(() => {
@@ -371,7 +371,7 @@ describe('lib/session', () => {
 		stub(session, 'getUser', () => Promise.resolve('testuser'));
 		stub(session, 'setupIntitalData');
 		//Continue the rejections...we will test this function by itself.
-		stub(session, 'maybeRedircect', () => (e => Promise.reject(e)));
+		stub(session, 'maybeRedirect', () => (e => Promise.reject(e)));
 
 		return session.middleware(basepath, req, resp, next)
 			.then(() => {
@@ -389,7 +389,7 @@ describe('lib/session', () => {
 	});
 
 
-	test ('Session::maybeRedircect() - go to login', () => {
+	test ('Session::maybeRedirect() - go to login', () => {
 		const Session = require('../index');
 		const session = new Session({});
 
@@ -408,7 +408,7 @@ describe('lib/session', () => {
 		};
 
 
-		const callback = session.maybeRedircect(basepath, scope, start, req, resp, next);
+		const callback = session.maybeRedirect(basepath, scope, start, req, resp, next);
 
 		let ret;
 		expect(() => ret = callback()).not.toThrow();
@@ -419,7 +419,7 @@ describe('lib/session', () => {
 	});
 
 
-	test ('Session::maybeRedircect() - drop on dead', () => {
+	test ('Session::maybeRedirect() - drop on dead', () => {
 		const Session = require('../index');
 		const session = new Session({});
 
@@ -438,7 +438,7 @@ describe('lib/session', () => {
 		};
 
 
-		const callback = session.maybeRedircect(basepath, scope, start, req, resp, next);
+		const callback = session.maybeRedirect(basepath, scope, start, req, resp, next);
 
 		req.dead = true;
 		let ret;
@@ -449,7 +449,7 @@ describe('lib/session', () => {
 	});
 
 
-	test ('Session::maybeRedircect() - redirect to login without return param if at root', () => {
+	test ('Session::maybeRedirect() - redirect to login without return param if at root', () => {
 		const Session = require('../index');
 		const session = new Session({});
 
@@ -468,7 +468,7 @@ describe('lib/session', () => {
 		};
 
 
-		const callback = session.maybeRedircect(basepath, scope, start, req, resp, next);
+		const callback = session.maybeRedirect(basepath, scope, start, req, resp, next);
 
 		let ret;
 		expect(() => ret = callback({statusCode: 401})).not.toThrow();
@@ -480,7 +480,7 @@ describe('lib/session', () => {
 	});
 
 
-	test ('Session::maybeRedircect() - does not redirect to login if route is login', () => {
+	test ('Session::maybeRedirect() - does not redirect to login if route is login', () => {
 		const Session = require('../index');
 		const session = new Session({});
 
@@ -499,7 +499,7 @@ describe('lib/session', () => {
 		};
 
 
-		const callback = session.maybeRedircect(basepath, scope, start, req, resp, next);
+		const callback = session.maybeRedirect(basepath, scope, start, req, resp, next);
 
 		return Promise.resolve(callback('123'))
 			.catch(reason => {
@@ -510,7 +510,7 @@ describe('lib/session', () => {
 	});
 
 
-	test ('Session::maybeRedircect() - does not redirect to login if route is api', () => {
+	test ('Session::maybeRedirect() - does not redirect to login if route is api', () => {
 		const Session = require('../index');
 		const session = new Session({});
 
@@ -529,7 +529,7 @@ describe('lib/session', () => {
 		};
 
 
-		const callback = session.maybeRedircect(basepath, scope, start, req, resp, next);
+		const callback = session.maybeRedirect(basepath, scope, start, req, resp, next);
 
 		return Promise.resolve(callback('123'))
 			.catch(reason => {
@@ -540,7 +540,7 @@ describe('lib/session', () => {
 	});
 
 
-	test ('Session::maybeRedircect() - calls next on Error', () => {
+	test ('Session::maybeRedirect() - calls next on Error', () => {
 		const Session = require('../index');
 		const session = new Session({});
 
@@ -559,7 +559,7 @@ describe('lib/session', () => {
 		};
 
 
-		const callback = session.maybeRedircect(basepath, scope, start, req, resp, next);
+		const callback = session.maybeRedirect(basepath, scope, start, req, resp, next);
 
 		const error = new Error('Oh snap');
 		expect(callback(error)).toEqual(undefined);
@@ -569,7 +569,7 @@ describe('lib/session', () => {
 	});
 
 
-	test ('Session::maybeRedircect() - logon action', () => {
+	test ('Session::maybeRedirect() - logon action', () => {
 		const Session = require('../index');
 		const session = new Session({});
 
@@ -588,7 +588,7 @@ describe('lib/session', () => {
 		};
 
 
-		const callback = session.maybeRedircect(basepath, scope, start, req, resp, next);
+		const callback = session.maybeRedirect(basepath, scope, start, req, resp, next);
 
 		const reason = {isLoginAction: true, route: 'tos'};
 		expect(callback(reason)).toEqual('redirected');
@@ -598,7 +598,7 @@ describe('lib/session', () => {
 	});
 
 
-	test ('Session::maybeRedircect() - logon action (preserve return url)', () => {
+	test ('Session::maybeRedirect() - logon action (preserve return url)', () => {
 		const Session = require('../index');
 		const session = new Session({});
 
@@ -617,7 +617,7 @@ describe('lib/session', () => {
 		};
 
 
-		const callback = session.maybeRedircect(basepath, scope, start, req, resp, next);
+		const callback = session.maybeRedirect(basepath, scope, start, req, resp, next);
 
 		const reason = {isLoginAction: true, route: 'tos'};
 		expect(callback(reason)).toEqual('redirected');
@@ -627,7 +627,7 @@ describe('lib/session', () => {
 	});
 
 
-	test ('Session::maybeRedircect() - logon action (nested route)', () => {
+	test ('Session::maybeRedirect() - logon action (nested route)', () => {
 		const Session = require('../index');
 		const session = new Session({});
 
@@ -646,7 +646,7 @@ describe('lib/session', () => {
 		};
 
 
-		const callback = session.maybeRedircect(basepath, scope, start, req, resp, next);
+		const callback = session.maybeRedirect(basepath, scope, start, req, resp, next);
 
 		const reason = {isLoginAction: true, route: 'tos'};
 		expect(callback(reason)).toEqual(undefined);

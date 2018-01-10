@@ -36,7 +36,7 @@ describe ('lib/api/endpoints/ugd/context-data', () => {
 		expect(api.get).toHaveBeenCalledWith(expect.any(String), expect.any(Function));
 		const [, callback] = api.get.mock.calls[0];
 
-		const pageInfo = new PageInfo({}, null, {});
+		const pageInfo = new PageInfo(null, null, {});
 		stub(pageInfo, 'getContent', () => Promise.resolve('html!'));
 
 		const req = {

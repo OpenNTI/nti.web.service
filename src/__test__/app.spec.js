@@ -205,6 +205,54 @@ describe('Test End-to-End', () => {
 	});
 
 
+	test ('Page Renders have cach-busting headers and no etag', () => {
+		const {getApp} = require('../worker');
+		const config = Object.assign({}, commonConfigs, {
+			apps: [{
+				public: true,
+				package: '../__test__/mock-app',
+				basepath: '/test/'
+			}],
+		});
+
+		return request(getApp(config))
+			.get('/test/')
+			.expect(200)
+			.expect(res => {
+
+				expect(res.headers).not.toHaveProperty('etag');
+				expect(res.headers).toHaveProperty('cache-control', 'no-cache, no-store, must-revalidate, max-age=0');
+				expect(res.headers).toHaveProperty('expires', 'Thu, 01 Jan 1970 00:00:00 GMT');
+				expect(res.headers).toHaveProperty('pragma', 'no-cache');
+			});
+	});
+
+
+	test ('Statics have cacheable headers', () => {
+		const {getApp} = require('../worker');
+		const config = Object.assign({}, commonConfigs, {
+			apps: [{
+				public: true,
+				package: '../__test__/mock-app',
+				basepath: '/test/'
+			}],
+		});
+
+		return request(getApp(config))
+			.get('/test/existing.asset')
+			.expect(200)
+			.expect(res => {
+
+				expect(res.headers).not.toHaveProperty('expires');
+				expect(res.headers).not.toHaveProperty('pragma');
+
+				expect(res.headers).toHaveProperty('etag');
+				expect(res.headers).toHaveProperty('last-modified');
+				expect(res.headers).toHaveProperty('cache-control', 'public, max-age=3600');
+			});
+	});
+
+
 	test ('Proper 404 for statics', () => {
 		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {

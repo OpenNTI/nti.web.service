@@ -27,8 +27,8 @@ describe('lib/no-cache (middleware)', () => {
 		const next = jest.fn();
 		const res = {setHeader: jest.fn()};
 
-		expect(() => fn(null, res, next)).not.toThrow();
-		expect(fn(null, res, jest.fn())).toEqual(void 0);
+		expect(() => fn({}, res, next)).not.toThrow();
+		expect(fn({}, res, jest.fn())).toEqual(void 0);
 
 		expect(next).toHaveBeenCalledTimes(1);
 		expect(next).toHaveBeenCalledWith();
@@ -40,7 +40,7 @@ describe('lib/no-cache (middleware)', () => {
 		const fn = require('../no-cache');
 		const res = {setHeader: jest.fn()};
 
-		expect(() => fn(null, res, next)).not.toThrow();
+		expect(() => fn({}, res, next)).not.toThrow();
 
 
 		expect(res.setHeader).toHaveBeenCalledTimes(3);
@@ -55,7 +55,7 @@ describe('lib/no-cache (middleware)', () => {
 		const fn = require('../no-cache');
 		const res = {headersSent: true, setHeader: jest.fn()};
 
-		expect(() => fn(null, res, next)).not.toThrow();
+		expect(() => fn({}, res, next)).not.toThrow();
 
 		expect(res.setHeader).not.toHaveBeenCalled();
 	});

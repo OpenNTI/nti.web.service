@@ -18,10 +18,15 @@ fi
 eslint --max-warnings 0 ./src || (echo "There are lint failures!" && exit 1)
 jest || (echo "There are test failures!" && exit 1)
 
-NEW=`npm version minor`
-NEXT=`semver -i minor $NEW`
-NEXT=$NEXT-alpha
-npm version $NEXT > /dev/null
-git tag -d v$NEXT > /dev/null
+BRANCH=`git rev-parse --abbrev-ref HEAD`;
+
+if [[ "$BRANCH" == "master" ]]; then
+	NEW=`npm version minor`
+	NEXT=`semver -i minor $NEW`
+	NEXT=$NEXT-alpha
+	npm version --no-git-tag-version $NEXT > /dev/null
+else
+	NEW=`npm version patch`
+fi
 git push
 git push origin tag $NEW

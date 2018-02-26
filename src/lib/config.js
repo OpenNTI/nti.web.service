@@ -24,7 +24,6 @@ const self = Object.assign(exports, {
 
 
 const opt = yargs
-	.usage('WebApp Instance')
 	.options({
 		'l': {
 			alias: 'listen',
@@ -60,10 +59,9 @@ const opt = yargs
 			desc: 'Specify env config key'
 		}
 	})
-	.version()
-	.alias('version', 'v')
 	.help('help', 'Usage')
 	.alias('help', '?')
+	.usage('WebApp Instance')
 	.argv;
 
 

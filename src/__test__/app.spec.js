@@ -97,7 +97,7 @@ describe('Test End-to-End', () => {
 		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
-				package: '../../example',
+				package: '../example',
 				basepath: '/test/'
 			}],
 		});
@@ -115,7 +115,7 @@ describe('Test End-to-End', () => {
 		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
-				package: '../../example',
+				package: '../example',
 				basepath: '/app/'
 			}],
 		});
@@ -133,7 +133,7 @@ describe('Test End-to-End', () => {
 		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
-				package: '../../example',
+				package: '../example',
 				basepath: '/app/'
 			}],
 		});
@@ -154,7 +154,7 @@ describe('Test End-to-End', () => {
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
 				public: true,
-				package: '../../example',
+				package: '../example',
 				basepath: '/test/'
 			}],
 		});
@@ -173,7 +173,7 @@ describe('Test End-to-End', () => {
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
 				public: true,
-				package: '../__test__/mock-app',
+				package: './__test__/mock-app',
 				basepath: '/test/'
 			}],
 		});
@@ -210,7 +210,7 @@ describe('Test End-to-End', () => {
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
 				public: true,
-				package: '../__test__/mock-app',
+				package: './__test__/mock-app',
 				basepath: '/test/'
 			}],
 		});
@@ -233,7 +233,7 @@ describe('Test End-to-End', () => {
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
 				public: true,
-				package: '../__test__/mock-app',
+				package: './__test__/mock-app',
 				basepath: '/test/'
 			}],
 		});
@@ -258,7 +258,7 @@ describe('Test End-to-End', () => {
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
 				public: true,
-				package: '../__test__/mock-app',
+				package: './__test__/mock-app',
 				basepath: '/test/'
 			}],
 		});
@@ -274,7 +274,7 @@ describe('Test End-to-End', () => {
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
 				public: true,
-				package: '../__test__/mock-app',
+				package: './__test__/mock-app',
 				basepath: '/test/'
 			}],
 		});
@@ -290,7 +290,7 @@ describe('Test End-to-End', () => {
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
 				public: true,
-				package: '../__test__/mock-app',
+				package: './__test__/mock-app',
 				basepath: '/test/'
 			}],
 		});
@@ -306,7 +306,7 @@ describe('Test End-to-End', () => {
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
 				public: true,
-				package: '../__test__/mock-app',
+				package: './__test__/mock-app',
 				basepath: '/test/'
 			}],
 		});
@@ -325,7 +325,7 @@ describe('Test End-to-End', () => {
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
 				public: true,
-				package: '../__test__/mock-app',
+				package: './__test__/mock-app',
 				basepath: '/test/'
 			}],
 		});
@@ -345,7 +345,7 @@ describe('Test End-to-End', () => {
 		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
-				package: '../__test__/mock-app-with-hooks',
+				package: './__test__/mock-app-with-hooks',
 				basepath: '/test/'
 			}],
 		});
@@ -376,7 +376,7 @@ describe('Test End-to-End', () => {
 		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
-				package: '../__test__/mock-app-with-hooks',
+				package: './__test__/mock-app-with-hooks',
 				basepath: '/test/'
 			}],
 		});
@@ -404,7 +404,7 @@ describe('Test End-to-End', () => {
 			const {getApp} = require('../worker');
 			const config = Object.assign({}, commonConfigs, {
 				apps: [{
-					package: '../__test__/mock-app-with-hooks',
+					package: './__test__/mock-app-with-hooks',
 					basepath: '/test/'
 				}],
 			});
@@ -423,7 +423,7 @@ describe('Test End-to-End', () => {
 			const {getApp} = require('../worker');
 			const config = Object.assign({}, commonConfigs, {
 				apps: [{
-					package: '../__test__/mock-app-with-hooks',
+					package: './__test__/mock-app-with-hooks',
 					basepath: '/test/'
 				}],
 			});
@@ -442,7 +442,7 @@ describe('Test End-to-End', () => {
 			const {getApp} = require('../worker');
 			const config = Object.assign({}, commonConfigs, {
 				apps: [{
-					package: '../__test__/mock-app-with-hooks',
+					package: './__test__/mock-app-with-hooks',
 					basepath: '/test/'
 				}],
 			});
@@ -461,7 +461,7 @@ describe('Test End-to-End', () => {
 			const {getApp} = require('../worker');
 			const config = Object.assign({}, commonConfigs, {
 				apps: [{
-					package: '../__test__/mock-app-with-hooks',
+					package: './__test__/mock-app-with-hooks',
 					basepath: '/test/'
 				}],
 			});
@@ -480,7 +480,7 @@ describe('Test End-to-End', () => {
 			const {getApp} = require('../worker');
 			const config = Object.assign({}, commonConfigs, {
 				apps: [{
-					package: '../__test__/mock-app-with-hooks',
+					package: './__test__/mock-app-with-hooks',
 					basepath: '/test/'
 				}],
 			});
@@ -499,7 +499,7 @@ describe('Test End-to-End', () => {
 			const {getApp} = require('../worker');
 			const config = Object.assign({}, commonConfigs, {
 				apps: [{
-					package: '../__test__/mock-app-with-hooks',
+					package: './__test__/mock-app-with-hooks',
 					basepath: '/test/'
 				}],
 			});

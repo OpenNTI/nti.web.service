@@ -60,6 +60,8 @@ const opt = yargs
 			desc: 'Specify env config key'
 		}
 	})
+	.version()
+	.alias('version', 'v')
 	.help('help', 'Usage')
 	.alias('help', '?')
 	.argv;

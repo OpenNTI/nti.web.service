@@ -104,7 +104,7 @@ function startWorker () {
 		logger.warn('MISSING CODE: Cannot start a worker.');
 		logger.debug('MISSING CODE: Cannot access "%s"', __filename);
 		clearTimeout(self.missingCode);
-		self.missingCode = setTimeout(self.maintainWorkerCount, 300);
+		self.missingCode = setTimeout(self.maintainWorkerCount, 1000);
 	}
 }
 

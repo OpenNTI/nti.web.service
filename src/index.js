@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 
+module.exports.resolve = x => require.resolve(x);
+
 function run () {
 	require('./polyfills');
 

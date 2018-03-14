@@ -15,6 +15,7 @@ const Session = require('./session');
 const logger = require('./logger');
 const cors = require('./cors');
 const {getPageRenderer} = require('./renderer');
+const {restartOnModification} = require('./restart');
 
 const isManifest = RegExp.prototype.test.bind(/\.appcache$/i);
 
@@ -87,8 +88,12 @@ function setupClient (client, {config, server, datacache, interface: _interface,
 	logger.info('Setting up app (version: %s):', client.appVersion || 'Unknown');
 
 	const flatConfig = Object.assign({}, config, client);  //flattened config
-	const {register} = getApplication(client.package);
+	const {register, file} = getApplication(client.package);
 	const {basepath} = client;
+
+	if (file) {
+		restartOnModification(file);
+	}
 
 	const clientRoute = self.contextualize(basepath, server);
 	logger.info('mount-point: %s', basepath);

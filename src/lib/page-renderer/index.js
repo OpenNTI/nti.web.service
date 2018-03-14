@@ -4,10 +4,7 @@ const url = require('url');
 
 const {URL: {join: urlJoin}} = require('nti-commons');
 
-const logger = require('../logger');
-const {getErrorMessage} = require('../util');
-
-const {resolveTemplateFile, getModules, getTemplate} = require('./utils');
+const {resolveTemplateFile, getTemplate} = require('./utils');
 
 Object.assign(exports, {
 	getRenderer
@@ -26,64 +23,34 @@ const injectConfig = (cfg, orginal, prop) => cfg[prop] || 'MissingConfigValue';
 
 function getRenderer (assets, renderContent, devmode) {
 	const templateFile = (devmode || {}).template || resolveTemplateFile(assets);
-	let warnedAboutChunks = false;
 
-	function warnAboutChunks (e) {
-		if (!warnedAboutChunks) {
-			warnedAboutChunks = true;
-			logger.warn('Could not resolve chunk names: %s', getErrorMessage(e));
-		}
-	}
-
-
-	getModules(assets)
-		.catch(warnAboutChunks);//prewarm
-
-
-	return (basePath, req, clientConfig, markError = NOOP) => {
-		const ScriptFilenameMap = { index: 'js/index.js' };
+	return async (basePath, req, clientConfig, markError = NOOP) => {
 		const u = url.parse(req.url);
 		const manifest = u.query === 'cache' ? '<html manifest="/manifest.appcache"' : '<html';
 
-		return Promise.all([
-			getTemplate(templateFile),
-			getModules(assets)
-				.catch(warnAboutChunks)
-		])
-			.then(([template = 'Bad Template', modules]) => {
-				if (modules != null) {
-					Object.assign(ScriptFilenameMap, modules);
-				}
+		const template = await getTemplate(templateFile) || 'Bad Template';
 
-				const cfg = Object.assign({url: req.url}, clientConfig.config || {});
+		const cfg = Object.assign({url: req.url}, clientConfig.config || {});
 
-				const basePathFix = (original, attr, val) =>
-					attr + `="${
-						shouldPrefixBasePath(val)
-							? urlJoin(basePath, val)
-							: val
-					}"`;
+		const basePathFix = (original, attr, val) =>
+			attr + `="${
+				shouldPrefixBasePath(val)
+					? urlJoin(basePath, val)
+					: val
+			}"`;
 
-				let rendererdContent = '';
+		let rendererdContent = '';
 
-				if (renderContent) {
-					rendererdContent = renderContent(cfg, markError);
-				}
+		if (renderContent) {
+			rendererdContent = renderContent(cfg, markError);
+		}
 
-				const html = rendererdContent + clientConfig.html;
+		const html = rendererdContent + clientConfig.html;
 
-				let out = template
-					.replace(/<html/, manifest)
-					.replace(configValues, injectConfig.bind(this, cfg))
-					.replace(basepathreplace, basePathFix)
-					.replace(/<!--html:server-values-->/i, html)
-					.replace(/resources\/styles\.css/, 'resources/styles.css?rel=' + encodeURIComponent(ScriptFilenameMap.index));
-
-				for (let script of Object.keys(ScriptFilenameMap)) {
-					out = out.replace(new RegExp(`js\\/${script}\\.js`), ScriptFilenameMap[script]);
-				}
-
-				return out;
-			});
+		return template
+			.replace(/<html/, manifest)
+			.replace(configValues, injectConfig.bind(this, cfg))
+			.replace(basepathreplace, basePathFix)
+			.replace(/<!--html:server-values-->/i, html);
 	};
 }

@@ -192,12 +192,6 @@ describe('Test End-to-End', () => {
 				//Rerooted Urls:
 				expect(res.text).not.toEqual(expect.stringContaining('"/resources/images/favicon.ico"'));
 				expect(res.text).toEqual(expect.stringContaining('"/test/resources/images/favicon.ico"'));
-				//Styles:
-				expect(res.text).not.toEqual(expect.stringContaining('"/resources/styles.css"'));
-				expect(res.text).toEqual(expect.stringContaining('"/test/resources/styles.css?rel=foobar.js"'));
-				//Modules:
-				expect(res.text).not.toEqual(expect.stringContaining('<script src="/test/index.js" id="main-bundle" type="text/javascript"></script>'));
-				expect(res.text).toEqual(expect.stringContaining('<script src="/test/foobar.js" id="main-bundle" type="text/javascript"></script>'));
 
 				//Check against double printing
 				expect(res.text.match(/\$AppConfig/g).length).toEqual(1);

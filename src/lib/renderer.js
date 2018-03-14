@@ -14,10 +14,10 @@ function asPromise (cb) {
 	}
 }
 
-function getPageRenderer ({appId, basepath, assets} = {}, config, datacache, render, renderContent) {
+function getPageRenderer ({appId, basepath, assets, devmode} = {}, config, datacache, render, renderContent) {
 
 	if (!render) {
-		render = getRenderer(assets, renderContent);
+		render = getRenderer(assets, renderContent, devmode);
 	}
 
 	return function renderPage (req, res, next) {

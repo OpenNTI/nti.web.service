@@ -211,7 +211,7 @@ describe('lib/app-service', () => {
 			package: 'test-app'
 		});
 
-		const clientConfigWithAssets = Object.assign({assets: mockReg.assets}, clientConfig);
+		const clientConfigWithAssets = Object.assign({assets: mockReg.assets, devmode: false}, clientConfig);
 
 		const params = {
 			server,
@@ -298,7 +298,7 @@ describe('lib/app-service', () => {
 			package: 'test-app'
 		});
 
-		const clientConfigWithAssets = Object.assign({assets: mockReg.assets}, clientConfig);
+		const clientConfigWithAssets = Object.assign({assets: mockReg.assets, devmode: mockReg.devmode}, clientConfig);
 
 		const params = {
 			server,

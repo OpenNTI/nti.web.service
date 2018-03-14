@@ -103,7 +103,8 @@ function setupClient (client, {config, server, datacache, interface: _interface,
 			sessionSetup
 		}) => {
 
-			client = Object.assign({}, client, {assets});//add the assets path to the client object (keep it out of the config)
+			//add the assets path to the client object (keep it out of the config)
+			client = Object.assign({}, client, {assets, devmode});
 
 			const session = new Session(_interface, sessionSetup);
 

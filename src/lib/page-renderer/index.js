@@ -24,8 +24,8 @@ const basepathreplace = /(manifest|src|href)="(.*?)"/igm;
 const configValues = /<\[cfg:([^\]]*)\]>/igm;
 const injectConfig = (cfg, orginal, prop) => cfg[prop] || 'MissingConfigValue';
 
-function getRenderer (assets, renderContent) {
-	const templateFile = resolveTemplateFile(assets);
+function getRenderer (assets, renderContent, devmode) {
+	const templateFile = (devmode || {}).template || resolveTemplateFile(assets);
 	let warnedAboutChunks = false;
 
 	function warnAboutChunks (e) {

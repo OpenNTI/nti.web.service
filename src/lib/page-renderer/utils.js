@@ -90,7 +90,7 @@ function getModules (assets) {
 
 
 function getTemplate (file) {
-	const cache = templateCache;
+	const cache = templateCache[file] || (templateCache[file] = {});
 	logger.debug('Checking Template: %s', file);
 
 	return stat(file)

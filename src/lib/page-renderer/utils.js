@@ -33,7 +33,7 @@ function resolveTemplateFile (assets) {
 
 
 async function getTemplate (file) {
-	const cache = templateCache;
+	const cache = templateCache[file] || (templateCache[file] = {});
 	logger.debug('Checking Template: %s', file);
 
 	try {

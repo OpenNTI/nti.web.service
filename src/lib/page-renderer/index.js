@@ -28,7 +28,7 @@ function getRenderer (assets, renderContent, devmode) {
 		const u = url.parse(req.url);
 		const manifest = u.query === 'cache' ? '<html manifest="/manifest.appcache"' : '<html';
 
-		const template = await getTemplate(templateFile) || 'Bad Template';
+		const template = (await getTemplate(templateFile)) || 'Bad Template';
 
 		const cfg = Object.assign({url: req.url}, clientConfig.config || {});
 

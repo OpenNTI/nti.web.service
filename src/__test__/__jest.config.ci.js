@@ -13,6 +13,7 @@ module.exports = Object.assign(jest || {}, {
 		'lcov',
 		'cobertura'
 	] : ['text-summary'],
+	roots: ['<rootDir>', '<rootDir>/src/'],
 	rootDir: path.resolve(__dirname, '../..'),
 	testResultsProcessor: process.env.CI ? './node_modules/jest-junit' : void 0,
 });

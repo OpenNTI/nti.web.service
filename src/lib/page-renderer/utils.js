@@ -6,15 +6,6 @@ const logger = require('../logger');
 const templateCache = {};
 const TEMPLATE = './page.html';
 
-function exists (f) {
-	try {
-		fs.accessSync(f);
-	} catch (e) {
-		return false;
-	}
-	return true;
-}
-
 const wrapfs = (method, ...locked) =>
 	(...args) => new Promise((fulfill, rej) =>
 		fs[method](...[...args, ...locked], (er, data) =>
@@ -24,7 +15,6 @@ const wrapfs = (method, ...locked) =>
 
 const stat = wrapfs('stat');
 const read = wrapfs('readFile', 'utf8');
-
 
 
 function resolveTemplateFile (assets) {
@@ -59,7 +49,6 @@ async function getTemplate (file) {
 }
 
 Object.assign(exports, {
-	exists,
 	getTemplate,
 	resolveTemplateFile
 });

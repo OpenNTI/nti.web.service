@@ -4,7 +4,11 @@ const url = require('url');
 
 const {URL: {join: urlJoin}} = require('nti-commons');
 
-const {resolveTemplateFile, getTemplate} = require('./utils');
+const {
+	resolveTemplateFile,
+	getModules, //not needed in webpack4
+	getTemplate,
+} = require('./utils');
 
 Object.assign(exports, {
 	getRenderer
@@ -39,18 +43,26 @@ function getRenderer (assets, renderContent, devmode) {
 					: val
 			}"`;
 
-		let rendererdContent = '';
-
-		if (renderContent) {
-			rendererdContent = renderContent(cfg, markError);
-		}
+		const rendererdContent = (!renderContent) ? '' : renderContent(cfg, markError);
 
 		const html = rendererdContent + clientConfig.html;
 
-		return template
+		//not needed in webpack4:
+		const ScriptFilenameMap = { index: 'js/index.js', ...(await getModules(assets))};
+
+		let out = template
 			.replace(/<html/, manifest)
 			.replace(configValues, injectConfig.bind(this, cfg))
 			.replace(basepathreplace, basePathFix)
-			.replace(/<!--html:server-values-->/i, html);
+			.replace(/<!--html:server-values-->/i, html)
+			//not needed in webpack4:
+			.replace(/resources\/styles\.css"/, `resources/styles.css?rel=${encodeURIComponent(ScriptFilenameMap.index)}"`);
+
+		//not needed in webpack4:
+		for (let script of Object.keys(ScriptFilenameMap)) {
+			out = out.replace(new RegExp(`js\\/${script}\\.js`), ScriptFilenameMap[script]);
+		}
+
+		return out;
 	};
 }

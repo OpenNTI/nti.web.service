@@ -3,13 +3,6 @@ const fs = require('fs');
 
 const logger = require('../logger');
 
-//not needed in webpack4:
-const statCache = {};
-const COMPILE_DATA = '../compile-data.json';
-
-const templateCache = {};
-const TEMPLATE = './page.html';
-
 const wrapfs = (method, ...locked) =>
 	(...args) => new Promise((fulfill, rej) =>
 		fs[method](...[...args, ...locked], (er, data) =>
@@ -21,13 +14,15 @@ const stat = wrapfs('stat');
 const read = wrapfs('readFile', 'utf8');
 
 
-function resolveTemplateFile (assets) {
-	return assets ? path.resolve(assets, TEMPLATE) : null;
+function getCached (key) {
+	const cache = getCached.cache || (getCached.cache = {});
+	return cache[key] || (cache[key] = {});
 }
 
 
-async function getTemplate (file) {
-	const cache = templateCache[file] || (templateCache[file] = {});
+async function getTemplate (assets, devmode) {
+	const file = (devmode || {}).template || (assets && path.resolve(assets, './page.html'));
+	const cache = getCached(file);
 	logger.debug('Checking Template: %s', file);
 
 	try {
@@ -42,7 +37,7 @@ async function getTemplate (file) {
 		cache.mtime = mtime.getTime();
 		const data = await read(file);
 
-		logger.debug('template loaded (length: %s)', data.length);
+		logger.info('template loaded (file: %s, length: %s)', file, data && data.length);
 		cache.data = data;
 		return data;
 
@@ -61,33 +56,34 @@ async function getModules (assets) {
 		return {};
 	}
 
-	const file = path.resolve(assets, COMPILE_DATA);
-	const cache = statCache[file] || (statCache[file] = {});
+	const file = path.resolve(assets, '../compile-data.json');
+	const cache = getCached(file);
 
 	try {
 		const {mtime} = await stat(file);
 
-		logger.debug('compile data mtime:', mtime);
+		logger.debug('compile data (%s) mtime: %o', file, mtime);
 		if (cache.mtime === mtime.getTime()) {
 			return cache.chunks;
 		}
 
-		logger.debug('new compile data, loading...');
+		cache.mtime = mtime.getTime();
+		logger.info('new compile data (%s), loading...', file);
 
 		const data = JSON.parse(await read(file));
+		logger.debug('%s loaded: %o', file, data);
 
-		logger.debug('data loaded? %s', !!data);
 		const chunks = data.assetsByChunkName;
 
 		for (let chunk of Object.keys(chunks)) {
 			chunks[chunk] = unwrap(chunks[chunk]);
 		}
 
-		logger.debug('updated module data: %o', chunks);
+		logger.info('%s: updated module data: %o', file, chunks);
 		cache.chunks = chunks;
 		return chunks;
 	} catch (e) {
-		logger.warn('Failed to load compile data. %s', file);
+		logger.warn('Failed to load compile data. %s, because: %o', file, e.stack || e);
 		return {};
 	}
 }
@@ -96,6 +92,4 @@ async function getModules (assets) {
 Object.assign(exports, {
 	getModules,//not needed in webpack4
 	getTemplate,
-	resolveTemplateFile
 });
-

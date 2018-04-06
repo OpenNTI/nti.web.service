@@ -5,7 +5,6 @@ const url = require('url');
 const {URL: {join: urlJoin}} = require('nti-commons');
 
 const {
-	resolveTemplateFile,
 	getModules, //not needed in webpack4
 	getTemplate,
 } = require('./utils');
@@ -26,13 +25,12 @@ const configValues = /<\[cfg:([^\]]*)\]>/igm;
 const injectConfig = (cfg, orginal, prop) => cfg[prop] || 'MissingConfigValue';
 
 function getRenderer (assets, renderContent, devmode) {
-	const templateFile = (devmode || {}).template || resolveTemplateFile(assets);
 
 	return async (basePath, req, clientConfig, markError = NOOP) => {
 		const u = url.parse(req.url);
 		const manifest = u.query === 'cache' ? '<html manifest="/manifest.appcache"' : '<html';
 
-		const template = (await getTemplate(templateFile)) || 'Bad Template';
+		const template = (await getTemplate(assets, devmode)) || 'Bad Template';
 
 		const cfg = Object.assign({url: req.url}, clientConfig.config || {});
 

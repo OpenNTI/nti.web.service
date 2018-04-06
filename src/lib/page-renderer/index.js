@@ -26,6 +26,18 @@ const injectConfig = (cfg, orginal, prop) => cfg[prop] || 'MissingConfigValue';
 
 function getRenderer (assets, renderContent, devmode) {
 
+	//TODO: Delete this after we update webpack4...
+	async function applyWebpack3Compat (out) {
+		const ScriptFilenameMap = { index: 'js/index.js', ...(await getModules(assets))};
+
+		for (let script of Object.keys(ScriptFilenameMap)) {
+			out = out.replace(new RegExp(`js\\/${script}\\.js`), ScriptFilenameMap[script]);
+		}
+
+		return out.replace(/resources\/styles\.css"/, `resources/styles.css?rel=${encodeURIComponent(ScriptFilenameMap.index)}"`);
+	}
+
+
 	return async (basePath, req, clientConfig, markError = NOOP) => {
 		const u = url.parse(req.url);
 		const manifest = u.query === 'cache' ? '<html manifest="/manifest.appcache"' : '<html';
@@ -45,22 +57,11 @@ function getRenderer (assets, renderContent, devmode) {
 
 		const html = rendererdContent + clientConfig.html;
 
-		//not needed in webpack4:
-		const ScriptFilenameMap = { index: 'js/index.js', ...(await getModules(assets))};
-
-		let out = template
+		return applyWebpack3Compat( template
 			.replace(/<html/, manifest)
 			.replace(configValues, injectConfig.bind(this, cfg))
 			.replace(basepathreplace, basePathFix)
 			.replace(/<!--html:server-values-->/i, html)
-			//not needed in webpack4:
-			.replace(/resources\/styles\.css"/, `resources/styles.css?rel=${encodeURIComponent(ScriptFilenameMap.index)}"`);
-
-		//not needed in webpack4:
-		for (let script of Object.keys(ScriptFilenameMap)) {
-			out = out.replace(new RegExp(`js\\/${script}\\.js`), ScriptFilenameMap[script]);
-		}
-
-		return out;
+		);
 	};
 }

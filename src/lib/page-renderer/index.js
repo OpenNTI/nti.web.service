@@ -1,6 +1,5 @@
 /*eslint strict: 0*/
 'use strict';
-const url = require('url');
 
 const {URL: {join: urlJoin}} = require('nti-commons');
 
@@ -14,15 +13,20 @@ Object.assign(exports, {
 });
 
 const NOOP = () => {};
+
 const isRootPath = RegExp.prototype.test.bind(/^\/(?!\/).*/);
 const isSiteAssets = RegExp.prototype.test.bind(/^\/site-assets/);
 const isVendoredAssets = RegExp.prototype.test.bind(/^\/vendor/);
 const isFavicon = RegExp.prototype.test.bind(/^\/favicon\.ico/);
-const shouldPrefixBasePath = val => isRootPath(val) && !isSiteAssets(val) && !isVendoredAssets(val) && !isFavicon(val);
 
-const basepathreplace = /(manifest|src|href)="(.*?)"/igm;
+const shouldPrefix = val => isRootPath(val) && !isSiteAssets(val) && !isVendoredAssets(val) && !isFavicon(val);
+
+const attributesToFix = /(manifest|src|href)="(.*?)"/igm;
+const fixAttributes = (base, original, attr, val) => `${attr}="${shouldPrefix(val) ? urlJoin(base, val) : val}"`;
+
 const configValues = /<\[cfg:([^\]]*)\]>/igm;
-const injectConfig = (cfg, orginal, prop) => cfg[prop] || 'MissingConfigValue';
+const fillInValues = (cfg, orginal, prop) => cfg[prop] || 'MissingConfigValue';
+
 
 function getRenderer (assets, renderContent, devmode) {
 
@@ -38,30 +42,32 @@ function getRenderer (assets, renderContent, devmode) {
 	}
 
 
-	return async (basePath, req, clientConfig, markError = NOOP) => {
-		const u = url.parse(req.url);
-		const manifest = u.query === 'cache' ? '<html manifest="/manifest.appcache"' : '<html';
+	if (!renderContent) {
+		renderContent = ({html}) => html;
+	}
 
+	/**
+	 * @method render
+	 * @param  {string} basePath            The public root path this app is hosted at.
+	 * @param  {Object} req                 The request object from express.
+	 * @param  {Object} clientConfig        The clientConfig object.
+	 * @param  {Function} [markError=NOOP]  An optional content rendering function. May return a string or a Promise
+	 *                                      that fulfills with a string.
+	 * @return {Promise<string>}            Fulfills with the rendered page as a string
+	 */
+	return async function render (basePath, {url} = {}, {html, config} = {}, markError = NOOP) {
 		const template = (await getTemplate(assets, devmode)) || 'Bad Template';
 
-		const cfg = Object.assign({url: req.url}, clientConfig.config || {});
-
-		const basePathFix = (original, attr, val) =>
-			attr + `="${
-				shouldPrefixBasePath(val)
-					? urlJoin(basePath, val)
-					: val
-			}"`;
-
-		const rendererdContent = (!renderContent) ? '' : renderContent(cfg, markError);
-
-		const html = rendererdContent + clientConfig.html;
+		const cfg = {
+			html,
+			url,
+			...(config || {})
+		};
 
 		return applyWebpack3Compat( template
-			.replace(/<html/, manifest)
-			.replace(configValues, injectConfig.bind(this, cfg))
-			.replace(basepathreplace, basePathFix)
-			.replace(/<!--html:server-values-->/i, html)
+			.replace(configValues, fillInValues.bind(null, cfg))
+			.replace(attributesToFix, fixAttributes.bind(null, basePath))
+			.replace(/<!--html:server-values-->/i, await renderContent(cfg, markError))
 		);
 	};
 }

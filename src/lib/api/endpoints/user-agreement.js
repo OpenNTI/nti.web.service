@@ -3,7 +3,7 @@ const Url = require('url');
 
 const {TOS_NOT_ACCEPTED, getLink} = require('nti-lib-interfaces');
 
-const {getStackOrMessage} = require('../../util');
+const {getStackOrMessage} = require('../../utils');
 
 const tagPattern = tag => new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)</' + tag + '>', 'ig');
 const BODY_REGEX = /<body[^>]*>([\s\S]*)<\/body/i;//no g

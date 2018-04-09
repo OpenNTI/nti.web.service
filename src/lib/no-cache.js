@@ -14,5 +14,8 @@ module.exports = function (_, res, next) {
 	} else {
 		logger.warn('Could not send cache-blocking headers for request! (url: %s, user: %s)', _.originalUrl, _.username);
 	}
-	next();
+
+	if (next) {
+		next();
+	}
 };

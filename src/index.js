@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
+/* istanbul ignore next */
 module.exports.resolve = x => require.resolve(x);
 
 function run () {
@@ -19,8 +20,8 @@ function run () {
 }
 
 //Imported
+/* istanbul ignore next */
 if (require.main === module) {
-	/* istanbul ignore next */
 	run();
 }
 

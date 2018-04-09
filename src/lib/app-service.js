@@ -40,7 +40,7 @@ const self = Object.assign(exports, {
 function neverCacheManifestFiles (res, requsestPath) {
 	if (isManifest(requsestPath)) {
 		//manifests never cache
-		cacheBuster(null, res, () => {});
+		cacheBuster(null, res);
 	}
 }
 
@@ -64,7 +64,7 @@ function forceError () {
 }
 
 
-function setupApplication (server, config, restartRequest) {
+async function setupApplication (server, config, restartRequest) {
 	//config.silent = true;
 
 	const params = Object.assign({server, config, restartRequest}, dataserver(config));
@@ -79,15 +79,15 @@ function setupApplication (server, config, restartRequest) {
 	}
 
 	for (let client of config.apps) {
-		self.setupClient(client, params);
+		await self.setupClient(client, params);
 	}
 }
 
 
-function setupClient (client, {config, server, datacache, interface: _interface, restartRequest}) {
+async function setupClient (client, {config, server, datacache, interface: _interface, restartRequest}) {
 	logger.info('Setting up app (version: %s):', client.appVersion || 'Unknown');
 
-	const flatConfig = Object.assign({}, config, client);  //flattened config
+	const flatConfig = {...config, ...client};  //flattened config
 	const {register, file} = getApplication(client.package);
 	const {basepath} = client;
 
@@ -98,71 +98,72 @@ function setupClient (client, {config, server, datacache, interface: _interface,
 	const clientRoute = self.contextualize(basepath, server);
 	logger.info('mount-point: %s', basepath);
 
-	return Promise.resolve(register(clientRoute, flatConfig, restartRequest))
-		.then(({
+	try {
+		const registration = await Promise.resolve(register(clientRoute, flatConfig, restartRequest));
+		const {
 			assets,
 			devmode,
 			locales,
 			render,
 			renderContent,
 			sessionSetup
-		}) => {
+		} = registration;
 
-			//add the assets path to the client object (keep it out of the config)
-			client = Object.assign({}, client, {assets, devmode});
+		//add the assets path to the client object (keep it out of the config)
+		client = {...client, assets, devmode};
 
-			const session = new Session(_interface, sessionSetup);
+		const session = new Session(_interface, sessionSetup);
 
-			clientRoute.use(requestLanguage({
-				languages: [...(locales || ['en'])],
-				queryName: 'locale', // ?locale=zh-CN will set the language to 'zh-CN'
-				cookie: {
-					name: 'language',
-					options: {
-						maxAge: 24 * 3600 * 1000
-					}
+		clientRoute.use(requestLanguage({
+			languages: [...(locales || ['en'])],
+			queryName: 'locale', // ?locale=zh-CN will set the language to 'zh-CN'
+			cookie: {
+				name: 'language',
+				options: {
+					maxAge: 24 * 3600 * 1000
 				}
-			}));
+			}
+		}));
 
-			setupCompression(clientRoute, assets);
-			logger.info('Static Assets: %s', assets);
+		setupCompression(clientRoute, assets);
+		logger.info('Static Assets: %s', assets);
 
-			//Static files...
-			clientRoute.use(staticFiles(assets, {
-				maxAge: '1 hour',
-				setHeaders: self.neverCacheManifestFiles
-			}));//static files
+		//Static files...
+		clientRoute.use(staticFiles(assets, {
+			maxAge: '1 hour',
+			setHeaders: self.neverCacheManifestFiles
+		}));//static files
 
-			//Do not let requests for static assets (that are not found) fall through to page rendering.
-			clientRoute.get(/^\/(js|resources)\//i, self.resourceNotFound);
+		//Do not let requests for static assets (that are not found) fall through to page rendering.
+		clientRoute.get(/^\/(js|resources)\//i, self.resourceNotFound);
 
-			clientRoute.use(cacheBuster);
+		clientRoute.use(cacheBuster);
 
-			clientRoute.use(FORCE_ERROR_ROUTE, self.forceError);
+		clientRoute.use(FORCE_ERROR_ROUTE, self.forceError);
 
 
-			registerEndPoints(
-				clientRoute, //express instance
-				flatConfig,
-				_interface); //interface
+		registerEndPoints(
+			clientRoute, //express instance
+			flatConfig,
+			_interface); //interface
 
-			clientRoute.use(ANONYMOUS_ROUTES, (r, q, n) => void session.anonymousMiddleware(basepath, r, q, n));
+		clientRoute.use(ANONYMOUS_ROUTES, (r, q, n) => void session.anonymousMiddleware(basepath, r, q, n));
 
-			if (flatConfig.public !== true) {
+		if (flatConfig.public !== true) {
 			//Session manager...
-				clientRoute.use(AUTHENTICATED_ROUTES, (r, q, n) => void session.middleware(basepath, r, q, n));
-			}
+			clientRoute.use(AUTHENTICATED_ROUTES, (r, q, n) => void session.middleware(basepath, r, q, n));
+		}
 
-			//HTML Renderer...
-			clientRoute.get('*', getPageRenderer(client, config, datacache, render, renderContent));
+		//HTML Renderer...
+		clientRoute.get('*', getPageRenderer(client, config, datacache, render, renderContent));
 
-			if (devmode) {
-				process.send({cmd: 'NOTIFY_DEVMODE'});
-				devmode.start();
-			}
-		})
-		.catch(e => {
-			logger.error(e.stack);
-			process.exit(1);
-		});
+		if (devmode) {
+			process.send({cmd: 'NOTIFY_DEVMODE'});
+			devmode.start();
+		}
+	}
+	catch(e) {
+		logger.error(e.stack);
+		process.exit(1);
+	}
 }

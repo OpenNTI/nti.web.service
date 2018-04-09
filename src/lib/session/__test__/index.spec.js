@@ -656,6 +656,35 @@ describe('lib/session', () => {
 	});
 
 
+	test ('Session::maybeRedirect() - res.redirect failed', () => {
+		const Session = require('../index');
+		const session = new Session({});
+
+		const next = jest.fn();
+		const basepath = '/';
+		const scope = 'fooboo';
+		const start = new Date();
+		const er = new Error();
+
+		const resp = {
+			redirect: jest.fn(() => { throw er; })
+		};
+
+		const req = {
+			method: 'GET',
+			originalUrl: '/tos/fooboo',
+		};
+
+
+		const callback = session.maybeRedirect(basepath, scope, start, req, resp, next);
+
+		expect(callback()).toEqual(undefined);
+		expect(resp.redirect).toHaveBeenCalled();
+		expect(next).toHaveBeenCalledTimes(1);
+		expect(next).toHaveBeenCalledWith(er);
+	});
+
+
 	test ('Session::anonymousMiddleware() - calls next() synchronously (no-ops for now)', () => {
 		const Session = require('../index');
 		const next = jest.fn();

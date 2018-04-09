@@ -6,6 +6,20 @@ describe('lib/no-cache (middleware)', () => {
 
 	beforeEach(() => {
 		jest.resetModules();
+		const logger = require('../logger');
+		const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
+
+		stub(logger, 'get', () => logger);
+		stub(logger, 'attachToExpress');
+		stub(logger, 'debug');
+		stub(logger, 'error');
+		stub(logger, 'info');
+		stub(logger, 'warn');
+	});
+
+
+	afterEach(() => {
+		jest.resetModules();
 	});
 
 
@@ -47,6 +61,8 @@ describe('lib/no-cache (middleware)', () => {
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
 		expect(res.setHeader).toHaveBeenCalledWith('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT');
 		expect(res.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
+
+		expect(() => fn({}, res)).not.toThrow();
 	});
 
 

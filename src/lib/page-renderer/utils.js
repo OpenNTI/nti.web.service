@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 
 const logger = require('../logger');
+const {getStackOrMessage} = require('../utils');
 
 const wrapfs = (method, ...locked) =>
 	(...args) => new Promise((fulfill, rej) =>
@@ -42,7 +43,7 @@ async function getTemplate (assets, devmode) {
 		return data;
 
 	} catch(er) {
-		logger.error('%s', er.stack || er.message || er);
+		logger.error('%s', getStackOrMessage(er));
 		return 'Could not load page template.';
 	}
 }
@@ -83,7 +84,7 @@ async function getModules (assets) {
 		cache.chunks = chunks;
 		return chunks;
 	} catch (e) {
-		logger.warn('Failed to load compile data. %s, because: %o', file, e.stack || e);
+		logger.warn('Failed to load compile data. %s, because: %o', file, getStackOrMessage(e));
 		return {};
 	}
 }

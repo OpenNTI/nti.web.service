@@ -3,7 +3,7 @@ const fs = require('fs');
 
 const pkg = require('../package.json');
 
-const {getStackOrMessage, getErrorMessage, callThresholdMet} = require('./lib/util');
+const {getStackOrMessage, getErrorMessage, callThresholdMet} = require('./lib/utils');
 const {loadConfig, showFlags} = require('./lib/config');
 const logger = require('./lib/logger');
 const {

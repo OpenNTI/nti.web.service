@@ -1,18 +1,19 @@
 Object.assign(exports, {
-	getStackOrMessage,
+	callThresholdMet,
 	getErrorMessage,
-	callThresholdMet
+	getStackOrMessage,
 });
-
-
-function getStackOrMessage (e) {
-	return e.stack || e.message || e;
-}
 
 
 function getErrorMessage (e) {
 	return e.message || e;
 }
+
+
+function getStackOrMessage (e) {
+	return e.stack || getErrorMessage(e);
+}
+
 
 
 /**

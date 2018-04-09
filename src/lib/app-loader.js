@@ -6,14 +6,12 @@ module.exports = function getApplication (pkg) {
 	const tip = `Relative modules are relative to: ${base}`;
 
 	try {
-		if (!require.main && process.env.NODE_ENV === 'test') {
-			return require(pkg);
-		}
+		const {__mockResolve, ...data} = require.main.require(pkg);
 
-		const {resolve} = require.main.exports;
+		const {resolve = __mockResolve} = require.main.exports;
 
 		return {
-			...require.main.require(pkg),
+			...data,
 			file: resolve && resolve(pkg)
 		};
 	} catch (e) {

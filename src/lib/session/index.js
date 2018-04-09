@@ -4,8 +4,6 @@ const Logger = require('../logger');
 
 const logger = Logger.get('SessionManager');
 
-const EMPTY = () => {};
-
 module.exports = exports = class SessionManager {
 	constructor (server, sessionSetup) {
 		if (!server) {
@@ -61,11 +59,7 @@ module.exports = exports = class SessionManager {
 		const scope = url.substr(0, basepath.length) === basepath ? url.substr(basepath.length) : url;
 		req.responseHeaders = req.responseHeaders || {};
 
-		const skip = () => {
-			const f = next;
-			next = EMPTY;
-			f('aborted');
-		};
+		const skip = () => next('aborted');
 
 		const reaper = ()=> {
 			req.dead = true;
@@ -109,14 +103,16 @@ module.exports = exports = class SessionManager {
 			.then(()=> logger.debug('SESSION [VALID] %s %s', req.method, url))
 			.then(()=> !req.dead && this.setupIntitalData(req))
 			.then(finish)
-			.catch(this.maybeRedirect(basepath, scope, start, req, res, x => next(x)))
+			.catch(this.maybeRedirect(basepath, scope, start, req, res, next))
 			.catch(er => {
-				logger.error('SESSION [ERROR] %s %s (%s, %dms)',
-					req.method, url, er, Date.now() - start);
-
-				next(er);
+				logger.error('SESSION [ERROR] %s %s (%s, %dms)', req.method, url, er, Date.now() - start);
+				try {
+					next(er);
+				} catch (e) {
+					//
+				}
 			})
-			.then(cleanReaper, x => (cleanReaper(), Promise.reject(x)));
+			.then(cleanReaper);
 	}
 
 

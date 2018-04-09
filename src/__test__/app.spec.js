@@ -18,60 +18,59 @@ const commonConfigs = {
 	}
 };
 
-const mockInterface = Object.assign({}, DataserverInterFace, {
+const mockInterface = {
+	...DataserverInterFace,
 	default (cfg) {
-		return Object.assign({},
-			DataserverInterFace.default(cfg),
-			{
-				interface: {
-					getServiceDocument (req) {
+		return {
+			...DataserverInterFace.default(cfg),
+			interface: {
+				getServiceDocument (req) {
 
-						if(!req.headers.authentication) {
-							return Promise.reject();
-						}
-
-						const username = req.headers.authentication;
-
-						return Promise.resolve({
-							getUserWorkspace () {
-								return {
-									Title: username
-								};
-							},
-
-							setLogoutURL () {},
-
-							getAppUsername () { return username; },
-
-							getAppUser () {
-								const user = {};
-
-								if (username === 'tos') {
-									user.acceptTermsOfService = true;
-								}
-
-								return Promise.resolve(user);
-							}
-						});
-					},
-					ping (name, req) {
-						req[DataserverInterFace.SiteName] = 'default';
-
-						if(!req.headers.authentication) {
-							return Promise.reject({});
-						}
-
-						return Promise.resolve({
-							getLink () {}
-						});
+					if(!req.headers.authentication) {
+						return Promise.reject();
 					}
+
+					const username = req.headers.authentication;
+
+					return Promise.resolve({
+						getUserWorkspace () {
+							return {
+								Title: username
+							};
+						},
+
+						setLogoutURL () {},
+
+						getAppUsername () { return username; },
+
+						getAppUser () {
+							const user = {};
+
+							if (username === 'tos') {
+								user.acceptTermsOfService = true;
+							}
+
+							return Promise.resolve(user);
+						}
+					});
+				},
+				ping (name, req) {
+					req[DataserverInterFace.SiteName] = 'default';
+
+					if(!req.headers.authentication) {
+						return Promise.reject({});
+					}
+
+					return Promise.resolve({
+						getLink () {}
+					});
 				}
 			}
-		);
+		};
 	}
-});
+};
 
-describe('Test End-to-End', () => {
+describe('Test End-to-End', async () => {
 	let logger;
 
 	beforeEach(() => {
@@ -93,16 +92,17 @@ describe('Test End-to-End', () => {
 	});
 
 
-	test ('Route File redirects to Route Dir', () => {
+	test ('Route File redirects to Route Dir', async () => {
 		const {getApp} = require('../worker');
-		const config = Object.assign({}, commonConfigs, {
+		const config = {
+			...commonConfigs,
 			apps: [{
 				package: '../example',
 				basepath: '/test/'
 			}],
-		});
+		};
 
-		return request(getApp(config))
+		return request(await getApp(config))
 			.get('/test')
 			.expect(301)
 			.expect(res => {
@@ -111,7 +111,7 @@ describe('Test End-to-End', () => {
 	});
 
 
-	test ('Anonymous access redirects to login', () => {
+	test ('Anonymous access redirects to login', async () => {
 		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
@@ -120,7 +120,7 @@ describe('Test End-to-End', () => {
 			}],
 		});
 
-		return request(getApp(config))
+		return request(await getApp(config))
 			.get('/app/')
 			.expect(302)
 			.expect(res => {
@@ -129,7 +129,7 @@ describe('Test End-to-End', () => {
 	});
 
 
-	test ('Authenticated access does not redirect', () => {
+	test ('Authenticated access does not redirect', async () => {
 		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
@@ -138,7 +138,7 @@ describe('Test End-to-End', () => {
 			}],
 		});
 
-		return request(getApp(config))
+		return request(await getApp(config))
 			.get('/app/')
 			//This isn't testing the authentication itself, just the behavior of "authenticated" or not...
 			.set('Authentication', 'foobar')
@@ -149,7 +149,7 @@ describe('Test End-to-End', () => {
 	});
 
 
-	test ('Public access does not redirect', () => {
+	test ('Public access does not redirect', async () => {
 		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
@@ -159,7 +159,7 @@ describe('Test End-to-End', () => {
 			}],
 		});
 
-		return request(getApp(config))
+		return request(await getApp(config))
 			.get('/test/')
 			.expect(200)
 			.expect(res => {
@@ -168,7 +168,7 @@ describe('Test End-to-End', () => {
 	});
 
 
-	test ('Render A Page', () => {
+	test ('Render A Page', async () => {
 		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
@@ -178,7 +178,7 @@ describe('Test End-to-End', () => {
 			}],
 		});
 
-		return request(getApp(config))
+		return request(await getApp(config))
 			.get('/test/')
 			.expect(200)
 			.expect(res => {
@@ -199,7 +199,7 @@ describe('Test End-to-End', () => {
 	});
 
 
-	test ('Page Renders have cach-busting headers and no etag', () => {
+	test ('Page Renders have cach-busting headers and no etag', async () => {
 		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
@@ -209,7 +209,7 @@ describe('Test End-to-End', () => {
 			}],
 		});
 
-		return request(getApp(config))
+		return request(await getApp(config))
 			.get('/test/')
 			.expect(200)
 			.expect(res => {
@@ -222,7 +222,7 @@ describe('Test End-to-End', () => {
 	});
 
 
-	test ('Statics have cacheable headers', () => {
+	test ('Statics have cacheable headers', async () => {
 		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
@@ -232,7 +232,7 @@ describe('Test End-to-End', () => {
 			}],
 		});
 
-		return request(getApp(config))
+		return request(await getApp(config))
 			.get('/test/existing.asset')
 			.expect(200)
 			.expect(res => {
@@ -247,7 +247,7 @@ describe('Test End-to-End', () => {
 	});
 
 
-	test ('Proper 404 for statics', () => {
+	test ('Proper 404 for statics', async () => {
 		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
@@ -257,13 +257,13 @@ describe('Test End-to-End', () => {
 			}],
 		});
 
-		return request(getApp(config))
+		return request(await getApp(config))
 			.get('/test/resources/foo.missing')
 			.expect(404);
 	});
 
 
-	test ('Proper 404 for non-app routes (controlled by app)', () => {
+	test ('Proper 404 for non-app routes (controlled by app)', async () => {
 		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
@@ -273,13 +273,13 @@ describe('Test End-to-End', () => {
 			}],
 		});
 
-		return request(getApp(config))
+		return request(await getApp(config))
 			.get('/test/foo.missing')
 			.expect(404);
 	});
 
 
-	test ('Proper 404 for non-app routes (controlled by app) v2', () => {
+	test ('Proper 404 for non-app routes (controlled by app) v2', async () => {
 		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
@@ -289,13 +289,13 @@ describe('Test End-to-End', () => {
 			}],
 		});
 
-		return request(getApp(config))
+		return request(await getApp(config))
 			.get('/test/foo.explicit404')
 			.expect(404);
 	});
 
 
-	test ('Proper 500 for app errors', () => {
+	test ('Proper 500 for app errors', async () => {
 		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
@@ -305,7 +305,7 @@ describe('Test End-to-End', () => {
 			}],
 		});
 
-		return request(getApp(config))
+		return request(await getApp(config))
 			.get('/test/foo.500')
 			.expect(500)
 			.expect(r => {
@@ -314,7 +314,7 @@ describe('Test End-to-End', () => {
 	});
 
 
-	test ('Service 500 for errors in app', () => {
+	test ('Service 500 for errors in app', async () => {
 		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
@@ -324,7 +324,7 @@ describe('Test End-to-End', () => {
 			}],
 		});
 
-		return request(getApp(config))
+		return request(await getApp(config))
 			.get('/test/foo.throw')
 			.expect(500)
 			.expect(r => {
@@ -335,7 +335,7 @@ describe('Test End-to-End', () => {
 	});
 
 
-	test ('Test Hooks: Session', () => {
+	test ('Test Hooks: Session', async () => {
 		const {getApp} = require('../worker');
 		const config = Object.assign({}, commonConfigs, {
 			apps: [{
@@ -344,7 +344,7 @@ describe('Test End-to-End', () => {
 			}],
 		});
 
-		return request(getApp(config))
+		return request(await getApp(config))
 			.get('/test/')
 			.set('Authentication', 'tos')
 			.expect(302)
@@ -359,7 +359,7 @@ describe('Test End-to-End', () => {
 	defineRedirectTests('tos');
 
 
-	test ('Test Hooks: Invalid Hook', (done) => {
+	test ('Test Hooks: Invalid Hook', async (done) => {
 		const Logger = logger.get('SessionManager');
 		const Session = require('../lib/session');
 
@@ -375,7 +375,7 @@ describe('Test End-to-End', () => {
 			}],
 		});
 
-		request(getApp(config))
+		request(await getApp(config))
 			.get('/test/?breakme=now')
 			.set('Cookie', 'language=en')
 			.end((e) => {
@@ -394,7 +394,7 @@ describe('Test End-to-End', () => {
 
 	function defineRedirectTests (user) {
 
-		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
+		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
 			const {getApp} = require('../worker');
 			const config = Object.assign({}, commonConfigs, {
 				apps: [{
@@ -403,7 +403,7 @@ describe('Test End-to-End', () => {
 				}],
 			});
 
-			return request(getApp(config))
+			return request(await getApp(config))
 				.get('/test/?q=aa')
 				.set('Authentication', user)
 				.expect(302)
@@ -413,7 +413,7 @@ describe('Test End-to-End', () => {
 		});
 
 
-		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
+		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
 			const {getApp} = require('../worker');
 			const config = Object.assign({}, commonConfigs, {
 				apps: [{
@@ -422,7 +422,7 @@ describe('Test End-to-End', () => {
 				}],
 			});
 
-			return request(getApp(config))
+			return request(await getApp(config))
 				.get('/test/?q=library/courses/available/invitations/accept/token')
 				.set('Authentication', user)
 				.expect(302)
@@ -432,7 +432,7 @@ describe('Test End-to-End', () => {
 		});
 
 
-		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
+		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
 			const {getApp} = require('../worker');
 			const config = Object.assign({}, commonConfigs, {
 				apps: [{
@@ -441,7 +441,7 @@ describe('Test End-to-End', () => {
 				}],
 			});
 
-			return request(getApp(config))
+			return request(await getApp(config))
 				.get('/test/?q=/app/library/courses/available/NTI-CourseInfo-iLed_iLed_001/...')
 				.set('Authentication', user)
 				.expect(302)
@@ -451,7 +451,7 @@ describe('Test End-to-End', () => {
 		});
 
 
-		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
+		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
 			const {getApp} = require('../worker');
 			const config = Object.assign({}, commonConfigs, {
 				apps: [{
@@ -460,7 +460,7 @@ describe('Test End-to-End', () => {
 				}],
 			});
 
-			return request(getApp(config))
+			return request(await getApp(config))
 				.get('/test/?q=library/availablecourses/IUB0YWc6bmV4dHRob3VnaHQuY29tLDIwMTEtMTA6TlRJLUNvdXJzZUluZm8tU3ByaW5nMjAxNV9MU1REXzExNTM/redeem/code')
 				.set('Authentication', user)
 				.expect(302)
@@ -470,7 +470,7 @@ describe('Test End-to-End', () => {
 		});
 
 
-		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
+		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
 			const {getApp} = require('../worker');
 			const config = Object.assign({}, commonConfigs, {
 				apps: [{
@@ -479,7 +479,7 @@ describe('Test End-to-End', () => {
 				}],
 			});
 
-			return request(getApp(config))
+			return request(await getApp(config))
 				.get('/test/?q=/app/id/unknown-OID-0x021cae18:5573657273:V0wWNR9EBJd')
 				.set('Authentication', user)
 				.expect(302)
@@ -489,7 +489,7 @@ describe('Test End-to-End', () => {
 		});
 
 
-		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, () => {
+		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
 			const {getApp} = require('../worker');
 			const config = Object.assign({}, commonConfigs, {
 				apps: [{
@@ -498,7 +498,7 @@ describe('Test End-to-End', () => {
 				}],
 			});
 
-			return request(getApp(config))
+			return request(await getApp(config))
 				.get('/test/?q=object/ntiid/tag:nextthought.com,2011-10:unknown-OID-0x021cae18:5573657273:V0wWNR9EBJd')
 				.set('Authentication', user)
 				.expect(302)

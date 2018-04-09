@@ -25,6 +25,42 @@ describe('lib/page-renderer (utils)', () => {
 	});
 
 
+	test ('getTemplate (io failure)', async () => {
+		const fs = require('fs');
+		const fn = require('../utils').getTemplate;
+
+		const assets = path.resolve('test');
+		const file = path.join(assets, './page.html');
+		const failure = 'Could not load page template.';
+
+		expect(fn).toEqual(expect.any(Function));
+
+		jest.spyOn(fs, 'stat').mockImplementation((f, cb) => cb(new Error(), null));
+		jest.spyOn(fs, 'readFile').mockImplementation((f, _, cb) => cb(new Error(), null));
+
+		//first pass... cache should be cold.
+		let page = await fn(assets);
+
+		expect(fs.stat).toHaveBeenCalledTimes(1);
+		expect(fs.stat).toHaveBeenCalledWith(file, expect.any(Function));
+		expect(fs.readFile).not.toHaveBeenCalled();
+		expect(page).toEqual(failure);
+
+		fs.stat.mockClear();
+		fs.readFile.mockClear();
+		jest.spyOn(fs, 'stat').mockImplementation((f, cb) => cb(null, {mtime: new Date('2018-04-02T16:35:42.000Z')}));
+
+		//second pass... cache should warm, and should hit.
+		page = await fn(assets);
+
+		expect(fs.stat).toHaveBeenCalledTimes(1);
+		expect(fs.stat).toHaveBeenCalledWith(file, expect.any(Function));
+		expect(fs.readFile).toHaveBeenCalledTimes(1);
+		expect(fs.readFile).toHaveBeenCalledWith(file, 'utf8', expect.any(Function));
+		expect(page).toEqual(failure);
+	});
+
+
 	test ('getTemplate (base line: caches template)', async () => {
 		const fs = require('fs');
 		const fn = require('../utils').getTemplate;
@@ -156,6 +192,22 @@ describe('lib/page-renderer (utils)', () => {
 	});
 
 
+	test ('getModules (empty case)', async () => {
+
+		const fs = require('fs');
+		const fn = require('../utils').getModules;
+
+		jest.spyOn(fs, 'stat').mockImplementation((f, cb) => cb(null, {mtime: new Date('2018-04-02T16:35:42.000Z')}));
+		jest.spyOn(fs, 'readFile').mockImplementation((f, _, cb) => cb(null, ''));
+
+		const data = await fn();
+		expect(fs.stat).not.toHaveBeenCalled();
+		expect(fs.readFile).not.toHaveBeenCalled();
+
+		expect(data).toEqual({});
+	});
+
+
 	test ('getModules (app-scripts with webpack3 back-compat)', async () => {
 
 		const fs = require('fs');
@@ -239,5 +291,41 @@ describe('lib/page-renderer (utils)', () => {
 			expect(data).toEqual(contents[dir].assetsByChunkName);
 		}
 
+	});
+
+
+	test ('getModules (io failure)', async () => {
+		const fs = require('fs');
+		const fn = require('../utils').getModules;
+
+		const assets = path.resolve('test/client');
+		const file = path.join(assets, '../compile-data.json');
+		const failure = {};
+
+		expect(fn).toEqual(expect.any(Function));
+
+		jest.spyOn(fs, 'stat').mockImplementation((f, cb) => cb(new Error(), null));
+		jest.spyOn(fs, 'readFile').mockImplementation((f, _, cb) => cb(new Error(), null));
+
+		//first pass... cache should be cold.
+		let data = await fn(assets);
+
+		expect(fs.stat).toHaveBeenCalledTimes(1);
+		expect(fs.stat).toHaveBeenCalledWith(file, expect.any(Function));
+		expect(fs.readFile).not.toHaveBeenCalled();
+		expect(data).toEqual(failure);
+
+		fs.stat.mockClear();
+		fs.readFile.mockClear();
+		jest.spyOn(fs, 'stat').mockImplementation((f, cb) => cb(null, {mtime: new Date('2018-04-02T16:35:42.000Z')}));
+
+		//second pass... cache should warm, and should hit.
+		data = await fn(assets);
+
+		expect(fs.stat).toHaveBeenCalledTimes(1);
+		expect(fs.stat).toHaveBeenCalledWith(file, expect.any(Function));
+		expect(fs.readFile).toHaveBeenCalledTimes(1);
+		expect(fs.readFile).toHaveBeenCalledWith(file, 'utf8', expect.any(Function));
+		expect(data).toEqual(failure);
 	});
 });

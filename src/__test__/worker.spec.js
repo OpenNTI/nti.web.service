@@ -25,24 +25,41 @@ describe('Worker', () => {
 	});
 
 
-
-	test ('getApp() No Configuration', () => {
+	test ('getApp() No Configuration', async () => {
 		const {getApp} = require('../worker');
 
-		expect(() => getApp({})).toThrow('No configuration');
+		let threw = false;
+
+		try {
+			await getApp({});
+		} catch (e) {
+			threw = true;
+			expect(e.toString()).toMatch('No configuration');
+		}
+
+		expect(threw).toBe(true);
 	});
 
 
-	test ('getApp() Missing app package', () => {
+	test ('getApp() Missing app package', async () => {
 		const {getApp} = require('../worker');
 
-		expect(() => getApp({
-			server: 'foo',
-			apps: [{
-				package: 'does not exist',
-				basepath: '/test/'
-			}],
-		})).toThrow(/Could not resolve package \(does not exist\) for app. Relative modules are relative to:/);
+		let threw = false;
+
+		try {
+			await getApp({
+				server: 'foo',
+				apps: [{
+					package: 'does not exist',
+					basepath: '/test/'
+				}],
+			});
+		} catch (e) {
+			threw = true;
+			expect(e.toString()).toMatch(/Could not resolve package \(does not exist\) for app. Relative modules are relative to:/);
+		}
+
+		expect(threw).toBe(true);
 	});
 
 
@@ -60,7 +77,7 @@ describe('Worker', () => {
 	});
 
 
-	test ('init() sets up: express, service, and error handlers; starts a server listening', () => {
+	test ('init() sets up: express, service, and error handlers; starts a server listening', async () => {
 		const listen = jest.fn();
 		const server = {listen};
 		const createServer = jest.fn(() => server);
@@ -82,7 +99,7 @@ describe('Worker', () => {
 
 		const worker = require('../worker');
 
-		const svr = worker.init(config);
+		const svr = await worker.init(config);
 
 		expect(server).toEqual(svr);
 		expect(proxy).not.toHaveBeenCalled();
@@ -101,7 +118,7 @@ describe('Worker', () => {
 	});
 
 
-	test ('init() will use proxy-protocol if configured', () => {
+	test ('init() will use proxy-protocol if configured', async () => {
 		const listen = jest.fn();
 		const server = {listen};
 		const createServer = jest.fn(() => server);
@@ -123,7 +140,7 @@ describe('Worker', () => {
 
 		const worker = require('../worker');
 
-		const svr = worker.init(config);
+		const svr = await worker.init(config);
 
 		expect(server).toEqual(svr);
 		expect(proxy).toHaveBeenCalled();
@@ -140,7 +157,7 @@ describe('Worker', () => {
 	});
 
 
-	test ('init() will use address if configured', () => {
+	test ('init() will use address if configured', async () => {
 		const listen = jest.fn();
 		const server = {listen};
 		const createServer = jest.fn(() => server);
@@ -162,7 +179,7 @@ describe('Worker', () => {
 
 		const worker = require('../worker');
 
-		const svr = worker.init(config);
+		const svr = await worker.init(config);
 
 		expect(server).toEqual(svr);
 
@@ -171,7 +188,7 @@ describe('Worker', () => {
 	});
 
 
-	test ('message handler: handles "init"', () => {
+	test ('message handler: handles "init"', async () => {
 		const exitCode = process.exitCode;
 		const disconnect = jest.fn();
 		jest.doMock('cluster', () => ({worker: {disconnect}}));
@@ -180,9 +197,7 @@ describe('Worker', () => {
 
 		stub(worker, 'init');
 
-		expect(() => {
-			worker.messageHandler({cmd: 'init'});
-		}).not.toThrow();
+		await worker.messageHandler({cmd: 'init'});
 
 		expect(worker.init).toHaveBeenCalled();
 
@@ -191,7 +206,7 @@ describe('Worker', () => {
 	});
 
 
-	test ('message handler: handles "init" error', () => {
+	test ('message handler: handles "init" error', async () => {
 		const disconnect = jest.fn();
 		const exitCode = 1;
 		const stubby = jest.fn();
@@ -207,9 +222,7 @@ describe('Worker', () => {
 
 		stub(worker, 'init', () => {throw new Error('Test');});
 
-		expect(() => {
-			worker.messageHandler({cmd: 'init'});
-		}).not.toThrow();
+		await worker.messageHandler({cmd: 'init'});
 
 		if (send === stubby) {
 			delete process.send;
@@ -223,7 +236,7 @@ describe('Worker', () => {
 	});
 
 
-	test ('message handler: handles "close" before init', () => {
+	test ('message handler: handles "close" before init', async () => {
 		const disconnect = jest.fn();
 		const exitCode = process.exitCode;
 
@@ -238,9 +251,7 @@ describe('Worker', () => {
 
 		stub(worker, 'init', () => server);
 
-		expect(() => {
-			worker.messageHandler({cmd: 'close'});
-		}).not.toThrow();
+		await worker.messageHandler({cmd: 'close'});
 
 		expect(exitCode).toEqual(process.exitCode);
 
@@ -251,7 +262,7 @@ describe('Worker', () => {
 	});
 
 
-	test ('message handler: handles "close" after init', () => {
+	test ('message handler: handles "close" after init', async () => {
 		const disconnect = jest.fn();
 		const exitCode = process.exitCode;
 
@@ -266,10 +277,9 @@ describe('Worker', () => {
 
 		stub(worker, 'init', () => server);
 
-		expect(() => {
-			worker.messageHandler({cmd: 'init'});
-			worker.messageHandler({cmd: 'close'});
-		}).not.toThrow();
+		await worker.messageHandler({cmd: 'init'});
+		await worker.messageHandler({cmd: 'close'});
+
 
 		expect(exitCode).toEqual(process.exitCode);
 
@@ -280,7 +290,7 @@ describe('Worker', () => {
 	});
 
 
-	test ('message handler: unknown messages do not crash.', () => {
+	test ('message handler: unknown messages do not crash.', async () => {
 		const exitCode = process.exitCode;
 		const disconnect = jest.fn();
 		jest.doMock('cluster', () => ({worker: {disconnect}}));
@@ -289,11 +299,9 @@ describe('Worker', () => {
 
 		stub(worker, 'init');
 
-		expect(() => {
-			worker.messageHandler();
-			worker.messageHandler({});
-			worker.messageHandler({cmd: 'this-does-not-exist'});
-		}).not.toThrow();
+		await worker.messageHandler();
+		await worker.messageHandler({});
+		await worker.messageHandler({cmd: 'this-does-not-exist'});
 
 
 		expect(exitCode).toEqual(process.exitCode);

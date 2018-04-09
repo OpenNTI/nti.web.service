@@ -9,11 +9,11 @@ const {proxy: createProxy} = require('findhit-proxywrap');
 const pkg = require('../package.json');
 
 const logger = require('./lib/logger');
-const htmlTemplates = require('./lib/htmlTemplates');
+const htmlTemplates = require('./lib/html-templates');
 const {restart} = require('./lib/restart');
 const {setupApplication} = require('./lib/app-service');
 const {setupErrorHandler} = require('./lib/error-handler');
-const {getStackOrMessage, getErrorMessage} = require('./lib/util');
+const {getStackOrMessage, getErrorMessage} = require('./lib/utils');
 
 const sendErrorMessage = e => process.send({cmd: 'FATAL_ERROR', error: e});
 
@@ -28,9 +28,9 @@ const self = Object.assign(exports, {
 
 const MESSAGE_HANDLERS = {
 
-	init (msg) {
+	async init (msg) {
 		try {
-			this.server = self.init(msg.config);
+			this.server = await self.init(msg.config);
 		} catch (e) {
 			process.exitCode = 1;
 			logger.error(getStackOrMessage(e));
@@ -67,7 +67,7 @@ function start ()  {
 }
 
 
-function getApp (config) {
+async function getApp (config) {
 	//WWW Server
 	const app = express();
 	app.engine('html', htmlTemplates);
@@ -76,7 +76,7 @@ function getApp (config) {
 	app.set('views', path.resolve(__dirname, 'templates'));
 	app.set('view engine', 'html');
 
-	setupApplication(app, config, restart);
+	await setupApplication(app, config, restart);
 
 	//Errors
 	setupErrorHandler(app, config);
@@ -84,12 +84,12 @@ function getApp (config) {
 }
 
 
-function init (config) {
+async function init (config) {
 	const protocol = config.protocol === 'proxy' ? createProxy(http) : http;
 	const address = config.address || '0.0.0.0';
 	const port = config.port;
 
-	const app = getApp(config);
+	const app = await getApp(config);
 
 	const server = protocol.createServer(app);
 
@@ -103,9 +103,9 @@ function init (config) {
 
 
 
-function messageHandler (msg) {
+async function messageHandler (msg) {
 	try {
-		MESSAGE_HANDLERS[msg.cmd](msg);
+		await MESSAGE_HANDLERS[msg.cmd](msg);
 		return;
 	} catch (e) {
 		logger.error('Could not handle message. %o', getErrorMessage(e));

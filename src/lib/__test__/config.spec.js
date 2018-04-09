@@ -253,7 +253,8 @@ describe ('lib/config', () => {
 					{ package: 'foo', basepath: '/foo/' },
 					{ package: 'bar', basepath: '/bar/' },
 					{ package: 'baz', basepath: '/foo/baz/' },
-					{ package: 'buz', basepath: '/foo/buz/' }
+					{ package: 'buz', basepath: '/foo/buz/' },
+					{ package: 'biz', basepath: '/foo/buz/' }
 				]
 			},
 			'site-mappings': {}
@@ -270,6 +271,7 @@ describe ('lib/config', () => {
 
 				expect(c.apps.map(x => x.basepath)).toEqual([
 					'/foo/baz/',
+					'/foo/buz/',
 					'/foo/buz/',
 					'/bar/',
 					'/foo/'

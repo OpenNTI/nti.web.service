@@ -10,7 +10,7 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		jest.resetModules();
 		global.fetch = () => {};
 
-		TOS_NOT_ACCEPTED = require('nti-lib-interfaces').TOS_NOT_ACCEPTED;
+		TOS_NOT_ACCEPTED = require('@nti/lib-interfaces').TOS_NOT_ACCEPTED;
 	});
 
 

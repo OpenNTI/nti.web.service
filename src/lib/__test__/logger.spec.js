@@ -26,7 +26,7 @@ describe('lib/logger (middleware)', () => {
 		jest.doMock('cluster', () => ({isMaster: true}));
 		jest.doMock('morgan', () => morganConstructor);
 		jest.doMock('response-time', () => responseTimeConstructor);
-		jest.doMock('nti-util-logger', () => ({default: LoggerFactory}));
+		jest.doMock('@nti/util-logger', () => ({default: LoggerFactory}));
 	});
 
 
@@ -45,14 +45,14 @@ describe('lib/logger (middleware)', () => {
 	});
 
 
-	test ('Should use an nti-util-logger backend and identify master', () => {
+	test ('Should use an @nti/util-logger backend and identify master', () => {
 		require('../logger');
 		expect(LoggerFactory.get).toHaveBeenCalled();
 		expect(LoggerFactory.get).toHaveBeenCalledWith('NodeService:master');
 	});
 
 
-	test ('Should use an nti-util-logger backend and identify worker', () => {
+	test ('Should use an @nti/util-logger backend and identify worker', () => {
 		jest.doMock('cluster', () => ({isMaster: false, worker: {id: 'foobar'}}));
 		require('../logger');
 

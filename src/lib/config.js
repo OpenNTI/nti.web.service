@@ -5,7 +5,7 @@ const path = require('path');
 
 const yargs = require('yargs');
 const uuid = require('uuid/v4');
-const {SiteName, ServiceStash} = require('nti-lib-interfaces');
+const {SiteName, ServiceStash} = require('@nti/lib-interfaces');
 
 const getApplication = require('./app-loader');
 const getSiteFrom = require('./site-mapping');

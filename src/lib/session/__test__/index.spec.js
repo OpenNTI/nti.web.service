@@ -17,7 +17,7 @@ describe('lib/session', () => {
 		stub(logger, 'info');
 		stub(logger, 'warn');
 
-		ServiceStash = require('nti-lib-interfaces').ServiceStash;
+		ServiceStash = require('@nti/lib-interfaces').ServiceStash;
 	});
 
 

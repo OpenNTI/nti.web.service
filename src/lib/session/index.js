@@ -1,4 +1,4 @@
-const {ServiceStash} = require('nti-lib-interfaces');
+const {ServiceStash} = require('@nti/lib-interfaces');
 
 const Logger = require('../logger');
 

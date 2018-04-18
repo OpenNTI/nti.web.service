@@ -34,7 +34,7 @@ describe ('lib/config', () => {
 
 		jest.doMock('yargs', () => yargs);
 
-		const iface = require('nti-lib-interfaces');
+		const iface = require('@nti/lib-interfaces');
 		SiteName = iface.SiteName;
 		ServiceStash = iface.ServiceStash;
 	});

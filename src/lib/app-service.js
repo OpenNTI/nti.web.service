@@ -5,7 +5,7 @@ const cookieParser = require('cookie-parser');
 const express = require('express');
 const requestLanguage = require('express-request-language');
 const staticFiles = require('serve-static');
-const {default: dataserver} = require('nti-lib-interfaces');
+const {default: dataserver} = require('@nti/lib-interfaces');
 
 const getApplication = require('./app-loader');
 const registerEndPoints = require('./api');

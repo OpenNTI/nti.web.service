@@ -8,7 +8,7 @@ expose potential problems for the service so we can produce errors for tests.
 const path = require('path');
 
 //eslint-disable-next-line
-const {encodeForURI, decodeFromURI} = require('nti-lib-ntiids');
+const {encodeForURI, decodeFromURI} = require('@nti/lib-ntiids');
 
 const SEGMENT_HANDLERS = {
 

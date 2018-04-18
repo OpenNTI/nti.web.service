@@ -1,7 +1,7 @@
 'use strict';
 const Url = require('url');
 
-const {TOS_NOT_ACCEPTED, getLink} = require('nti-lib-interfaces');
+const {TOS_NOT_ACCEPTED, getLink} = require('@nti/lib-interfaces');
 
 const {getStackOrMessage} = require('../../utils');
 

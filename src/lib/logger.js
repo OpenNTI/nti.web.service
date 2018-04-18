@@ -3,7 +3,7 @@ const {isMaster, worker} = require('cluster');
 
 const morgan = require('morgan');
 const responseTime = require('response-time');
-const {default: Logger} = require('nti-util-logger');
+const {default: Logger} = require('@nti/util-logger');
 
 const BASE_NAME = 'NodeService:' + (isMaster ? 'master' : ('worker:' + worker.id));
 const logger = Logger.get(BASE_NAME);

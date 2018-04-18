@@ -1,6 +1,6 @@
 /* eslint-env jest */
 const request = require('supertest');
-const DataserverInterFace = require('nti-lib-interfaces');
+const DataserverInterFace = require('@nti/lib-interfaces');
 
 const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
@@ -83,7 +83,7 @@ describe('Test End-to-End', async () => {
 		stub(logger, 'info');
 		stub(logger, 'warn');
 
-		jest.doMock('nti-lib-interfaces', () => mockInterface);
+		jest.doMock('@nti/lib-interfaces', () => mockInterface);
 	});
 
 

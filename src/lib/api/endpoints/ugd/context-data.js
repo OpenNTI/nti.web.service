@@ -1,5 +1,5 @@
 'use strict';
-const {getModel} = require('nti-lib-interfaces');
+const {getModel} = require('@nti/lib-interfaces');
 const PageInfo = getModel('pageinfo');
 
 

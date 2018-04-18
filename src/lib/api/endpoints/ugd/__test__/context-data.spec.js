@@ -9,7 +9,7 @@ describe ('lib/api/endpoints/ugd/context-data', () => {
 	beforeEach(() => {
 		jest.resetModules();
 
-		PageInfo = require('nti-lib-interfaces').Models.content.PageInfo;
+		PageInfo = require('@nti/lib-interfaces').Models.content.PageInfo;
 	});
 
 

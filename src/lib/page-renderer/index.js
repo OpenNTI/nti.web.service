@@ -1,7 +1,7 @@
 /*eslint strict: 0*/
 'use strict';
 
-const {URL: {join: urlJoin}} = require('nti-commons');
+const {URL: {join: urlJoin}} = require('@nti/lib-commons');
 
 const {
 	getModules, //not needed in webpack4

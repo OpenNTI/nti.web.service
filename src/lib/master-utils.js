@@ -1,3 +1,4 @@
+'use strict';
 const {workers} = require('cluster');
 const STORAGE = {};
 

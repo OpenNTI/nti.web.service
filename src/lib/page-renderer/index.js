@@ -19,10 +19,14 @@ const isSiteAssets = RegExp.prototype.test.bind(/^\/site-assets/);
 const isVendoredAssets = RegExp.prototype.test.bind(/^\/vendor/);
 const isFavicon = RegExp.prototype.test.bind(/^\/favicon\.ico/);
 
-const shouldPrefix = val => isRootPath(val) && !isSiteAssets(val) && !isVendoredAssets(val) && !isFavicon(val);
+const shouldPrefix = (val, base) => isRootPath(val)
+							&& !val.startsWith(base)
+							&& !isSiteAssets(val)
+							&& !isVendoredAssets(val)
+							&& !isFavicon(val);
 
 const attributesToFix = /(manifest|src|href)="(.*?)"/igm;
-const fixAttributes = (base, original, attr, val) => `${attr}="${shouldPrefix(val) ? urlJoin(base, val) : val}"`;
+const fixAttributes = (base, original, attr, val) => `${attr}="${shouldPrefix(val, base) ? urlJoin(base, val) : val}"`;
 
 const configValues = /<\[cfg:([^\]]*)\]>/igm;
 const fillInValues = (cfg, orginal, prop) => cfg[prop] || 'MissingConfigValue';

@@ -1,3 +1,4 @@
+'use strict';
 const logger = require('./logger');
 const {clientConfig, nodeConfigAsClientConfig} = require('./config');
 const {getRenderer} = require('./page-renderer');

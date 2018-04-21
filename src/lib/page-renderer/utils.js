@@ -84,7 +84,7 @@ async function getModules (assets) {
 		cache.chunks = chunks;
 		return chunks;
 	} catch (e) {
-		logger.warn('Failed to load compile data. %s, because: %o', file, getStackOrMessage(e));
+		logger.debug('Failed to load compile data. %s, because: %o', file, getStackOrMessage(e));
 		return {};
 	}
 }

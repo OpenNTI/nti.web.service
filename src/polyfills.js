@@ -1,3 +1,4 @@
+'use strict';
 /* istanbul ignore next */
 (() => {//iife for istanbul ignore next
 	//add polyfills and shims

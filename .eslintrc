@@ -1,12 +1,11 @@
 {
-	"extends": [
-		"nti-codestyle-js"
-	],
+	"extends": "./node_modules/@nti/lib-scripts/config/eslintrc.js",
 
-	"env": {
-		"browser": false,
-		"mocha": true,
-		"node": true
+	"parserOptions": {
+		"sourceType": "script",
+		"ecmaFeatures": {
+			"impliedStrict": false
+		}
 	},
 
 	"globals": {
@@ -14,7 +13,7 @@
 	},
 
 	"rules": {
-		"strict": 0,
+		"strict": ["error", "global"],
 		"import/no-commonjs": 0,
 		"import/no-extraneous-dependencies": ["error", {"devDependencies": ["**/test/*.js", "**/*.spec.js"]}],
 		"no-restricted-globals": 0

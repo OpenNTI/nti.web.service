@@ -1,3 +1,4 @@
+'use strict';
 /*
 This file was copied from the mobile app, and is not meant to be tested, but
 to provide plugin code to test the harness. Code in this file is meant to

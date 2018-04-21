@@ -1,4 +1,5 @@
 /* eslint-env jest */
+'use strict';
 const request = require('supertest');
 const DataserverInterFace = require('@nti/lib-interfaces');
 

@@ -231,11 +231,18 @@ function config (env) {
 }
 
 
-function noServiceAndThereShouldBe () {
-	//mock Thenable. When this is passed to a Promise.resolve() it should reject
-	return {
-		then: () => {throw new Error('No Service.');}
-	};
+function serviceRef (service, cfg) {
+	return Object.defineProperty(cfg, 'nodeService', {
+		configurable: true,
+		enumerable: false,
+		...(service
+			? { value: service }
+			: {
+				get () {
+					return Promise.reject(new Error('No Service.'));
+				}
+			})
+	});
 }
 
 
@@ -266,9 +273,8 @@ function clientConfig (baseConfig, username, appId, context) {
 
 
 	return {
-		//used only on server
-		config: Object.assign({}, cfg, {
-			nodeService: context[ServiceStash] || noServiceAndThereShouldBe()
+		config: serviceRef(context[ServiceStash], {
+			...cfg
 		}),
 		html:
 			'\n<script type="text/javascript">\n' +
@@ -283,12 +289,13 @@ function nodeConfigAsClientConfig (cfg, appId, context) {
 	const site = self.getSite(cfg, context[SiteName]);
 	return {
 		html: '',
-		config: Object.assign({}, cfg, app, {
+		config: serviceRef(context[ServiceStash], {
+			...cfg,
+			...app,
 			locale: getLocale(context),
 			username: context.username,
 			siteName: site.name,
 			siteTitle: site.title,
-			nodeService: context[ServiceStash] || noServiceAndThereShouldBe()
 		})
 	};
 }

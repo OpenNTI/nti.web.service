@@ -42,7 +42,10 @@ function getRenderer (assets, renderContent, devmode) {
 			out = out.replace(new RegExp(`js\\/${script}\\.js`), ScriptFilenameMap[script]);
 		}
 
-		return out.replace(/resources\/styles\.css"/, `resources/styles.css?rel=${encodeURIComponent(ScriptFilenameMap.index)}"`);
+		return out.replace(
+			/resources\/styles\.css"/,
+			`resources/styles.css?rel=${encodeURIComponent(ScriptFilenameMap.index)}"`
+		);
 	}
 
 
@@ -62,11 +65,13 @@ function getRenderer (assets, renderContent, devmode) {
 	return async function render (basePath, {url} = {}, {html, config} = {}, markError = NOOP) {
 		const template = (await getTemplate(assets, devmode)) || 'Bad Template';
 
-		const cfg = {
+		// There are non-enumerable properties on config, and we need them passed to renderContent, so create a new cfg
+		// with the original config as the prototype, and assign these new values to the wrapper object. (this is to
+		// avoid mutating the config.
+		const cfg = Object.assign(Object.create(config || {}), {
 			html,
-			url,
-			...(config || {})
-		};
+			url
+		});
 
 		return applyWebpack3Compat( template
 			.replace(configValues, fillInValues.bind(null, cfg))

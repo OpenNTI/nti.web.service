@@ -437,7 +437,7 @@ describe ('lib/config', () => {
 	});
 
 
-	test ('clientConfig(): blows up if no service on context', () => {
+	test ('clientConfig(): blows up if no service on context', async () => {
 		const {clientConfig} = require('../config');
 		const context = {};
 		const config = {};
@@ -445,12 +445,13 @@ describe ('lib/config', () => {
 		let out;
 		expect(() => out = clientConfig(config, context.username, 'abc', context)).not.toThrow();
 
-		return Promise.resolve(out.config.nodeService)
-			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
-			.catch(e => {
-				expect(e).toEqual(expect.any(Error));
-				expect(e.message).toBe('No Service.');
-			});
+		try {
+			await out.config.nodeService;
+			throw new Error('Unexpected Promise fulfillment. It should have failed.');
+		} catch(e) {
+			expect(e).toEqual(expect.any(Error));
+			expect(e.message).toBe('No Service.');
+		}
 	});
 
 
@@ -490,7 +491,7 @@ describe ('lib/config', () => {
 	});
 
 
-	test ('nodeConfigAsClientConfig(): blows up if no service on context', () => {
+	test ('nodeConfigAsClientConfig(): blows up if no service on context', async () => {
 		const {nodeConfigAsClientConfig} = require('../config');
 		const context = {};
 		const config = {};
@@ -498,11 +499,13 @@ describe ('lib/config', () => {
 		let out;
 		expect(() => out = nodeConfigAsClientConfig(config, 'abc', context)).not.toThrow();
 
-		return Promise.resolve(out.config.nodeService)
-			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
-			.catch(e => {
-				expect(e).toEqual(expect.any(Error));
-				expect(e.message).toBe('No Service.');
-			});
+		try {
+			await out.config.nodeService;
+			throw new Error('Unexpected Promise fulfillment. It should have failed.');
+		}
+		catch(e) {
+			expect(e).toEqual(expect.any(Error));
+			expect(e.message).toBe('No Service.');
+		}
 	});
 });

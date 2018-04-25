@@ -14,6 +14,7 @@ const cacheBuster = require('./no-cache');
 const Session = require('./session');
 const logger = require('./logger');
 const cors = require('./cors');
+const frameOptions = require('./frame-options');
 const {getPageRenderer} = require('./renderer');
 const {restartOnModification} = require('./restart');
 
@@ -71,6 +72,7 @@ async function setupApplication (server, config, restartRequest) {
 
 	server.use(cookieParser());
 	server.use(cors);
+	server.use(frameOptions);
 	// server.use(cacheBuster);
 
 	logger.info('DataServer end-point: %s', config.server);

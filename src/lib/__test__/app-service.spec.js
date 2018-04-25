@@ -6,6 +6,7 @@ const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 describe('lib/app-service', () => {
 	const cacheBusterMiddleware = Object.freeze({});
 	const corsMiddleware = Object.freeze({});
+	const foMiddleware = Object.freeze({});
 
 	let cookieParserConstructor;
 	let compressionMock;
@@ -70,6 +71,7 @@ describe('lib/app-service', () => {
 		jest.doMock('../compress', () => ({attachToExpress: compressionMock}));
 		jest.doMock('../no-cache', () => cacheBusterMiddleware);
 		jest.doMock('../cors', () => corsMiddleware);
+		jest.doMock('../frame-options', () => foMiddleware);
 		jest.doMock('../session', () => sessionMock);
 		jest.doMock('../renderer', () => ({getPageRenderer}));
 		jest.doMock('../restart', () => ({restartOnModification}));
@@ -187,9 +189,10 @@ describe('lib/app-service', () => {
 		expect(service.setupClient).toHaveBeenCalledWith(config.apps[0], expect.any(Object));
 		expect(service.setupClient).toHaveBeenCalledWith(config.apps[1], expect.any(Object));
 
-		expect(server.use).toHaveBeenCalledTimes(2);
+		expect(server.use).toHaveBeenCalledTimes(3);
 		expect(server.use).toHaveBeenCalledWith('cookie-parser-middleware');
 		expect(server.use).toHaveBeenCalledWith(corsMiddleware);
+		expect(server.use).toHaveBeenCalledWith(foMiddleware);
 	});
 
 
@@ -222,9 +225,10 @@ describe('lib/app-service', () => {
 		expect(service.setupClient).toHaveBeenCalledWith(config.apps[0], expect.any(Object));
 		expect(service.setupClient).toHaveBeenCalledWith(config.apps[1], expect.any(Object));
 
-		expect(server.use).toHaveBeenCalledTimes(2);
+		expect(server.use).toHaveBeenCalledTimes(3);
 		expect(server.use).toHaveBeenCalledWith('cookie-parser-middleware');
 		expect(server.use).toHaveBeenCalledWith(corsMiddleware);
+		expect(server.use).toHaveBeenCalledWith(foMiddleware);
 	});
 
 

@@ -7,11 +7,14 @@
     "web-service": "src/index.js"
   },
   "scripts": {
+    "build": "lib-scripts build",
+    "check": "lib-scripts check",
+    "clean": "lib-scripts clean",
     "fix": "lib-scripts fix",
     "prepack": "npm test",
     "release": "lib-scripts release",
-    "test": "eslint ./src && jest -c ./src/__test__/__jest.config.ci.js",
-    "start": "node ./src --protocol http --config ./config/env.json.example"
+    "start": "node ./src --protocol http --config ./config/env.json.example",
+    "test": "lib-scripts test"
   },
   "repository": {
     "type": "git",
@@ -40,8 +43,8 @@
     "zpad"
   ],
   "dependencies": {
-    "@nti/lib-commons": "^2.5.1",
-    "@nti/lib-interfaces": "^1.40.0",
+    "@nti/lib-commons": "^2.14.0",
+    "@nti/lib-interfaces": "^1.78.0",
     "@nti/util-logger": "^1.0.0",
     "atob": "^2.0.3",
     "btoa": "^1.1.2",
@@ -62,7 +65,7 @@
     "zpad": "^0.5.0"
   },
   "devDependencies": {
-    "@nti/lib-scripts": "^1.16.0",
+    "@nti/lib-scripts": "^1.17.4",
     "supertest": "^3.0.0"
   },
   "jest": {

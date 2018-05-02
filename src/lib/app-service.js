@@ -10,6 +10,7 @@ const {default: dataserver} = require('@nti/lib-interfaces');
 const getApplication = require('./app-loader');
 const registerEndPoints = require('./api');
 const {attachToExpress: setupCompression} = require('./compress');
+const apiProxy = require('./api-proxy');
 const cacheBuster = require('./no-cache');
 const Session = require('./session');
 const logger = require('./logger');
@@ -69,6 +70,10 @@ async function setupApplication (server, config, restartRequest) {
 	//config.silent = true;
 
 	const params = Object.assign({server, config, restartRequest}, dataserver(config));
+
+	if (config.proxy) {
+		server.use('/dataserver2', apiProxy(config));
+	}
 
 	server.use(cookieParser());
 	server.use(cors);

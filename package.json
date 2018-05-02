@@ -20,6 +20,9 @@
     "type": "git",
     "url": "https://github.com/NextThought/nti.web.service.git"
   },
+  "publishConfig": {
+    "registry": "https://npm.nextthought.com/"
+  },
   "author": "nextthought",
   "license": "UNLICENSED",
   "bundledDependencies": [

@@ -56,8 +56,8 @@ describe('lib/api-proxy (middleware)', () => {
 
 		expect(httpProxyMiddleware).toHaveBeenCalledWith(
 			expect.objectContaining({
-				'changeOrigin': true,
-				'target': config.proxy
+				changeOrigin: false,
+				target: config.proxy
 			})
 		);
 	});

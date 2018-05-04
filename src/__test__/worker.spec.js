@@ -1,5 +1,6 @@
 /*eslint-env jest*/
 'use strict';
+jest.mock('fs');
 
 const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
@@ -154,6 +155,102 @@ describe('Worker', () => {
 
 		expect(listen).toHaveBeenCalledTimes(1);
 		expect(listen).toHaveBeenCalledWith(port, '0.0.0.0', expect.any(Function));
+	});
+
+	test ('init() will use https if configured', async () => {
+		const fs = require('fs');
+		const listen = jest.fn();
+		const server = {listen};
+		const createServer = jest.fn(() => server);
+		const app = {set () {}, engine () {}};
+		const express = jest.fn(() => app);
+		const port = 12345;
+		const config = {protocol: 'https', port};
+
+		const setupApplication = jest.fn();
+		const setupErrorHandler = jest.fn();
+
+		jest.doMock('http', () => ({createServer}));
+		jest.doMock('express', () => express);
+
+		jest.doMock('../lib/app-service', () => ({setupApplication}));
+		jest.doMock('../lib/error-handler', () => ({setupErrorHandler}));
+
+		stub(fs, 'readFileSync', (f) => f);
+
+		process.env.NTI_BUILDOUT_PATH = '/some/Path';
+
+		const worker = require('../worker');
+
+		const svr = await worker.init(config);
+
+		expect(server).toEqual(svr);
+		expect(express).toHaveBeenCalledTimes(1);
+		expect(setupApplication).toHaveBeenCalledTimes(1);
+		expect(setupApplication).toHaveBeenCalledWith(app, config, restart);
+		expect(setupErrorHandler).toHaveBeenCalledTimes(1);
+
+		expect(createServer).toHaveBeenCalledTimes(1);
+		expect(createServer).toHaveBeenCalledWith(app);
+
+		expect(listen).toHaveBeenCalledTimes(1);
+		expect(listen).toHaveBeenCalledWith(port, '0.0.0.0', expect.any(Function));
+	});
+
+	test ('init() with https with no NTI_BUILDOUT_PATH', async () => {
+		const fs = require('fs');
+		const listen = jest.fn();
+		const server = {listen};
+		const createServer = jest.fn(() => server);
+		const app = {set () {}, engine () {}};
+		const express = jest.fn(() => app);
+		const port = 12345;
+		const config = {protocol: 'https', port};
+
+		const setupApplication = jest.fn();
+		const setupErrorHandler = jest.fn();
+
+		jest.doMock('https', () => ({createServer}));
+		jest.doMock('express', () => express);
+
+		jest.doMock('../lib/app-service', () => ({setupApplication}));
+		jest.doMock('../lib/error-handler', () => ({setupErrorHandler}));
+
+		stub(fs, 'readFileSync', (f) => f);
+
+		delete process.env.NTI_BUILDOUT_PATH;
+
+		const worker = require('../worker');
+
+		return expect(worker.init(config)).rejects.toThrow('https was specified, but NTI_BUILDOUT_PATH was not defined or a valid string.');
+	});
+
+	test ('init() with https with bad NTI_BUILDOUT_PATH', async () => {
+		const fs = require('fs');
+		const listen = jest.fn();
+		const server = {listen};
+		const createServer = jest.fn(() => server);
+		const app = {set () {}, engine () {}};
+		const express = jest.fn(() => app);
+		const port = 12345;
+		const config = {protocol: 'https', port};
+
+		const setupApplication = jest.fn();
+		const setupErrorHandler = jest.fn();
+
+		jest.doMock('https', () => ({createServer}));
+		jest.doMock('express', () => express);
+
+		jest.doMock('../lib/app-service', () => ({setupApplication}));
+		jest.doMock('../lib/error-handler', () => ({setupErrorHandler}));
+
+		stub(fs, 'readFileSync', (f) => {throw new Error();});
+
+		process.env.NTI_BUILDOUT_PATH = '/doesNotExist';
+
+		const worker = require('../worker');
+
+		return expect(worker.init(config)).rejects.toThrow('Could not create secure server.');
 	});
 
 

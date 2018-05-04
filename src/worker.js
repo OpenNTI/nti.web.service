@@ -1,7 +1,9 @@
 'use strict';
 const {worker} = require('cluster');
 const http = require('http');
+const https = require('https');
 const path = require('path');
+const fs = require('fs');
 
 const express = require('express');
 const {proxy: createProxy} = require('findhit-proxywrap');
@@ -84,14 +86,46 @@ async function getApp (config) {
 }
 
 
+function createServer (protocol, app) {
+	const FACTORIES = {
+		proxy: () => createProxy(http).createServer(app),
+		http: () => http.createServer(app),
+		https: () => {
+			const {NTI_BUILDOUT_PATH = false} = process.env;
+
+			if(typeof NTI_BUILDOUT_PATH !== 'string' || !NTI_BUILDOUT_PATH.length) {
+				throw new Error('https was specified, but NTI_BUILDOUT_PATH was not defined or a valid string.');
+			}
+
+
+			try {
+				const options = {
+					key: fs.readFileSync(path.join(NTI_BUILDOUT_PATH, 'etc/pki/localhost.key')),
+					cert: fs.readFileSync(path.join(NTI_BUILDOUT_PATH, 'etc/pki/localhost.crt'))
+				};
+
+				return https.createServer(options, app);
+			} catch (e) {
+				const newErr = new Error('Could not create secure server.');
+				newErr.stack += '\nCaused by: ' + e.stack;
+				throw newErr;
+			}
+		}
+	};
+
+	const factory = FACTORIES[protocol] || FACTORIES.http;
+
+	return factory();
+}
+
+
 async function init (config) {
-	const protocol = config.protocol === 'proxy' ? createProxy(http) : http;
 	const address = config.address || '0.0.0.0';
 	const port = config.port;
 
 	const app = await getApp(config);
 
-	const server = protocol.createServer(app);
+	const server = createServer(config.protocol, app);
 
 	//Go!
 	server.listen(port, address, () => {

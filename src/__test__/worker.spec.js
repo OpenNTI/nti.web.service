@@ -157,6 +157,7 @@ describe('Worker', () => {
 		expect(listen).toHaveBeenCalledWith(port, '0.0.0.0', expect.any(Function));
 	});
 
+
 	test ('init() will use https if configured', async () => {
 		const fs = require('fs');
 		const listen = jest.fn();
@@ -170,7 +171,7 @@ describe('Worker', () => {
 		const setupApplication = jest.fn();
 		const setupErrorHandler = jest.fn();
 
-		jest.doMock('http', () => ({createServer}));
+		jest.doMock('https', () => ({createServer}));
 		jest.doMock('express', () => express);
 
 		jest.doMock('../lib/app-service', () => ({setupApplication}));
@@ -178,7 +179,7 @@ describe('Worker', () => {
 
 		stub(fs, 'readFileSync', (f) => f);
 
-		process.env.NTI_BUILDOUT_PATH = '/some/Path';
+		process.env.NTI_BUILDOUT_PATH = '/some/path';
 
 		const worker = require('../worker');
 
@@ -191,11 +192,18 @@ describe('Worker', () => {
 		expect(setupErrorHandler).toHaveBeenCalledTimes(1);
 
 		expect(createServer).toHaveBeenCalledTimes(1);
-		expect(createServer).toHaveBeenCalledWith(app);
+		expect(createServer).toHaveBeenCalledWith(
+			expect.objectContaining({
+				cert: expect.stringMatching(/^\/some\/path/),
+				key: expect.stringMatching(/^\/some\/path/),
+			}),
+			app
+		);
 
 		expect(listen).toHaveBeenCalledTimes(1);
 		expect(listen).toHaveBeenCalledWith(port, '0.0.0.0', expect.any(Function));
 	});
+
 
 	test ('init() with https with no NTI_BUILDOUT_PATH', async () => {
 		const fs = require('fs');
@@ -224,6 +232,7 @@ describe('Worker', () => {
 
 		return expect(worker.init(config)).rejects.toThrow('https was specified, but NTI_BUILDOUT_PATH was not defined or a valid string.');
 	});
+
 
 	test ('init() with https with bad NTI_BUILDOUT_PATH', async () => {
 		const fs = require('fs');

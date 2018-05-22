@@ -94,7 +94,7 @@ async function setupApplication (server, config, restartRequest) {
 async function setupClient (client, {config, server, datacache, interface: _interface, restartRequest}) {
 	logger.info('Setting up app (version: %s):', client.appVersion || 'Unknown');
 
-	const flatConfig = {...config, ...client};  //flattened config
+	const flatConfig = {...config, ...client, logger};  //flattened config
 	const {register, file} = getApplication(client.package);
 	const {basepath} = client;
 

@@ -48,8 +48,8 @@ describe('lib/page-renderer (index)', () => {
 		expect(result).toEqual('Bad Template');
 	});
 
-	test ('render (root path rewrite)');
-	test ('render (config value injection)');
-	test ('render (custom content renderer)');
+	// test ('render (root path rewrite)');
+	// test ('render (config value injection)');
+	// test ('render (custom content renderer)');
 
 });

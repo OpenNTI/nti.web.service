@@ -131,6 +131,8 @@ module.exports = exports = class SessionManager {
 		return reason => {
 			if (req.dead) {return;}
 
+			logger.debug('Session Failure: %o', reason);
+
 			if ((reason || {}).hasOwnProperty('statusCode')) {
 				reason = reason.statusCode;
 			}

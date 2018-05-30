@@ -158,7 +158,7 @@ module.exports = exports = class SessionManager {
 			}
 
 			if (!/^(api|login)/.test(scope)) {
-				logger.debug('SESSION [INVALID] %s %s REDIRECT %slogin/ (User: annonymous, %dms)',
+				logger.debug('SESSION [INVALID] %s %s REDIRECT %slogin/ (User: anonymous, %dms)',
 					req.method, url, basepath, Date.now() - start);
 
 				return redirect(`${basepath}login/${returnTo}`);

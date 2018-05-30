@@ -99,6 +99,7 @@ module.exports = exports = class SessionManager {
 			next();
 		}
 
+		req.username = '[anonymous user]';
 		return this.getUser(req)
 			.then(user => req.username = user)
 			.then(()=> logger.debug('SESSION [VALID] %s %s', req.method, url))

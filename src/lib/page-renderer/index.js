@@ -4,7 +4,6 @@
 const {URL: {join: urlJoin}} = require('@nti/lib-commons');
 
 const {
-	getModules, //not needed in webpack4
 	getTemplate,
 } = require('./utils');
 
@@ -34,21 +33,6 @@ const fillInValues = (cfg, orginal, prop) => cfg[prop] || 'MissingConfigValue';
 
 function getRenderer (assets, renderContent, devmode) {
 
-	//TODO: Delete this after we update webpack4...
-	async function applyWebpack3Compat (out) {
-		const ScriptFilenameMap = { index: 'js/index.js', ...(await getModules(assets))};
-
-		for (let script of Object.keys(ScriptFilenameMap)) {
-			out = out.replace(new RegExp(`js\\/${script}\\.js`), ScriptFilenameMap[script]);
-		}
-
-		return out.replace(
-			/resources\/styles\.css"/,
-			`resources/styles.css?rel=${encodeURIComponent(ScriptFilenameMap.index)}"`
-		);
-	}
-
-
 	if (!renderContent) {
 		renderContent = ({html}) => html;
 	}
@@ -73,10 +57,9 @@ function getRenderer (assets, renderContent, devmode) {
 			url
 		});
 
-		return applyWebpack3Compat( template
+		return template
 			.replace(configValues, fillInValues.bind(null, cfg))
 			.replace(attributesToFix, fixAttributes.bind(null, basePath))
-			.replace(/<!--html:server-values-->/i, await renderContent(cfg, markError))
-		);
+			.replace(/<!--html:server-values-->/i, await renderContent(cfg, markError));
 	};
 }

@@ -50,48 +50,6 @@ async function getTemplate (assets, devmode) {
 }
 
 
-//not needed in webpack4:
-async function getModules (assets) {
-	const unwrap = x => Array.isArray(x) ? x[0] : x;
-
-	if (!assets) {
-		return {};
-	}
-
-	const file = path.resolve(assets, '../compile-data.json');
-	const cache = getCached(file);
-
-	try {
-		const {mtime} = await stat(file);
-
-		logger.debug('compile data (%s) mtime: %o', file, mtime);
-		if (cache.mtime === mtime.getTime()) {
-			return cache.chunks;
-		}
-
-		cache.mtime = mtime.getTime();
-		logger.info('new compile data (%s), loading...', file);
-
-		const data = JSON.parse(await read(file));
-		logger.debug('%s loaded: %o', file, data);
-
-		const chunks = data.assetsByChunkName;
-
-		for (let chunk of Object.keys(chunks)) {
-			chunks[chunk] = unwrap(chunks[chunk]);
-		}
-
-		logger.info('%s: updated module data: %o', file, chunks);
-		cache.chunks = chunks;
-		return chunks;
-	} catch (e) {
-		logger.debug('Failed to load compile data. %s, because: %o', file, getStackOrMessage(e));
-		return {};
-	}
-}
-
-
 Object.assign(exports, {
-	getModules,//not needed in webpack4
 	getTemplate,
 });

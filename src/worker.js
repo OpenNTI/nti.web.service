@@ -15,9 +15,9 @@ const htmlTemplates = require('./lib/html-templates');
 const {restart} = require('./lib/restart');
 const {setupApplication} = require('./lib/app-service');
 const {setupErrorHandler} = require('./lib/error-handler');
-const {getStackOrMessage, getErrorMessage} = require('./lib/utils');
+const {getStackOrMessage, getErrorMessage, send} = require('./lib/utils');
 
-const sendErrorMessage = e => process.send({cmd: 'FATAL_ERROR', error: e});
+const sendErrorMessage = e => send({cmd: 'FATAL_ERROR', error: e});
 
 const self = Object.assign(exports, {
 	start,
@@ -142,7 +142,7 @@ async function messageHandler (msg) {
 		await MESSAGE_HANDLERS[msg.cmd](msg);
 		return;
 	} catch (e) {
-		logger.error('Could not handle message. %o', getErrorMessage(e));
+		logger.error('Could not handle message. %o', getErrorMessage(e), msg);
 		return;
 	}
 }

@@ -3,6 +3,7 @@ Object.assign(exports, {
 	callThresholdMet,
 	getErrorMessage,
 	getStackOrMessage,
+	send
 });
 
 
@@ -40,4 +41,13 @@ function callThresholdMet (fn, threshold, period = 1000, key = 'callCounter') {
 
 	//return the inequality of the count vs the threshold
 	return stats.count > threshold;
+}
+
+
+
+function send (msg) {
+	process.send({
+		topic: 'default',
+		...msg
+	});
 }

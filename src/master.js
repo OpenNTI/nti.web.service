@@ -201,13 +201,17 @@ function onWorkerExit (worker, code, signal) {
 
 
 function handleMessage (worker, msg) {
+	if (msg.topic !== 'default') {
+		return;
+	}
+
 	logger.debug('From Worker %d: %o', worker.id, msg);
 	try {
 		MESSAGE_HANDLERS[msg.cmd](msg);
 		return;
 	} catch (e) {
 		/* istanbul ignore next */
-		logger.error('Could not handle message. %o', getErrorMessage(e));
+		logger.error('Could not handle message. %o', getErrorMessage(e), msg);
 		return;
 	}
 }

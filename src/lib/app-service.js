@@ -18,6 +18,7 @@ const cors = require('./cors');
 const frameOptions = require('./frame-options');
 const {getPageRenderer} = require('./renderer');
 const {restartOnModification} = require('./restart');
+const {send} = require('./utils');
 
 const isManifest = RegExp.prototype.test.bind(/\.appcache$/i);
 
@@ -165,7 +166,7 @@ async function setupClient (client, {config, server, datacache, interface: _inte
 		clientRoute.get('*', getPageRenderer(client, config, datacache, render, renderContent));
 
 		if (devmode) {
-			process.send({cmd: 'NOTIFY_DEVMODE'});
+			send({cmd: 'NOTIFY_DEVMODE'});
 			devmode.start();
 		}
 	}

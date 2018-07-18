@@ -43,7 +43,7 @@ describe('lib/restart', () => {
 		}
 
 		expect(send).toHaveBeenCalledTimes(1);
-		expect(send).toHaveBeenCalledWith({cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL'});
+		expect(send).toHaveBeenCalledWith({topic: 'default', cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL'});
 	});
 
 	test ('askToRestartOnce() sends WORKER_WANTS_TO_RESTART_THE_POOL only once', () => {
@@ -61,7 +61,7 @@ describe('lib/restart', () => {
 		}
 
 		expect(send).toHaveBeenCalledTimes(1);
-		expect(send).toHaveBeenCalledWith({cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL'});
+		expect(send).toHaveBeenCalledWith({topic: 'default', cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL'});
 	});
 
 	test ('restartOnModification() calls askToRestartOnce', () => {

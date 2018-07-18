@@ -1,6 +1,7 @@
 'use strict';
 const fs = require('fs');
 
+const {send} = require('./utils');
 
 Object.assign(exports, {
 	askToRestartOnce,
@@ -17,7 +18,7 @@ function askToRestartOnce () {
 }
 
 function restart () {
-	process.send({cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL'});
+	send({cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL'});
 }
 
 function restartOnModification (file) {

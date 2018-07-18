@@ -426,7 +426,7 @@ describe('Master', () => {
 
 	test ('Handles "unknown" message', () => {
 		const master = require('../master');
-		master.handleMessage({id: 'mock'}, {});
+		master.handleMessage({id: 'mock'}, {topic: 'default'});
 
 		expect(logger.error).toHaveBeenCalledTimes(1);
 	});
@@ -438,7 +438,7 @@ describe('Master', () => {
 		};
 		jest.doMock('../lib/master-utils', () => utils);
 		const master = require('../master');
-		master.handleMessage({id: 'mock'}, {cmd: 'NOTIFY_DEVMODE'});
+		master.handleMessage({id: 'mock'}, {topic: 'default', cmd: 'NOTIFY_DEVMODE'});
 
 		expect(utils.setConfiguredWorkerCount).toHaveBeenCalledTimes(1);
 		expect(utils.setConfiguredWorkerCount).toHaveBeenCalledWith(1);
@@ -449,7 +449,7 @@ describe('Master', () => {
 	test ('Handles unknown "WORKER_WANTS_TO_RESTART_THE_POOL"', () => {
 		const master = require('../master');
 		stub(master, 'restartWorkers');
-		master.handleMessage({id: 'mock'}, {cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL'});
+		master.handleMessage({id: 'mock'}, {topic: 'default', cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL'});
 
 		expect(master.restartWorkers).toHaveBeenCalled();
 		expect(logger.error).not.toHaveBeenCalled();
@@ -458,7 +458,7 @@ describe('Master', () => {
 
 	test ('Handles unknown "FATAL_ERROR"', () => {
 		const master = require('../master');
-		master.handleMessage({id: 'mock'}, {cmd: 'FATAL_ERROR'});
+		master.handleMessage({id: 'mock'}, {topic: 'default', cmd: 'FATAL_ERROR'});
 
 		expect(logger.error).toHaveBeenCalled();
 	});

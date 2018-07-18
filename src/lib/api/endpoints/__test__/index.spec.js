@@ -18,10 +18,11 @@ describe ('lib/api/endpoints/index', () => {
 		jest.doMock('../health-check', () => m);
 		jest.doMock('../user-agreement', () => m);
 		jest.doMock('../ugd/context-data', () => m);
+		jest.doMock('../videos', () => m);
 		const register = require('../index');
 
 		expect(() => register(1, 2, 3)).not.toThrow();
-		expect(registerEndpoint).toHaveBeenCalledTimes(3);
+		expect(registerEndpoint).toHaveBeenCalledTimes(4);
 		expect(registerEndpoint).toHaveBeenCalledWith(1, 2, 3);
 	});
 });

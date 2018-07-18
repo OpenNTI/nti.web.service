@@ -410,6 +410,9 @@ describe ('lib/config', () => {
 				{appId: 'abc', fluf: 'yes'},
 				{appId: 'xyz', fluf: 'no'}
 			],
+			keys: {
+				googleapi: {}
+			},
 			stuffAndThings: 'foobar',
 			'site-mappings': {
 				'some.site.nextthought.com': {
@@ -432,6 +435,7 @@ describe ('lib/config', () => {
 		expect(res.config).not.toHaveProperty('address');
 		expect(res.config).not.toHaveProperty('apps');
 		expect(res.config).not.toHaveProperty('site-mappings');
+		expect(res.config).not.toHaveProperty('keys');
 		expect(res.config.nodeService).toBeTruthy();
 		expect(res.config.nodeService).toBe(context[ServiceStash]);
 	});

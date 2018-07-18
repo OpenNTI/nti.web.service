@@ -1,6 +1,6 @@
 'use strict';
-const {getModel} = require('@nti/lib-interfaces');
-const PageInfo = getModel('pageinfo');
+const { Models } = require('@nti/lib-interfaces');
+const { PageInfo } = Models.content;
 
 
 class GetContextData {
@@ -13,7 +13,7 @@ class GetContextData {
 
 		const container = ntiidObject.getContainerID();
 
-		ntiService.getParsedObject(container)
+		ntiService.getObject(container)
 			.then(obj => obj instanceof PageInfo ? this.getContext(req, obj) : obj)
 			.then(o => res.json(o))
 			.catch(error);

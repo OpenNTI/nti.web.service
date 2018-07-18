@@ -44,7 +44,7 @@ describe ('lib/api/endpoints/ugd/context-data', () => {
 				getContainerID: jest.fn(() => 'my-container-id')
 			},
 			ntiService: {
-				getParsedObject: jest.fn(() => Promise.resolve(pageInfo))
+				getObject: jest.fn(() => Promise.resolve(pageInfo))
 			}
 		};
 
@@ -58,7 +58,7 @@ describe ('lib/api/endpoints/ugd/context-data', () => {
 			.then(json => {
 				expect(json).toBeTruthy();
 				expect(req.ntiidObject.getContainerID).toHaveBeenCalledTimes(1);
-				expect(req.ntiService.getParsedObject).toHaveBeenCalledTimes(1);
+				expect(req.ntiService.getObject).toHaveBeenCalledTimes(1);
 			});
 	});
 
@@ -77,7 +77,7 @@ describe ('lib/api/endpoints/ugd/context-data', () => {
 				getContainerID: jest.fn(() => 'my-container-id')
 			},
 			ntiService: {
-				getParsedObject: jest.fn(() => Promise.resolve({}))
+				getObject: jest.fn(() => Promise.resolve({}))
 			}
 		};
 
@@ -91,7 +91,7 @@ describe ('lib/api/endpoints/ugd/context-data', () => {
 			.then(json => {
 				expect(json).toBeTruthy();
 				expect(req.ntiidObject.getContainerID).toHaveBeenCalledTimes(1);
-				expect(req.ntiService.getParsedObject).toHaveBeenCalledTimes(1);
+				expect(req.ntiService.getObject).toHaveBeenCalledTimes(1);
 			});
 	});
 });

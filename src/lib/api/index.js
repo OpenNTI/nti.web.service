@@ -22,7 +22,7 @@ module.exports = function registerEndPoints (app, config, dataserver) {
 
 	api.param('ntiid', (req, res, next, id) => {
 		getService(req)
-			.then(service => service.getParsedObject(id))
+			.then(service => service.getObject(id))
 			.then(ob => {
 				req.ntiidObject = ob;
 				next();

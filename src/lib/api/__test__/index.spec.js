@@ -9,7 +9,7 @@ describe ('lib/api - index', () => {
 	let expressMock;
 	let endpoints;
 	let getServiceDocument;
-	let getParsedObject;
+	let getObject;
 	let doc;
 
 	beforeEach(() => {
@@ -23,8 +23,8 @@ describe ('lib/api - index', () => {
 		stub(logger, 'info');
 		stub(logger, 'warn');
 
-		getParsedObject = jest.fn(id => ({NTIID: id}));
-		doc = {getParsedObject};
+		getObject = jest.fn(id => ({NTIID: id}));
+		doc = {getObject};
 		endpoints = jest.fn();
 		getServiceDocument = jest.fn(() => Promise.resolve(doc));
 

@@ -1,6 +1,8 @@
 'use strict';
 const url = require('url');
+const util = require('util');
 
+const memored = require('memored');
 const { Models, Service } = require('@nti/lib-interfaces');
 const { URL: {appendQueryParams} } = require('@nti/lib-commons');
 
@@ -9,6 +11,8 @@ const logger = require('../../../logger').get('videos:youtube');
 const { MediaSourceFactory, MetaDataResolver } = Models.media;
 const getSourceURL = id => 'https://www.youtube.com/embed/${id}';
 
+
+const read = util.promisify(memored.read.bind(memored));
 
 
 exports.default = function register (api, config, server) {
@@ -22,26 +26,14 @@ exports.default = function register (api, config, server) {
 	};
 
 	api.get(/^\/youtube/, async (req, res, next) => {
-		const key = JSON.stringify(req.query);
+		const key = Buffer.from(JSON.stringify(req.query)).toString('base64');
 		const {id} = req.query;
 		logger.log('%s Resolving Video data for %s', key, id);
 
 		try {
-			const source = await MediaSourceFactory.from(DUMMY_SERVICE, getSourceURL(id));
-			const resolver = MetaDataResolver.getProvider(source);
+			let r = (await getCached(key)) || (await resolve(key, id, req));
 
-			const uri = appendQueryParams(await resolver.resolveURL(DUMMY_SERVICE, id), req.query);
-
-			// const service = await server.getServiceDocument(req);
-
-			logger.log('%s Requesting...', key);
-			const r = await fetch(uri, {
-				headers: {
-					Referer: req.header('Referer') || origin('https://' + req.headers.host + (req.originalUrl || req.url))
-				}
-			});
-
-			res.status(r.status);
+			res.status(r.status || 200);
 
 			logger.debug('%s Responded: %s', key, r.status);
 
@@ -51,8 +43,15 @@ exports.default = function register (api, config, server) {
 			}
 
 			logger.debug('%s Reading response body...', key);
+			const data = await r.json();
 
-			res.json(await r.json());
+			if (r.status === 200) {
+				logger.info('%s Storing video data in cache', key);
+				memored.store(key, data);
+			}
+
+
+			res.json(data);
 			res.end();
 
 			logger.debug('%s Done.', key);
@@ -63,15 +62,49 @@ exports.default = function register (api, config, server) {
 		}
 
 	});
+
+
+
+	async function getCached (key) {
+		try {
+			logger.debug('%s Checking cache...', key);
+			const data = await read(key);
+			logger.debug('%s Was cached? %d', key, data ? 'yes' : 'no');
+			return data && {
+				headers: [],
+				status: false,
+				json: async () => data
+			};
+		} catch (e) {
+			logger.error('%s Error: ', key, e);
+		}
+	}
+
+
+	async function resolve (key, id, req) {
+		// const service = await server.getServiceDocument(req);
+		const source = await MediaSourceFactory.from(DUMMY_SERVICE, getSourceURL(id));
+		const resolver = MetaDataResolver.getProvider(source);
+
+		const uri = appendQueryParams(await resolver.resolveURL(DUMMY_SERVICE, id), req.query);
+
+
+		logger.log('%s Requesting %s...', key, uri);
+		return await fetch(uri, {
+			headers: {
+				Referer: req.header('Referer') || origin('https://' + req.headers.host + (req.originalUrl || req.url))
+			}
+		});
+	}
+
+
+	function origin (uri) {
+		return Object.assign(url.parse(uri), {
+			hash: null,
+			search: null,
+			query: null,
+			pathname: null,
+			path: null
+		}).format();
+	}
 };
-
-
-function origin (uri) {
-	return Object.assign(url.parse(uri), {
-		hash: null,
-		search: null,
-		query: null,
-		pathname: null,
-		path: null
-	}).format();
-}

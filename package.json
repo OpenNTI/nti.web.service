@@ -57,6 +57,7 @@
     "express-request-language": "^1.1.10",
     "findhit-proxywrap": "^0.3.11",
     "invariant": "^2.1.0",
+    "memored": "^1.1.1",
     "mime-types": "^2.1.0",
     "morgan": "^1.5.2",
     "node-fetch": "^2.0.0",

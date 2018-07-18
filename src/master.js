@@ -1,4 +1,5 @@
 'use strict';
+require('memored');
 const cluster = require('cluster');
 const fs = require('fs');
 
@@ -99,7 +100,7 @@ function startWorker () {
 
 		const config = getConfig();
 		const worker = cluster.fork();
-		worker.send({cmd: 'init', config});
+		worker.send({topic: 'default', cmd: 'init', config});
 		return worker;
 	} catch (e) {
 		logger.warn('MISSING CODE: Cannot start a worker.');
@@ -181,7 +182,7 @@ function restartWorkers () {
 			// cluster.once('online', rollingRestart);
 			try {
 				if (worker.isConnected()) {
-					worker.send({cmd: 'close'});
+					worker.send({topic: 'default', cmd: 'close'});
 				}
 			} catch (e) {
 				logger.error(getStackOrMessage(e));
@@ -201,7 +202,7 @@ function onWorkerExit (worker, code, signal) {
 
 
 function handleMessage (worker, msg) {
-	if (msg.topic !== 'default') {
+	if ((msg || {}).topic !== 'default') {
 		return;
 	}
 

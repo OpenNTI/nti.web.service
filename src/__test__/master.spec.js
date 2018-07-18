@@ -224,7 +224,7 @@ describe('Master', () => {
 
 		expect(cluster.fork).toHaveBeenCalledTimes(1);
 		expect(w.send).toHaveBeenCalledTimes(1);
-		expect(w.send).toHaveBeenCalledWith({cmd: 'init', config: cfg});
+		expect(w.send).toHaveBeenCalledWith({cmd: 'init', config: cfg, topic: 'default'});
 
 		expect(res).toBe(w);
 	});
@@ -508,7 +508,7 @@ describe('Master', () => {
 
 		const verify = x => {
 			expect(x).toHaveBeenCalledTimes(1);
-			expect(x).toHaveBeenCalledWith({cmd: 'close'});
+			expect(x).toHaveBeenCalledWith({topic: 'default', cmd: 'close'});
 		};
 
 		verify(fakeWorkers[0].send);

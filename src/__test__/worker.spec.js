@@ -303,7 +303,7 @@ describe('Worker', () => {
 
 		stub(worker, 'init');
 
-		await worker.messageHandler({cmd: 'init'});
+		await worker.messageHandler({topic: 'default', cmd: 'init'});
 
 		expect(worker.init).toHaveBeenCalled();
 
@@ -328,7 +328,7 @@ describe('Worker', () => {
 
 		stub(worker, 'init', () => {throw new Error('Test');});
 
-		await worker.messageHandler({cmd: 'init'});
+		await worker.messageHandler({topic: 'default', cmd: 'init'});
 
 		if (send === stubby) {
 			delete process.send;
@@ -357,7 +357,7 @@ describe('Worker', () => {
 
 		stub(worker, 'init', () => server);
 
-		await worker.messageHandler({cmd: 'close'});
+		await worker.messageHandler({topic: 'default', cmd: 'close'});
 
 		expect(exitCode).toEqual(process.exitCode);
 
@@ -383,8 +383,8 @@ describe('Worker', () => {
 
 		stub(worker, 'init', () => server);
 
-		await worker.messageHandler({cmd: 'init'});
-		await worker.messageHandler({cmd: 'close'});
+		await worker.messageHandler({topic: 'default', cmd: 'init'});
+		await worker.messageHandler({topic: 'default', cmd: 'close'});
 
 
 		expect(exitCode).toEqual(process.exitCode);
@@ -407,7 +407,7 @@ describe('Worker', () => {
 
 		await worker.messageHandler();
 		await worker.messageHandler({});
-		await worker.messageHandler({cmd: 'this-does-not-exist'});
+		await worker.messageHandler({topic: 'default', cmd: 'this-does-not-exist'});
 
 
 		expect(exitCode).toEqual(process.exitCode);

@@ -138,6 +138,10 @@ async function init (config) {
 
 
 async function messageHandler (msg) {
+	if ((msg || {}).topic !== 'default') {
+		return;
+	}
+
 	try {
 		await MESSAGE_HANDLERS[msg.cmd](msg);
 		return;

@@ -252,6 +252,14 @@ function clientConfig (baseConfig, username, appId, context) {
 	const cfg = {
 		...baseConfig,
 		...app,
+		//hide internal hostnames... If we ever host server & web-app on different domains this will have to be removed.
+		server: Object.assign(url.parse(baseConfig.server || ''), {
+			slashes: false,
+			host:null,
+			hostname: null,
+			protocol: null,
+			port: null
+		}).format(),
 		siteName: site.name,
 		siteTitle: site.title,
 		username,

@@ -402,6 +402,7 @@ describe ('lib/config', () => {
 			[ServiceStash]: {} //fake service
 		};
 		const config = {
+			server: 'http://some-private-host:1234/dataserver2/',
 			webpack: true,
 			port: 1234,
 			protocol: 'proxy',
@@ -426,6 +427,7 @@ describe ('lib/config', () => {
 
 		expect(res).toBeTruthy();
 		expect(res.html).toEqual(expect.any(String));
+		expect(res.config.server).toBe('/dataserver2/');
 		expect(res.config.siteName).toBe('test');
 		expect(res.config.siteTitle).toBe('Testing');
 		expect(res.config.username).toBe(context.username);

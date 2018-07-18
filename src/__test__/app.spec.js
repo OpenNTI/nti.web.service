@@ -114,12 +114,10 @@ describe('Test End-to-End', async () => {
 
 	test ('Anonymous access redirects to login', async () => {
 		const {getApp} = require('../worker');
-		const config = Object.assign({}, commonConfigs, {
-			apps: [{
-				package: '../example',
-				basepath: '/app/'
-			}],
-		});
+		const config = { ...commonConfigs, apps: [{
+			package: '../example',
+			basepath: '/app/'
+		}],};
 
 		return request(await getApp(config))
 			.get('/app/')
@@ -132,12 +130,10 @@ describe('Test End-to-End', async () => {
 
 	test ('Authenticated access does not redirect', async () => {
 		const {getApp} = require('../worker');
-		const config = Object.assign({}, commonConfigs, {
-			apps: [{
-				package: '../example',
-				basepath: '/app/'
-			}],
-		});
+		const config = { ...commonConfigs, apps: [{
+			package: '../example',
+			basepath: '/app/'
+		}],};
 
 		return request(await getApp(config))
 			.get('/app/')
@@ -152,13 +148,11 @@ describe('Test End-to-End', async () => {
 
 	test ('Public access does not redirect', async () => {
 		const {getApp} = require('../worker');
-		const config = Object.assign({}, commonConfigs, {
-			apps: [{
-				public: true,
-				package: '../example',
-				basepath: '/test/'
-			}],
-		});
+		const config = { ...commonConfigs, apps: [{
+			public: true,
+			package: '../example',
+			basepath: '/test/'
+		}],};
 
 		return request(await getApp(config))
 			.get('/test/')
@@ -171,13 +165,11 @@ describe('Test End-to-End', async () => {
 
 	test ('Render A Page', async () => {
 		const {getApp} = require('../worker');
-		const config = Object.assign({}, commonConfigs, {
-			apps: [{
-				public: true,
-				package: './__test__/mock-app',
-				basepath: '/test/'
-			}],
-		});
+		const config = { ...commonConfigs, apps: [{
+			public: true,
+			package: './__test__/mock-app',
+			basepath: '/test/'
+		}],};
 
 		return request(await getApp(config))
 			.get('/test/')
@@ -202,13 +194,11 @@ describe('Test End-to-End', async () => {
 
 	test ('Page Renders have cach-busting headers and no etag', async () => {
 		const {getApp} = require('../worker');
-		const config = Object.assign({}, commonConfigs, {
-			apps: [{
-				public: true,
-				package: './__test__/mock-app',
-				basepath: '/test/'
-			}],
-		});
+		const config = { ...commonConfigs, apps: [{
+			public: true,
+			package: './__test__/mock-app',
+			basepath: '/test/'
+		}],};
 
 		return request(await getApp(config))
 			.get('/test/')
@@ -225,13 +215,11 @@ describe('Test End-to-End', async () => {
 
 	test ('Statics have cacheable headers', async () => {
 		const {getApp} = require('../worker');
-		const config = Object.assign({}, commonConfigs, {
-			apps: [{
-				public: true,
-				package: './__test__/mock-app',
-				basepath: '/test/'
-			}],
-		});
+		const config = { ...commonConfigs, apps: [{
+			public: true,
+			package: './__test__/mock-app',
+			basepath: '/test/'
+		}],};
 
 		return request(await getApp(config))
 			.get('/test/existing.asset')
@@ -250,13 +238,11 @@ describe('Test End-to-End', async () => {
 
 	test ('Proper 404 for statics', async () => {
 		const {getApp} = require('../worker');
-		const config = Object.assign({}, commonConfigs, {
-			apps: [{
-				public: true,
-				package: './__test__/mock-app',
-				basepath: '/test/'
-			}],
-		});
+		const config = { ...commonConfigs, apps: [{
+			public: true,
+			package: './__test__/mock-app',
+			basepath: '/test/'
+		}],};
 
 		return request(await getApp(config))
 			.get('/test/resources/foo.missing')
@@ -266,13 +252,11 @@ describe('Test End-to-End', async () => {
 
 	test ('Proper 404 for non-app routes (controlled by app)', async () => {
 		const {getApp} = require('../worker');
-		const config = Object.assign({}, commonConfigs, {
-			apps: [{
-				public: true,
-				package: './__test__/mock-app',
-				basepath: '/test/'
-			}],
-		});
+		const config = { ...commonConfigs, apps: [{
+			public: true,
+			package: './__test__/mock-app',
+			basepath: '/test/'
+		}],};
 
 		return request(await getApp(config))
 			.get('/test/foo.missing')
@@ -282,13 +266,11 @@ describe('Test End-to-End', async () => {
 
 	test ('Proper 404 for non-app routes (controlled by app) v2', async () => {
 		const {getApp} = require('../worker');
-		const config = Object.assign({}, commonConfigs, {
-			apps: [{
-				public: true,
-				package: './__test__/mock-app',
-				basepath: '/test/'
-			}],
-		});
+		const config = { ...commonConfigs, apps: [{
+			public: true,
+			package: './__test__/mock-app',
+			basepath: '/test/'
+		}],};
 
 		return request(await getApp(config))
 			.get('/test/foo.explicit404')
@@ -298,13 +280,11 @@ describe('Test End-to-End', async () => {
 
 	test ('Proper 500 for app errors', async () => {
 		const {getApp} = require('../worker');
-		const config = Object.assign({}, commonConfigs, {
-			apps: [{
-				public: true,
-				package: './__test__/mock-app',
-				basepath: '/test/'
-			}],
-		});
+		const config = { ...commonConfigs, apps: [{
+			public: true,
+			package: './__test__/mock-app',
+			basepath: '/test/'
+		}],};
 
 		return request(await getApp(config))
 			.get('/test/foo.500')
@@ -317,13 +297,11 @@ describe('Test End-to-End', async () => {
 
 	test ('Service 500 for errors in app', async () => {
 		const {getApp} = require('../worker');
-		const config = Object.assign({}, commonConfigs, {
-			apps: [{
-				public: true,
-				package: './__test__/mock-app',
-				basepath: '/test/'
-			}],
-		});
+		const config = { ...commonConfigs, apps: [{
+			public: true,
+			package: './__test__/mock-app',
+			basepath: '/test/'
+		}],};
 
 		return request(await getApp(config))
 			.get('/test/foo.throw')
@@ -338,12 +316,10 @@ describe('Test End-to-End', async () => {
 
 	test ('Test Hooks: Session', async () => {
 		const {getApp} = require('../worker');
-		const config = Object.assign({}, commonConfigs, {
-			apps: [{
-				package: './__test__/mock-app-with-hooks',
-				basepath: '/test/'
-			}],
-		});
+		const config = { ...commonConfigs, apps: [{
+			package: './__test__/mock-app-with-hooks',
+			basepath: '/test/'
+		}],};
 
 		return request(await getApp(config))
 			.get('/test/')
@@ -369,12 +345,10 @@ describe('Test End-to-End', async () => {
 
 
 		const {getApp} = require('../worker');
-		const config = Object.assign({}, commonConfigs, {
-			apps: [{
-				package: './__test__/mock-app-with-hooks',
-				basepath: '/test/'
-			}],
-		});
+		const config = { ...commonConfigs, apps: [{
+			package: './__test__/mock-app-with-hooks',
+			basepath: '/test/'
+		}],};
 
 		request(await getApp(config))
 			.get('/test/?breakme=now')
@@ -397,12 +371,10 @@ describe('Test End-to-End', async () => {
 
 		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
 			const {getApp} = require('../worker');
-			const config = Object.assign({}, commonConfigs, {
-				apps: [{
-					package: './__test__/mock-app-with-hooks',
-					basepath: '/test/'
-				}],
-			});
+			const config = { ...commonConfigs, apps: [{
+				package: './__test__/mock-app-with-hooks',
+				basepath: '/test/'
+			}],};
 
 			return request(await getApp(config))
 				.get('/test/?q=aa')
@@ -416,12 +388,10 @@ describe('Test End-to-End', async () => {
 
 		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
 			const {getApp} = require('../worker');
-			const config = Object.assign({}, commonConfigs, {
-				apps: [{
-					package: './__test__/mock-app-with-hooks',
-					basepath: '/test/'
-				}],
-			});
+			const config = { ...commonConfigs, apps: [{
+				package: './__test__/mock-app-with-hooks',
+				basepath: '/test/'
+			}],};
 
 			return request(await getApp(config))
 				.get('/test/?q=library/courses/available/invitations/accept/token')
@@ -435,12 +405,10 @@ describe('Test End-to-End', async () => {
 
 		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
 			const {getApp} = require('../worker');
-			const config = Object.assign({}, commonConfigs, {
-				apps: [{
-					package: './__test__/mock-app-with-hooks',
-					basepath: '/test/'
-				}],
-			});
+			const config = { ...commonConfigs, apps: [{
+				package: './__test__/mock-app-with-hooks',
+				basepath: '/test/'
+			}],};
 
 			return request(await getApp(config))
 				.get('/test/?q=/app/library/courses/available/NTI-CourseInfo-iLed_iLed_001/...')
@@ -454,12 +422,10 @@ describe('Test End-to-End', async () => {
 
 		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
 			const {getApp} = require('../worker');
-			const config = Object.assign({}, commonConfigs, {
-				apps: [{
-					package: './__test__/mock-app-with-hooks',
-					basepath: '/test/'
-				}],
-			});
+			const config = { ...commonConfigs, apps: [{
+				package: './__test__/mock-app-with-hooks',
+				basepath: '/test/'
+			}],};
 
 			return request(await getApp(config))
 				.get('/test/?q=library/availablecourses/IUB0YWc6bmV4dHRob3VnaHQuY29tLDIwMTEtMTA6TlRJLUNvdXJzZUluZm8tU3ByaW5nMjAxNV9MU1REXzExNTM/redeem/code')
@@ -473,12 +439,10 @@ describe('Test End-to-End', async () => {
 
 		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
 			const {getApp} = require('../worker');
-			const config = Object.assign({}, commonConfigs, {
-				apps: [{
-					package: './__test__/mock-app-with-hooks',
-					basepath: '/test/'
-				}],
-			});
+			const config = { ...commonConfigs, apps: [{
+				package: './__test__/mock-app-with-hooks',
+				basepath: '/test/'
+			}],};
 
 			return request(await getApp(config))
 				.get('/test/?q=/app/id/unknown-OID-0x021cae18:5573657273:V0wWNR9EBJd')
@@ -492,12 +456,10 @@ describe('Test End-to-End', async () => {
 
 		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
 			const {getApp} = require('../worker');
-			const config = Object.assign({}, commonConfigs, {
-				apps: [{
-					package: './__test__/mock-app-with-hooks',
-					basepath: '/test/'
-				}],
-			});
+			const config = { ...commonConfigs, apps: [{
+				package: './__test__/mock-app-with-hooks',
+				basepath: '/test/'
+			}],};
 
 			return request(await getApp(config))
 				.get('/test/?q=object/ntiid/tag:nextthought.com,2011-10:unknown-OID-0x021cae18:5573657273:V0wWNR9EBJd')

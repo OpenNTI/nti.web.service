@@ -69,7 +69,7 @@ function forceError () {
 async function setupApplication (server, config, restartRequest) {
 	//config.silent = true;
 
-	const params = Object.assign({server, config, restartRequest}, dataserver(config));
+	const params = {server, config, restartRequest, ...dataserver(config)};
 
 	if (config.proxy) {
 		server.use('/dataserver2', apiProxy(config));

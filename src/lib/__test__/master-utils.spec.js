@@ -29,7 +29,7 @@ describe('lib/master-utils', () => {
 
 	test ('getConfig/setConfig work as expected', () => {
 		const cfg = {test:'abc'};
-		const copy = Object.assign({}, cfg);
+		const copy = { ...cfg};
 		const {getConfig, setConfig} = require('../master-utils');
 		//starts out unset
 		expect(getConfig()).toEqual(undefined);

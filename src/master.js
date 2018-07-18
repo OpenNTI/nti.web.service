@@ -71,10 +71,10 @@ function init (config) {
 	logger.info('Config loaded.');
 	showFlags(config);
 
-	config.versions = Object.assign({},
-		config.versions || {},
-		{service: pkg.version} //tell apps what version we are
-	);
+	config.versions = {
+		...config.versions || {},
+		service: pkg.version //tell apps what version we are
+	};
 
 	setConfig(config);
 

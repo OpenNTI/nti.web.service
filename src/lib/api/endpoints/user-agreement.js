@@ -74,7 +74,7 @@ function resolveUrl (request, config, server) {
 function copyRequestHeaders (req) {
 	const blacklist = ['accept-encoding', 'content-length', 'content-type', 'referer'];
 
-	const headers = Object.assign({}, (req || {}).headers || {});
+	const headers = { ...(req || {}).headers || {}};
 	for (let header of blacklist) {
 		delete headers[header];
 	}

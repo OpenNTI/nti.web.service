@@ -146,16 +146,15 @@ function config (env) {
 		});
 	}
 
-	const envFlat = Object.assign({}, env[base], env[opt.env]);
+	const envFlat = { ...env[base], ...env[opt.env]};
 	//Cary over environment mappings.
 	envFlat['site-mappings'] = env['site-mappings'];
 
-	const c = Object.assign(
-		{webpack: opt.webpack}, envFlat, {
-			protocol: opt.protocol,
-			address: opt.l || envFlat.address || '0.0.0.0',
-			port: parseInt(opt.p || envFlat.port, 10) //ensure port is 'number'
-		});
+	const c = {
+		webpack: opt.webpack, ...envFlat, protocol: opt.protocol,
+		address: opt.l || envFlat.address || '0.0.0.0',
+		port: parseInt(opt.p || envFlat.port, 10) //ensure port is 'number'
+	};
 
 	if (!Array.isArray(c.apps) || c.apps.length === 0) {
 		logger.error('No apps configured!');
@@ -250,12 +249,14 @@ function clientConfig (baseConfig, username, appId, context) {
 	//unsafe to send to client raw... lets reduce it to essentials
 	const app = (baseConfig.apps || []).reduce((r, o) => r || o.appId === appId && o, null) || {};
 	const site = self.getSite(baseConfig, context[SiteName]);
-	const cfg = Object.assign({}, baseConfig, app, {
+	const cfg = {
+		...baseConfig,
+		...app,
 		siteName: site.name,
 		siteTitle: site.title,
 		username,
 		locale: getLocale(context)
-	});
+	};
 
 	const blacklist = [/webpack.*/i, 'port', 'protocol', 'address', 'apps', 'site-mappings', 'package'];
 

@@ -138,7 +138,7 @@ module.exports = exports = class SessionManager {
 				reason = reason.statusCode;
 			}
 
-			if (reason instanceof Error) {
+			if (reason instanceof Error && (!reason.NoContineLink && !/No continue link/i.test(reason.message))) {
 				return next(reason);
 			}
 

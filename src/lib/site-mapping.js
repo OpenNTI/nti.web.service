@@ -24,5 +24,7 @@ module.exports = function getSite (map, site) {
 		logger.warn('No site-mapping entry found for %s.', site);
 	}
 
-	return s;
+	return s !== unknown
+		? s
+		: {...s, name: site || s.name};
 };

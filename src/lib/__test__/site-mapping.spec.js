@@ -46,9 +46,9 @@ describe('lib/site-mapping', () => {
 	test ('returns defaults', () => {
 		const fn = require('../site-mapping');
 
-		expect(fn(siteMap, 'bla')).toHaveProperty('name', 'default');
+		expect(fn(siteMap, 'bla')).toEqual({name: 'bla', title: 'nextthought'});
 
-		expect(fn(siteMap, 'badAlias')).toHaveProperty('name', 'default');
+		expect(fn(siteMap, 'badAlias')).toEqual({name: 'badAlias', title: 'nextthought'});
 
 		expect(fn(siteMap)).toHaveProperty('name', 'default');
 
@@ -76,7 +76,7 @@ describe('lib/site-mapping', () => {
 	test ('returns default for cycled alias', () => {
 		const fn = require('../site-mapping');
 
-		expect(fn(siteMap, 'aliasBadCycle')).toHaveProperty('name', 'default');
+		expect(fn(siteMap, 'aliasBadCycle')).toEqual({name: 'aliasBadCycle', title: 'nextthought'});
 
 		expect(logger.warn).toHaveBeenCalledWith('Cycle in alias: %s -x-> %s <=', expect.any(String), expect.any(String));
 		expect(logger.warn).toHaveBeenCalledWith('No site-mapping entry found for %s.', 'aliasBadCycle');

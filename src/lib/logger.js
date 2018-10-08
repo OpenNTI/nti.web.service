@@ -17,7 +17,7 @@ module.exports = Object.assign(morgan, {
 
 	attachToExpress: expressApp => {
 		expressApp.use(responseTime());
-		expressApp.use(morgan('- - [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"'));
+		expressApp.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent""'));
 	},
 
 

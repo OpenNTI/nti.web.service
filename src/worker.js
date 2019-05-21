@@ -3,7 +3,6 @@ const {worker} = require('cluster');
 const http = require('http');
 const https = require('https');
 const path = require('path');
-const fs = require('fs');
 
 const express = require('express');
 const {proxy: createProxy} = require('findhit-proxywrap');

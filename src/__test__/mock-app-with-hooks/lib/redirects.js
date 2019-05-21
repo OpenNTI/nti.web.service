@@ -164,7 +164,7 @@ function translateCatalogId (input) {
 		.replace(/-/g, '+')
 		.replace(/_/g, '/');
 
-	catalogId = new Buffer(catalogId, 'base64').toString();
+	catalogId = Buffer.from(catalogId, 'base64').toString('utf8');
 	catalogId = catalogId.replace(/^!@/, '');//strip off the WebApp's 'salt'
 	catalogId = encodeForURI(catalogId);
 

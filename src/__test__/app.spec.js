@@ -71,7 +71,7 @@ const mockInterface = {
 	}
 };
 
-describe('Test End-to-End', async () => {
+describe('Test End-to-End', () => {
 	let logger;
 
 	beforeEach(() => {

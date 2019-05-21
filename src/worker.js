@@ -91,18 +91,9 @@ function createServer (protocol, app) {
 		proxy: () => createProxy(http).createServer(app),
 		http: () => http.createServer(app),
 		https: () => {
-			const {NTI_BUILDOUT_PATH = false} = process.env;
-
-			if(typeof NTI_BUILDOUT_PATH !== 'string' || !NTI_BUILDOUT_PATH.length) {
-				throw new Error('https was specified, but NTI_BUILDOUT_PATH was not defined or a valid string.');
-			}
-
-
+			const { getHTTPS } = require('@nti/dev-ssl-config');
 			try {
-				const options = {
-					key: fs.readFileSync(path.join(NTI_BUILDOUT_PATH, 'etc/pki/localhost.key')),
-					cert: fs.readFileSync(path.join(NTI_BUILDOUT_PATH, 'etc/pki/localhost.crt'))
-				};
+				const options = getHTTPS();
 
 				return https.createServer(options, app);
 			} catch (e) {

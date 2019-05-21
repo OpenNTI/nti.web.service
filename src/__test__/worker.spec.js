@@ -178,6 +178,7 @@ describe('Worker', () => {
 		jest.doMock('../lib/error-handler', () => ({setupErrorHandler}));
 
 		stub(fs, 'readFileSync', (f) => f);
+		stub(fs, 'existsSync', () => true);
 
 		process.env.NTI_BUILDOUT_PATH = '/some/path';
 
@@ -194,8 +195,8 @@ describe('Worker', () => {
 		expect(createServer).toHaveBeenCalledTimes(1);
 		expect(createServer).toHaveBeenCalledWith(
 			expect.objectContaining({
-				cert: expect.stringMatching(/^\/some\/path/),
-				key: expect.stringMatching(/^\/some\/path/),
+				cert: expect.any(String),
+				key: expect.any(String),
 			}),
 			app
 		);
@@ -225,12 +226,16 @@ describe('Worker', () => {
 		jest.doMock('../lib/error-handler', () => ({setupErrorHandler}));
 
 		stub(fs, 'readFileSync', (f) => f);
+		stub(fs, 'existsSync', (f) => false);
+		stub(process, 'exit', () => {});
+		stub(console, 'error', () => {});
+
 
 		delete process.env.NTI_BUILDOUT_PATH;
 
 		const worker = require('../worker');
 
-		return expect(worker.init(config)).rejects.toThrow('https was specified, but NTI_BUILDOUT_PATH was not defined or a valid string.');
+		return expect(worker.init(config)).rejects.toThrow('Could not create secure server.');
 	});
 
 

@@ -267,7 +267,7 @@ describe('lib/app-service', () => {
 		expect(service.setupClient).toHaveBeenCalledWith(config.apps[1], expect.any(Object));
 
 		expect(server.use).toHaveBeenCalledTimes(4);
-		expect(server.use).toHaveBeenCalledWith('/dataserver2', 'apiProxyMiddleware');
+		expect(server.use).toHaveBeenCalledWith('*', 'apiProxyMiddleware');
 		expect(server.use).toHaveBeenCalledWith('cookie-parser-middleware');
 		expect(server.use).toHaveBeenCalledWith(corsMiddleware);
 		expect(server.use).toHaveBeenCalledWith(foMiddleware);

@@ -72,10 +72,6 @@ async function setupApplication (server, config, restartRequest) {
 
 	const params = {server, config, restartRequest, ...dataserver(config)};
 
-	if (config.proxy) {
-		server.use('/dataserver2', apiProxy(config));
-	}
-
 	server.use(cookieParser());
 	server.use(cors);
 	server.use(frameOptions);
@@ -88,6 +84,11 @@ async function setupApplication (server, config, restartRequest) {
 
 	for (let client of config.apps) {
 		await self.setupClient(client, params);
+	}
+
+	// The proxy comes last as a fall through
+	if (config.proxy) {
+		server.use('*', apiProxy(config));
 	}
 }
 

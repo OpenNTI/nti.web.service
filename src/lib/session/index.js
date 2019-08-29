@@ -134,7 +134,7 @@ module.exports = exports = class SessionManager {
 
 			logger.debug('Session Failure: %o', reason);
 
-			if ((reason || {}).hasOwnProperty('statusCode')) {
+			if (Object.prototype.hasOwnProperty.call(reason || {}, 'statusCode')) {
 				reason = reason.statusCode;
 			}
 

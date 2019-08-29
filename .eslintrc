@@ -1,5 +1,5 @@
 {
-	"extends": "./node_modules/@nti/lib-scripts/config/eslintrc.js",
+	"extends": "@nti/eslint-config-lib-scripts",
 
 	"parserOptions": {
 		"sourceType": "script",

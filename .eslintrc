@@ -9,7 +9,8 @@
 	},
 
 	"globals": {
-		"fetch": true
+		"fetch": true,
+		"self": "off"
 	},
 
 	"rules": {

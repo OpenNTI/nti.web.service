@@ -7,6 +7,8 @@ const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 describe('Worker', () => {
 	let logger, restart;
 
+	const fail = () => { throw new Error(); };
+
 	beforeEach(() => {
 		jest.resetModules();
 		jest.dontMock('cluster');
@@ -20,7 +22,7 @@ describe('Worker', () => {
 
 
 	afterEach(() => {
-		// jest.restoreAllMocks();
+		jest.restoreAllMocks();
 		jest.resetModules();
 		jest.dontMock('cluster');
 	});
@@ -227,10 +229,11 @@ describe('Worker', () => {
 
 		stub(fs, 'readFileSync', (f) => f);
 		stub(fs, 'existsSync', (f) => false);
-		stub(process, 'exit', () => {});
+		stub(process, 'exit', fail);
 		stub(console, 'error', () => {});
 
 
+		process.env.HOME = '/junk';
 		delete process.env.NTI_BUILDOUT_PATH;
 
 		const worker = require('../worker');
@@ -258,13 +261,48 @@ describe('Worker', () => {
 		jest.doMock('../lib/app-service', () => ({setupApplication}));
 		jest.doMock('../lib/error-handler', () => ({setupErrorHandler}));
 
-		stub(fs, 'readFileSync', (f) => {throw new Error();});
+		stub(console, 'error', () => {});
+		stub(fs, 'existsSync', (f) => false);
+		stub(process, 'exit', fail);
 
+		process.env.HOME = '/junk';
 		process.env.NTI_BUILDOUT_PATH = '/doesNotExist';
 
 		const worker = require('../worker');
 
 		return expect(worker.init(config)).rejects.toThrow('Could not create secure server.');
+	});
+
+	test ('init() with https with existing but bad NTI_BUILDOUT_PATH', async () => {
+		const fs = require('fs');
+		const listen = jest.fn();
+		const server = {listen};
+		const createServer = jest.fn(() => server);
+		const app = {set () {}, engine () {}};
+		const express = jest.fn(() => app);
+		const port = 12345;
+		const config = {protocol: 'https', port};
+
+		const setupApplication = jest.fn();
+		const setupErrorHandler = jest.fn();
+
+		jest.doMock('https', () => ({createServer}));
+		jest.doMock('express', () => express);
+
+		jest.doMock('../lib/app-service', () => ({setupApplication}));
+		jest.doMock('../lib/error-handler', () => ({setupErrorHandler}));
+
+		stub(console, 'error', () => {});
+		stub(fs, 'existsSync', fail);
+		stub(process, 'exit', fail);
+
+		process.env.HOME = '/junk';
+		process.env.NTI_BUILDOUT_PATH = '/exists';
+
+		const worker = require('../worker');
+
+		await expect(worker.init(config)).rejects.toThrow('Could not create secure server.');
+		expect(process.exit).not.toHaveBeenCalled();
 	});
 
 

@@ -49,7 +49,7 @@
     "zpad"
   ],
   "dependencies": {
-    "@nti/dev-ssl-config": "^2.9.2",
+    "@nti/dev-ssl-config": "^2.12.5",
     "@nti/lib-commons": "^2.14.0",
     "@nti/lib-interfaces": "^1.78.0",
     "@nti/util-logger": "^1.0.0",

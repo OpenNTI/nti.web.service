@@ -90,8 +90,8 @@ function createServer (protocol, app) {
 		proxy: () => createProxy(http).createServer(app),
 		http: () => http.createServer(app),
 		https: () => {
-			const { getHTTPS } = require('@nti/dev-ssl-config');
 			try {
+				const { getHTTPS } = require('@nti/dev-ssl-config');
 				const options = getHTTPS();
 
 				return https.createServer(options, app);

@@ -27,8 +27,8 @@ const shouldPrefix = (val, base) => isRootPath(val)
 const attributesToFix = /(manifest|src|href)="(.*?)"/igm;
 const fixAttributes = (base, original, attr, val) => `${attr}="${shouldPrefix(val, base) ? urlJoin(base, val) : val}"`;
 
-const configValues = /<\[cfg:([^\]]*)\]>/igm;
-const fillInValues = (cfg, orginal, prop) => cfg[prop] || 'MissingConfigValue';
+const configValues = /<(!\[CDATA)?\[cfg:([^\]]*)\]\]?>/igm;
+const fillInValues = (cfg, orginal, _, prop) => cfg[prop] || `MissingConfigValue[${prop}]`;
 
 
 function getRenderer (assets, renderContent, devmode) {

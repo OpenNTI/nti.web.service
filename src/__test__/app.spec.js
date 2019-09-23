@@ -179,7 +179,7 @@ describe('Test End-to-End', () => {
 				//Variables injected:
 				expect(res.text).toEqual(expect.stringContaining('<title>nextthought</title>'));
 				expect(res.text).not.toEqual(expect.stringContaining('"<[cfg:missing]>"'));
-				expect(res.text).toEqual(expect.stringContaining('"MissingConfigValue"'));
+				expect(res.text).toEqual(expect.stringContaining('"MissingConfigValue[missing]"'));
 				//Rerooting should not effect absolute urls:
 				expect(res.text).toEqual(expect.stringContaining('<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react.js"></script>'));
 				//Rerooted Urls:

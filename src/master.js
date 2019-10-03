@@ -29,10 +29,13 @@ const self = Object.assign(exports, {
 	handleMessage
 });
 
+let devmode = false;
+
 
 const MESSAGE_HANDLERS = {
 	NOTIFY_DEVMODE () {
 		logger.warn('Restricting workers, because devmode.');
+		devmode = true;
 		setConfiguredWorkerCount(1);
 	},
 
@@ -196,6 +199,10 @@ function restartWorkers () {
 
 function onWorkerExit (worker, code, signal) {
 	logger.info('worker %d exited (code: %s%s)', worker.process.pid, code, signal ? `, signal: ${signal}` : '');
+
+	if (devmode && code !== 0) {
+		return process.exit(code);
+	}
 
 	self.maintainWorkerCount();
 }

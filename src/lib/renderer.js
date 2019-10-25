@@ -29,7 +29,7 @@ function getPageRenderer ({appId, basepath, assets, devmode} = {}, config, datac
 					Promise.resolve()
 			]);
 
-			const configForClient = clientConfig(config, req.username, appId, req);
+			const configForClient = await clientConfig(config, req.username, appId, req);
 			configForClient.html += datacache.getForContext(req).serialize();
 
 			//Final render

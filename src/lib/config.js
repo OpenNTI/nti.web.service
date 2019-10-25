@@ -238,6 +238,7 @@ async function loadBranding (service) {
 
 		return siteBrand;
 	} catch (e) {
+		logger.warn('Could not load SiteBrand: %s', e.message);
 		return null;
 	}
 }

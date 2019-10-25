@@ -19,7 +19,8 @@ const self = Object.assign(exports, {
 	loadConfig,
 	nodeConfigAsClientConfig,
 	showFlags,
-	getSite
+	getSite,
+	loadBranding
 });
 
 
@@ -229,6 +230,18 @@ function config (env) {
 	return c;
 }
 
+async function loadBranding (service) {
+	if (!service || !service.get) { return null; }
+
+	try {
+		const siteBrand = await service.get('SiteBrand');
+
+		return siteBrand;
+	} catch (e) {
+		return null;
+	}
+}
+
 
 function serviceRef (service, cfg) {
 	return Object.defineProperty(cfg, 'nodeService', {
@@ -245,7 +258,7 @@ function serviceRef (service, cfg) {
 }
 
 
-function clientConfig (baseConfig, username, appId, context) {
+async function clientConfig (baseConfig, username, appId, context) {
 	//unsafe to send to client raw... lets reduce it to essentials
 	const app = (baseConfig.apps || []).reduce((r, o) => r || o.appId === appId && o, null) || {};
 	const site = self.getSite(baseConfig, context[SiteName]);
@@ -280,10 +293,12 @@ function clientConfig (baseConfig, username, appId, context) {
 		}
 	}
 
+	const branding = await loadBranding(context[ServiceStash]);
 
 	return {
 		config: serviceRef(context[ServiceStash], {
-			...cfg
+			...cfg,
+			branding
 		}),
 		html:
 			'\n<script type="text/javascript">\n' +

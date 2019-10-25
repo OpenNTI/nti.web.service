@@ -394,7 +394,7 @@ describe ('lib/config', () => {
 	});
 
 
-	test ('clientConfig(): filters server-side-only value of out config', () => {
+	test ('clientConfig(): filters server-side-only value of out config', async () => {
 		const {clientConfig} = require('../config');
 		const context = {
 			username: 'foobar',
@@ -423,7 +423,7 @@ describe ('lib/config', () => {
 			}
 		};
 
-		const res = clientConfig(config, context.username, 'abc', context);
+		const res = await clientConfig(config, context.username, 'abc', context);
 
 		expect(res).toBeTruthy();
 		expect(res.html).toEqual(expect.any(String));
@@ -448,8 +448,7 @@ describe ('lib/config', () => {
 		const context = {};
 		const config = {};
 
-		let out;
-		expect(() => out = clientConfig(config, context.username, 'abc', context)).not.toThrow();
+		const out = await clientConfig(config, context.username, 'abc', context);
 
 		try {
 			await out.config.nodeService;
@@ -458,6 +457,52 @@ describe ('lib/config', () => {
 			expect(e).toEqual(expect.any(Error));
 			expect(e.message).toBe('No Service.');
 		}
+	});
+
+	test('clientConfig(): adds site branding to the config', async () => {
+		const {clientConfig} = require('../config');
+
+		const siteBrand = {};
+
+		const get = jest.fn((url) => {
+			if (url === 'SiteBrand') {
+				return siteBrand;
+			}
+		});
+		const context = {
+			username: 'foobar',
+			[SiteName]: 'some.site.nextthought.com',
+			[ServiceStash]: {
+				get
+			}
+		};
+		const config = {
+			server: 'http://some-private-host:1234/dataserver2/',
+			webpack: true,
+			port: 1234,
+			protocol: 'proxy',
+			address: '0.0.0.0',
+			apps: [
+				{appId: 'abc', fluf: 'yes'},
+				{appId: 'xyz', fluf: 'no'}
+			],
+			keys: {
+				googleapi: {}
+			},
+			stuffAndThings: 'foobar',
+			'site-mappings': {
+				'some.site.nextthought.com': {
+					name: 'test',
+					title: 'Testing'
+				}
+			}
+		};
+
+		const out = await clientConfig(config, context.username, 'abc', context);
+
+		expect(out.config.branding).toBe(siteBrand);
+		expect(get).toHaveBeenCalledWith('SiteBrand');
+		expect(get).toHaveBeenCalledTimes(1);
 	});
 
 

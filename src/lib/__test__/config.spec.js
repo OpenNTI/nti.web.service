@@ -505,6 +505,50 @@ describe ('lib/config', () => {
 		expect(get).toHaveBeenCalledTimes(1);
 	});
 
+	test('clientConfig(): site branding fails', async () => {
+		const {clientConfig} = require('../config');
+
+		const get = jest.fn((url) => {
+			if (url === 'SiteBrand') {
+				throw new Error('Unable to load SiteBrand');
+			}
+		});
+		const context = {
+			username: 'foobar',
+			[SiteName]: 'some.site.nextthought.com',
+			[ServiceStash]: {
+				get
+			}
+		};
+		const config = {
+			server: 'http://some-private-host:1234/dataserver2/',
+			webpack: true,
+			port: 1234,
+			protocol: 'proxy',
+			address: '0.0.0.0',
+			apps: [
+				{appId: 'abc', fluf: 'yes'},
+				{appId: 'xyz', fluf: 'no'}
+			],
+			keys: {
+				googleapi: {}
+			},
+			stuffAndThings: 'foobar',
+			'site-mappings': {
+				'some.site.nextthought.com': {
+					name: 'test',
+					title: 'Testing'
+				}
+			}
+		};
+
+		const out = await clientConfig(config, context.username, 'abc', context);
+
+		expect(out.config.branding).toBeNull();
+		expect(get).toHaveBeenCalledWith('SiteBrand');
+		expect(get).toHaveBeenCalledTimes(1);
+	});
+
 
 	test ('nodeConfigAsClientConfig(): fakes clientConfig with full server-side config (for serverside rendering)', () => {
 		const {nodeConfigAsClientConfig} = require('../config');

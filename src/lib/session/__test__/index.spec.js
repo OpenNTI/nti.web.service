@@ -1,5 +1,6 @@
 /*eslint-env jest*/
 'use strict';
+const {SERVER_REF} = require('../../constants');
 
 const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
@@ -685,17 +686,18 @@ describe('lib/session', () => {
 	});
 
 
-	test ('Session::anonymousMiddleware() - calls next() synchronously (no-ops for now)', () => {
+	test ('Session::anonymousMiddleware() - calls next() synchronously', () => {
 		const Session = require('../index');
 		const next = jest.fn();
-		const handler = {
-			get: jest.fn((s, prop) => s[prop])
-		};
-		const session = new Proxy(new Session({}), handler);
+		const session = new Session({});
+		const response = Object.freeze({});
+		const request = {};
 
 		expect(next).not.toHaveBeenCalled();
-		expect(() => session.anonymousMiddleware(null, null, null, next)).not.toThrow();
+		expect(() => session.anonymousMiddleware(null, request, response, next)).not.toThrow();
 		expect(next).toHaveBeenCalled();
-		expect(handler.get).toHaveBeenCalledTimes(1);
+		expect(request).toEqual({
+			[SERVER_REF]: {}
+		});
 	});
 });

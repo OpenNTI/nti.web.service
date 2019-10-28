@@ -1,6 +1,6 @@
 /*eslint-env jest*/
 'use strict';
-
+const {SERVER_REF} = require('../constants');
 const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 
@@ -472,7 +472,7 @@ describe ('lib/config', () => {
 		const context = {
 			username: 'foobar',
 			[SiteName]: 'some.site.nextthought.com',
-			[ServiceStash]: {
+			[SERVER_REF]: {
 				get
 			}
 		};
@@ -501,7 +501,7 @@ describe ('lib/config', () => {
 		const out = await clientConfig(config, context.username, 'abc', context);
 
 		expect(out.config.branding).toBe(siteBrand);
-		expect(get).toHaveBeenCalledWith('SiteBrand');
+		expect(get).toHaveBeenCalledWith('SiteBrand', context);
 		expect(get).toHaveBeenCalledTimes(1);
 	});
 
@@ -516,7 +516,7 @@ describe ('lib/config', () => {
 		const context = {
 			username: 'foobar',
 			[SiteName]: 'some.site.nextthought.com',
-			[ServiceStash]: {
+			[SERVER_REF]: {
 				get
 			}
 		};
@@ -545,7 +545,7 @@ describe ('lib/config', () => {
 		const out = await clientConfig(config, context.username, 'abc', context);
 
 		expect(out.config.branding).toBeNull();
-		expect(get).toHaveBeenCalledWith('SiteBrand');
+		expect(get).toHaveBeenCalledWith('SiteBrand', context);
 		expect(get).toHaveBeenCalledTimes(1);
 	});
 

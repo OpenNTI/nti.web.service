@@ -7,6 +7,7 @@ const yargs = require('yargs');
 const uuid = require('uuid/v4');
 const {SiteName, ServiceStash} = require('@nti/lib-interfaces');
 
+const {SERVER_REF} = require('./constants');
 const getApplication = require('./app-loader');
 const getSiteFrom = require('./site-mapping');
 const logger = require('./logger');
@@ -230,15 +231,14 @@ function config (env) {
 	return c;
 }
 
-async function loadBranding (service) {
-	if (!service || !service.get) { return null; }
-
+async function loadBranding (context) {
 	try {
-		const siteBrand = await service.get('SiteBrand');
+		const serverRef = context[SERVER_REF];
+		const siteBrand = await serverRef.get('SiteBrand', context);
 
 		return siteBrand;
 	} catch (e) {
-		logger.warn('Could not load SiteBrand: %s', e.message);
+		logger.warn('Could not load SiteBrand: %s', JSON.stringify(e, null, '\t'));
 		return null;
 	}
 }
@@ -294,7 +294,7 @@ async function clientConfig (baseConfig, username, appId, context) {
 		}
 	}
 
-	const branding = await loadBranding(context[ServiceStash]);
+	const branding = await loadBranding(context);
 
 	return {
 		config: serviceRef(context[ServiceStash], {

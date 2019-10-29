@@ -294,12 +294,11 @@ async function clientConfig (baseConfig, username, appId, context) {
 		}
 	}
 
-	const branding = await loadBranding(context);
+	cfg.branding = await loadBranding(context);
 
 	return {
 		config: serviceRef(context[ServiceStash], {
-			...cfg,
-			branding
+			...cfg
 		}),
 		html:
 			'\n<script type="text/javascript">\n' +

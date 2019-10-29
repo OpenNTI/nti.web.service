@@ -65,6 +65,11 @@ const mockInterface = {
 					return Promise.resolve({
 						getLink () {}
 					});
+				},
+				async get (uri) {
+					if (uri === 'SiteBrand') {
+						return 'yo-brand';
+					}
 				}
 			}
 		};
@@ -142,6 +147,7 @@ describe('Test End-to-End', () => {
 			.expect(200)
 			.expect(res => {
 				expect(res.text).toEqual(expect.stringContaining('Page! at /app/'));
+				expect(res.text).toEqual(expect.stringContaining('branding":"yo-brand'));
 			});
 	});
 
@@ -159,6 +165,7 @@ describe('Test End-to-End', () => {
 			.expect(200)
 			.expect(res => {
 				expect(res.text).toEqual(expect.stringContaining('Page! at /test/'));
+				expect(res.text).toEqual(expect.stringContaining('branding":"yo-brand'));
 			});
 	});
 

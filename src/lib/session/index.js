@@ -2,7 +2,6 @@
 const {ServiceStash} = require('@nti/lib-interfaces');
 
 const Logger = require('../logger');
-const {SERVER_REF} = require('../constants');
 
 const logger = Logger.get('SessionManager');
 
@@ -60,7 +59,6 @@ module.exports = exports = class SessionManager {
 		const url = req.originalUrl;
 		const scope = url.substr(0, basepath.length) === basepath ? url.substr(basepath.length) : url;
 		req.responseHeaders = req.responseHeaders || {};
-		req[SERVER_REF] = this.server;
 
 		const skip = () => next('aborted');
 
@@ -174,7 +172,6 @@ module.exports = exports = class SessionManager {
 
 
 	anonymousMiddleware (basepath, context, res, next) {
-		context[SERVER_REF] = this.server;
 		next();
 	}
 

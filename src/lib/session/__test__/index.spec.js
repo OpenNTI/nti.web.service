@@ -690,14 +690,14 @@ describe('lib/session', () => {
 		const Session = require('../index');
 		const next = jest.fn();
 		const session = new Session({});
+		// For now, this middleware doesn't do anything... when we add to it, we
+		// should change these two frozen objects to allow mutation and validate
+		// the middleware.
 		const response = Object.freeze({});
-		const request = {};
+		const request = Object.freeze({});
 
 		expect(next).not.toHaveBeenCalled();
 		expect(() => session.anonymousMiddleware(null, request, response, next)).not.toThrow();
 		expect(next).toHaveBeenCalled();
-		expect(request).toEqual({
-			[SERVER_REF]: {}
-		});
 	});
 });

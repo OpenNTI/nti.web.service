@@ -9,6 +9,7 @@ const {default: dataserver} = require('@nti/lib-interfaces');
 
 const getApplication = require('./app-loader');
 const registerEndPoints = require('./api');
+const {SERVER_REF} = require('./constants');
 const {attachToExpress: setupCompression} = require('./compress');
 const apiProxy = require('./api-proxy');
 const cacheBuster = require('./no-cache');
@@ -29,6 +30,7 @@ const FORCE_ERROR_ROUTE = '/errortest*';
 const self = Object.assign(exports, {
 	contextualize,
 	forceError,
+	interfaceTagger,
 	neverCacheManifestFiles,
 	resourceNotFound,
 	setupApplication,
@@ -64,6 +66,14 @@ function resourceNotFound (_, res) {
 
 function forceError () {
 	throw new Error('This is an error. Neato.');
+}
+
+
+function interfaceTagger (iface) {
+	return (r, _, next) => {
+		r[SERVER_REF] = iface;
+		next();
+	};
 }
 
 
@@ -155,6 +165,9 @@ async function setupClient (client, {config, server, datacache, interface: _inte
 			clientRoute, //express instance
 			flatConfig,
 			_interface); //interface
+
+		// Tag the server interface reference on the request so we can use it in lower middlewares...
+		clientRoute.use(self.interfaceTagger(_interface));
 
 		clientRoute.use(ANONYMOUS_ROUTES, (r, q, n) => void session.anonymousMiddleware(basepath, r, q, n));
 

@@ -326,9 +326,11 @@ describe('lib/app-service', () => {
 
 		jest.doMock('test-app1', () => mockModule, {virtual: true});
 
+		const tagger = () => {};
 		const service = require('../app-service');
 		const clientApp = expressMock();
 		stub(service, 'contextualize', () => clientApp);
+		stub(service, 'interfaceTagger', () => tagger);
 
 		//the freeze ensures attempts at modifying it will explode.
 		const clientConfig = Object.freeze({
@@ -374,10 +376,11 @@ describe('lib/app-service', () => {
 			params.interface
 		);
 
-		expect(clientApp.use.mock.calls.length).toEqual(6);
+		expect(clientApp.use.mock.calls.length).toEqual(7);
 		expect(clientApp.use).toHaveBeenCalledWith('staticMiddleware');
 		expect(clientApp.use).toHaveBeenCalledWith('express-request-language-middleware');
 		expect(clientApp.use).toHaveBeenCalledWith(cacheBusterMiddleware);
+		expect(clientApp.use).toHaveBeenCalledWith(tagger);
 		expect(clientApp.use).toHaveBeenCalledWith(service.FORCE_ERROR_ROUTE, service.forceError);
 		expect(clientApp.use).toHaveBeenCalledWith(service.ANONYMOUS_ROUTES, expect.any(Function));
 		expect(clientApp.use).toHaveBeenCalledWith(service.AUTHENTICATED_ROUTES, expect.any(Function));
@@ -414,9 +417,11 @@ describe('lib/app-service', () => {
 
 		jest.doMock('test-app2', () => ({register: jest.fn(() => mockReg)}), {virtual: true});
 
+		const tagger = () => {};
 		const service = require('../app-service');
 		const clientApp = expressMock();
 		stub(service, 'contextualize', () => clientApp);
+		stub(service, 'interfaceTagger', () => tagger);
 
 		//the freeze ensures attempts at modifying it will explode.
 		const clientConfig = Object.freeze({
@@ -459,10 +464,11 @@ describe('lib/app-service', () => {
 			params.interface
 		);
 
-		expect(clientApp.use.mock.calls.length).toEqual(6);
+		expect(clientApp.use.mock.calls.length).toEqual(7);
 		expect(clientApp.use).toHaveBeenCalledWith('staticMiddleware');
 		expect(clientApp.use).toHaveBeenCalledWith('express-request-language-middleware');
 		expect(clientApp.use).toHaveBeenCalledWith(cacheBusterMiddleware);
+		expect(clientApp.use).toHaveBeenCalledWith(tagger);
 		expect(clientApp.use).toHaveBeenCalledWith(service.FORCE_ERROR_ROUTE, service.forceError);
 		expect(clientApp.use).toHaveBeenCalledWith(service.ANONYMOUS_ROUTES, expect.any(Function));
 		expect(clientApp.use).toHaveBeenCalledWith(service.AUTHENTICATED_ROUTES, expect.any(Function));

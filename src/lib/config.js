@@ -297,9 +297,7 @@ async function clientConfig (baseConfig, username, appId, context) {
 	cfg.branding = await loadBranding(context);
 
 	return {
-		config: serviceRef(context[ServiceStash], {
-			...cfg
-		}),
+		config: serviceRef(context[ServiceStash], cfg),
 		html:
 			'\n<script type="text/javascript">\n' +
 			'window.$AppConfig = ' + JSON.stringify(cfg) +

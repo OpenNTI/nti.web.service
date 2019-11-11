@@ -251,9 +251,8 @@ function getFaviconFromBranding (branding) {
 	if (!favicon) { return '/favicon.ico'; }
 
 	const {'Last Modified': lastMod, href} = favicon;
-	const cacheBust = lastMod && (new Date(lastMod * 1000)).getTime();
 
-	return cacheBust ? `${href}?v=${cacheBust}` : href;
+	return lastMod ? `${href}?v=${lastMod}` : href;
 }
 
 

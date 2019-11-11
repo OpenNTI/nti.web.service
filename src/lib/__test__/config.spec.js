@@ -546,7 +546,7 @@ describe ('lib/config', () => {
 
 			const out = await clientConfig(config, context.username, 'abc', context);
 
-			expect(out.config.favicon).toBe('/path/to/favicon.ico?v=1573493123045');
+			expect(out.config.favicon).toBe('/path/to/favicon.ico?v=1573493123.045');
 		});
 
 		test('adds favicon to the config (with no cache bust)', async () => {

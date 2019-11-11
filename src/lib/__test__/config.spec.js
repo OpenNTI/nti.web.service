@@ -459,94 +459,149 @@ describe ('lib/config', () => {
 		}
 	});
 
-	test('clientConfig(): adds site branding to the config', async () => {
-		const {clientConfig} = require('../config');
-
-		const siteBrand = {};
-
-		const get = jest.fn((url) => {
-			if (url === 'SiteBrand') {
-				return siteBrand;
-			}
-		});
-		const context = {
-			username: 'foobar',
-			[SiteName]: 'some.site.nextthought.com',
-			[SERVER_REF]: {
-				get
-			}
-		};
-		const config = {
-			server: 'http://some-private-host:1234/dataserver2/',
-			webpack: true,
-			port: 1234,
-			protocol: 'proxy',
-			address: '0.0.0.0',
-			apps: [
-				{appId: 'abc', fluf: 'yes'},
-				{appId: 'xyz', fluf: 'no'}
-			],
-			keys: {
-				googleapi: {}
-			},
-			stuffAndThings: 'foobar',
-			'site-mappings': {
-				'some.site.nextthought.com': {
-					name: 'test',
-					title: 'Testing'
+	describe('clientConfig(): SiteBranding', () => {
+		const getConfig = () => {
+			return {
+				server: 'http://some-private-host:1234/dataserver2/',
+				webpack: true,
+				port: 1234,
+				protocol: 'proxy',
+				address: '0.0.0.0',
+				apps: [
+					{appId: 'abc', fluf: 'yes'},
+					{appId: 'xyz', fluf: 'no'}
+				],
+				keys: {
+					googleapi: {}
+				},
+				stuffAndThings: 'foobar',
+				'site-mappings': {
+					'some.site.nextthought.com': {
+						name: 'test',
+						title: 'Testing'
+					}
 				}
-			}
+			};
 		};
 
-		const out = await clientConfig(config, context.username, 'abc', context);
-
-		expect(out.config.branding).toBe(siteBrand);
-		expect(get).toHaveBeenCalledWith('SiteBrand', context);
-		expect(get).toHaveBeenCalledTimes(1);
-	});
-
-	test('clientConfig(): site branding fails', async () => {
-		const {clientConfig} = require('../config');
-
-		const get = jest.fn((url) => {
-			if (url === 'SiteBrand') {
-				throw new Error('Unable to load SiteBrand');
-			}
-		});
-		const context = {
-			username: 'foobar',
-			[SiteName]: 'some.site.nextthought.com',
-			[SERVER_REF]: {
-				get
-			}
-		};
-		const config = {
-			server: 'http://some-private-host:1234/dataserver2/',
-			webpack: true,
-			port: 1234,
-			protocol: 'proxy',
-			address: '0.0.0.0',
-			apps: [
-				{appId: 'abc', fluf: 'yes'},
-				{appId: 'xyz', fluf: 'no'}
-			],
-			keys: {
-				googleapi: {}
-			},
-			stuffAndThings: 'foobar',
-			'site-mappings': {
-				'some.site.nextthought.com': {
-					name: 'test',
-					title: 'Testing'
+		const getContext = (siteBrand) => {
+			const get = jest.fn((url) => {
+				if (url === 'SiteBrand') {
+					if (!siteBrand) {
+						throw new Error('Unable to load SiteBrand');
+					} else {
+						return siteBrand;
+					}
 				}
-			}
+			});
+
+			return {
+				username: 'mock.user',
+				[SiteName]: 'mock.site.nextthought.com',
+				[SERVER_REF]: {
+					get
+				}
+			};
 		};
 
-		const out = await clientConfig(config, context.username, 'abc', context);
 
-		expect(out.config.branding).toBeNull();
-		expect(get).toHaveBeenCalledWith('SiteBrand', context);
-		expect(get).toHaveBeenCalledTimes(1);
+		test('adds site branding to the config', async () => {
+			const {clientConfig} = require('../config');
+			const siteBrand = {};
+
+			const context = getContext(siteBrand);
+			const config = getConfig();
+
+			const out = await clientConfig(config, context.username, 'abc', context);
+
+			expect(out.config.branding).toBe(siteBrand);
+			expect(context[SERVER_REF].get).toHaveBeenCalledWith('SiteBrand', context);
+			expect(context[SERVER_REF].get).toHaveBeenCalledTimes(1);
+		});
+
+		test('site branding fails', async () => {
+			const {clientConfig} = require('../config');
+
+			const context = getContext();
+			const config = getConfig();
+
+			const out = await clientConfig(config, context.username, 'abc', context);
+
+			expect(out.config.branding).toBeNull();
+			expect(context[SERVER_REF].get).toHaveBeenCalledWith('SiteBrand', context);
+			expect(context[SERVER_REF].get).toHaveBeenCalledTimes(1);
+		});
+
+		test('adds favicon to the config (with cache bust)', async () => {
+			const {clientConfig} = require('../config');
+			const siteBrand = {
+				assets: {
+					logo: {href: 'path/to/logo.png'},
+					favicon: {href: '/path/to/favicon.ico', 'Last Modified': 1573493123.045}
+				}
+			};
+
+			const context = getContext(siteBrand);
+			const config = getConfig();
+
+			const out = await clientConfig(config, context.username, 'abc', context);
+
+			expect(out.config.favicon).toBe('/path/to/favicon.ico?v=1573493123045');
+		});
+
+		test('adds favicon to the config (with no cache bust)', async () => {
+			const {clientConfig} = require('../config');
+			const siteBrand = {
+				assets: {
+					logo: {href: 'path/to/logo.png'},
+					favicon: {href: '/path/to/favicon.ico'}
+				}
+			};
+
+			const context = getContext(siteBrand);
+			const config = getConfig();
+
+			const out = await clientConfig(config, context.username, 'abc', context);
+
+			expect(out.config.favicon).toBe('/path/to/favicon.ico');
+		});
+
+		test('adds default favicon (no favicon asset)', async () => {
+			const {clientConfig} = require('../config');
+			const siteBrand = {
+				assets: {logo: {href: '/path/to/logo.png'}}
+			};
+
+			const context = getContext(siteBrand);
+			const config = getConfig();
+
+			const out = await clientConfig(config, context.username, 'abc', context);
+
+			expect(out.config.favicon).toBe('/favicon.ico');
+		});
+
+		test('adds default favicon (no assets)', async () => {
+			const {clientConfig} = require('../config');
+			const siteBrand = {};
+
+			const context = getContext(siteBrand);
+			const config = getConfig();
+
+			const out = await clientConfig(config, context.username, 'abc', context);
+
+			expect(out.config.favicon).toBe('/favicon.ico');
+		});
+
+		test('adds default favicon (no SiteBrand)', async () => {
+			const {clientConfig} = require('../config');
+
+			const context = getContext();
+			const config = getConfig();
+
+			const out = await clientConfig(config, context.username, 'abc', context);
+
+			expect(out.config.favicon).toBe('/favicon.ico');
+		});
 	});
 
 

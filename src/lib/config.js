@@ -21,7 +21,8 @@ const self = Object.assign(exports, {
 	nodeConfigAsClientConfig,
 	showFlags,
 	getSite,
-	loadBranding
+	loadBranding,
+	getFaviconFromBranding
 });
 
 
@@ -243,6 +244,18 @@ async function loadBranding (context) {
 	}
 }
 
+function getFaviconFromBranding (branding) {
+	const {assets} = branding || {};
+	const {favicon} = assets || {};
+
+	if (!favicon) { return '/favicon.ico'; }
+
+	const {'Last Modified': lastMod, href} = favicon;
+	const cacheBust = lastMod && (new Date(lastMod * 1000)).getTime();
+
+	return cacheBust ? `${href}?v=${cacheBust}` : href;
+}
+
 
 function serviceRef (service, cfg) {
 	return Object.defineProperty(cfg, 'nodeService', {
@@ -295,6 +308,7 @@ async function clientConfig (baseConfig, username, appId, context) {
 	}
 
 	cfg.branding = await loadBranding(context);
+	cfg.favicon = getFaviconFromBranding(cfg.branding);
 
 	return {
 		config: serviceRef(context[ServiceStash], cfg),

@@ -602,6 +602,18 @@ describe ('lib/config', () => {
 
 			expect(out.config.favicon).toBe('/favicon.ico');
 		});
+
+		test('sets siteTitle', async () => {
+			const {clientConfig} = require('../config');
+
+			const brandName = 'Test Brand Name';
+			const context = getContext({'brand_name': brandName});
+			const config = getConfig();
+
+			const out = await clientConfig(config, context.username, 'abc', context);
+
+			expect(out.config.siteTitle).toBe(brandName);
+		});
 	});
 
 

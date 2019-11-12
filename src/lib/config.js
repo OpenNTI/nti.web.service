@@ -309,6 +309,10 @@ async function clientConfig (baseConfig, username, appId, context) {
 	cfg.branding = await loadBranding(context);
 	cfg.favicon = getFaviconFromBranding(cfg.branding);
 
+	if (cfg.branding && cfg.branding['brand_name']) {
+		cfg.siteTitle = cfg.branding['brand_name'];
+	}
+
 	return {
 		config: serviceRef(context[ServiceStash], cfg),
 		html:

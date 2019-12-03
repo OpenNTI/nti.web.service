@@ -13,7 +13,7 @@ const commonConfigs = {
 			name: 'moo'
 		},
 		default: {
-			title: 'default',
+			title: 'custom-site-title',
 			name: 'default'
 		}
 	}
@@ -184,7 +184,7 @@ describe('Test End-to-End', () => {
 			.expect(res => {
 				expect(res.text).toEqual(expect.stringContaining('Page! at /test/'));
 				//Variables injected:
-				expect(res.text).toEqual(expect.stringContaining('<title>nextthought</title>'));
+				expect(res.text).toEqual(expect.stringContaining('<title>custom-site-title</title>'));
 				expect(res.text).not.toEqual(expect.stringContaining('"<[cfg:missing]>"'));
 				expect(res.text).toEqual(expect.stringContaining('"MissingConfigValue[missing]"'));
 				//Rerooting should not effect absolute urls:

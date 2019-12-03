@@ -171,7 +171,8 @@ module.exports = exports = class SessionManager {
 	}
 
 
-	anonymousMiddleware (basepath, context, res, next) {
+	async anonymousMiddleware (basepath, context, res, next) {
+		await this.server.ping(void 0, context).catch(() => {});
 		next();
 	}
 

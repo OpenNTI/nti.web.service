@@ -169,11 +169,13 @@ async function setupClient (client, {config, server, datacache, interface: _inte
 		// Tag the server interface reference on the request so we can use it in lower middlewares...
 		clientRoute.use(self.interfaceTagger(_interface));
 
-		clientRoute.use(ANONYMOUS_ROUTES, (r, q, n) => void session.anonymousMiddleware(basepath, r, q, n));
 
 		if (flatConfig.public !== true) {
 			//Session manager...
+			clientRoute.use(ANONYMOUS_ROUTES, (r, q, n) => void session.anonymousMiddleware(basepath, r, q, n));
 			clientRoute.use(AUTHENTICATED_ROUTES, (r, q, n) => void session.middleware(basepath, r, q, n));
+		} else {
+			clientRoute.use('*', (r, q, n) => void session.anonymousMiddleware(basepath, r, q, n));
 		}
 
 		//HTML Renderer...

@@ -686,10 +686,12 @@ describe('lib/session', () => {
 	});
 
 
-	test ('Session::anonymousMiddleware() - calls next() synchronously', () => {
+	test ('Session::anonymousMiddleware() - calls next()', async () => {
 		const Session = require('../index');
 		const next = jest.fn();
-		const session = new Session({});
+		const session = new Session({
+			async ping () {}
+		});
 		// For now, this middleware doesn't do anything... when we add to it, we
 		// should change these two frozen objects to allow mutation and validate
 		// the middleware.
@@ -697,7 +699,7 @@ describe('lib/session', () => {
 		const request = Object.freeze({});
 
 		expect(next).not.toHaveBeenCalled();
-		expect(() => session.anonymousMiddleware(null, request, response, next)).not.toThrow();
+		await session.anonymousMiddleware(null, request, response, next);
 		expect(next).toHaveBeenCalled();
 	});
 });

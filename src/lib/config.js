@@ -275,6 +275,7 @@ async function clientConfig (baseConfig, username, appId, context) {
 	//unsafe to send to client raw... lets reduce it to essentials
 	const app = (baseConfig.apps || []).reduce((r, o) => r || o.appId === appId && o, null) || {};
 	const site = self.getSite(baseConfig, context[SiteName]);
+	const userId = ({AuthenticatedUserID: x}) => x ? `${x}@${site.name}` : null;
 	const cfg = {
 		...baseConfig,
 		...app,
@@ -286,6 +287,7 @@ async function clientConfig (baseConfig, username, appId, context) {
 			protocol: null,
 			port: null
 		}).format(),
+		userId: userId(context.pong || {}),
 		siteName: site.name,
 		siteTitle: site.title,
 		username,

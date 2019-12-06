@@ -28,7 +28,7 @@ const attributesToFix = /(manifest|src|href)="(.*?)"/igm;
 const fixAttributes = (base, original, attr, val) => `${attr}="${shouldPrefix(val, base) ? urlJoin(base, val) : val}"`;
 
 const configValues = /<(!\[CDATA)?\[cfg:([^\]]*)\]\]?>/igm;
-const fillInValues = (cfg, orginal, _, prop) => cfg[prop] || `MissingConfigValue[${prop}]`;
+const fillInValues = (cfg, orginal, _, prop) => cfg[prop] === null ? '' : (cfg[prop] || `MissingConfigValue[${prop}]`);
 
 
 function getRenderer (assets, renderContent, devmode) {

@@ -7,16 +7,6 @@ const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 const commonConfigs = {
 	server: 'mock:/dataserver2/',
-	'site-mappings': {
-		undefined: {
-			title: 'nextthought',
-			name: 'moo'
-		},
-		default: {
-			title: 'custom-site-title',
-			name: 'default'
-		}
-	}
 };
 
 const mockInterface = {
@@ -56,7 +46,7 @@ const mockInterface = {
 					});
 				},
 				ping (name, req) {
-					req[DataserverInterFace.SiteName] = 'default';
+					req.pong = {Site: 'default'};
 
 					if(!req.headers.authentication) {
 						return Promise.reject({});
@@ -68,7 +58,9 @@ const mockInterface = {
 				},
 				async get (uri) {
 					if (uri === 'SiteBrand') {
-						return 'yo-brand';
+						return {
+							'brand_name': 'yo-brand'
+						};
 					}
 				}
 			}
@@ -147,7 +139,7 @@ describe('Test End-to-End', () => {
 			.expect(200)
 			.expect(res => {
 				expect(res.text).toEqual(expect.stringContaining('Page! at /app/'));
-				expect(res.text).toEqual(expect.stringContaining('branding":"yo-brand'));
+				expect(res.text).toEqual(expect.stringContaining('branding":{"brand_name":"yo-brand"}'));
 			});
 	});
 
@@ -165,7 +157,7 @@ describe('Test End-to-End', () => {
 			.expect(200)
 			.expect(res => {
 				expect(res.text).toEqual(expect.stringContaining('Page! at /test/'));
-				expect(res.text).toEqual(expect.stringContaining('branding":"yo-brand'));
+				expect(res.text).toEqual(expect.stringContaining('branding":{"brand_name":"yo-brand"}'));
 			});
 	});
 
@@ -184,7 +176,7 @@ describe('Test End-to-End', () => {
 			.expect(res => {
 				expect(res.text).toEqual(expect.stringContaining('Page! at /test/'));
 				//Variables injected:
-				expect(res.text).toEqual(expect.stringContaining('<title>custom-site-title</title>'));
+				expect(res.text).toEqual(expect.stringContaining('<title>yo-brand</title>'));
 				expect(res.text).not.toEqual(expect.stringContaining('"<[cfg:missing]>"'));
 				expect(res.text).toEqual(expect.stringContaining('"MissingConfigValue[missing]"'));
 				//Rerooting should not effect absolute urls:

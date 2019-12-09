@@ -2,11 +2,9 @@
 
 This component hosts and runs the client applications. It provides initial page view acceleration as well as a hand-full of apis.
 
-The configuration is located in `./config/env.json` (you may specify an alternate location for this.) There is an example file in this path already. The structure is basically a dictionary with three primary keys: "production", "development", and "site-mappings".
+The configuration is located in `./config/env.json` (you may specify an alternate location for this.) There is an example file in this path already. The structure is basically a dictionary with two primary keys: "production" and "development".
 
 The first two represent config. When run in production mode, the development config is used as base, and the production values are merged on top. In dev mode, the production key is ignored.
-
-The "site-mappings" key provides the mappings of sites to domain names. It allows us to provide the document title and site package id given a domain.
 
 
 Within "development" (and/or "production") there is a key called "apps" which is an array of dictionaries. Each entry points this service at a client app. The client app config can be unique to that client.  The only required keys in each entry are:

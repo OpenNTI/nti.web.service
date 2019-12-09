@@ -5,14 +5,12 @@ const path = require('path');
 
 const yargs = require('yargs');
 const uuid = require('uuid/v4');
-const {SiteName, ServiceStash} = require('@nti/lib-interfaces');
+const {ServiceStash} = require('@nti/lib-interfaces');
 
 const {SERVER_REF} = require('./constants');
 const getApplication = require('./app-loader');
-const getSiteFrom = require('./site-mapping');
 const logger = require('./logger');
 
-const getSite = (env, x) => getSiteFrom(env['site-mappings'] || {}, x);
 
 const self = Object.assign(exports, {
 	clientConfig,
@@ -20,7 +18,6 @@ const self = Object.assign(exports, {
 	loadConfig,
 	nodeConfigAsClientConfig,
 	showFlags,
-	getSite,
 	loadBranding,
 	getFaviconFromBranding
 });
@@ -150,8 +147,6 @@ function config (env) {
 	}
 
 	const envFlat = { ...env[base], ...env[opt.env]};
-	//Cary over environment mappings.
-	envFlat['site-mappings'] = env['site-mappings'];
 
 	const c = {
 		webpack: opt.webpack, ...envFlat, protocol: opt.protocol,
@@ -274,7 +269,7 @@ function serviceRef (service, cfg) {
 async function clientConfig (baseConfig, username, appId, context) {
 	//unsafe to send to client raw... lets reduce it to essentials
 	const app = (baseConfig.apps || []).reduce((r, o) => r || o.appId === appId && o, null) || {};
-	const site = self.getSite(baseConfig, context[SiteName]);
+	const {pong = {}} = context;
 	const userId = ({AuthenticatedUserID: x}) => x ? `${x}@${site.name}` : null;
 	const cfg = {
 		...baseConfig,
@@ -287,9 +282,9 @@ async function clientConfig (baseConfig, username, appId, context) {
 			protocol: null,
 			port: null
 		}).format(),
-		userId: userId(context.pong || {}),
-		siteName: site.name,
-		siteTitle: site.title,
+		userId: userId(pong),
+		siteName: pong.Site || 'default',
+		siteTitle: 'nextthought',
 		username,
 		locale: getLocale(context)
 	};
@@ -326,8 +321,8 @@ async function clientConfig (baseConfig, username, appId, context) {
 
 
 function nodeConfigAsClientConfig (cfg, appId, context) {
+	const {pong = {}} = context;
 	const app = (cfg.apps || []).reduce((r, o) => r || o.appId === appId && o, null) || {};
-	const site = self.getSite(cfg, context[SiteName]);
 	return {
 		html: '',
 		config: serviceRef(context[ServiceStash], {
@@ -335,8 +330,8 @@ function nodeConfigAsClientConfig (cfg, appId, context) {
 			...app,
 			locale: getLocale(context),
 			username: context.username,
-			siteName: site.name,
-			siteTitle: site.title,
+			siteName: pong.Site || 'default',
+			siteTitle: '-',
 		})
 	};
 }

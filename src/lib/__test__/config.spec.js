@@ -5,7 +5,7 @@ const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 
 describe ('lib/config', () => {
-	let SiteName, ServiceStash;
+	let ServiceStash;
 	let logger;
 	let yargs;
 
@@ -35,7 +35,6 @@ describe ('lib/config', () => {
 		jest.doMock('yargs', () => yargs);
 
 		const iface = require('@nti/lib-interfaces');
-		SiteName = iface.SiteName;
 		ServiceStash = iface.ServiceStash;
 	});
 
@@ -256,8 +255,7 @@ describe ('lib/config', () => {
 					{ package: 'buz', basepath: '/foo/buz/' },
 					{ package: 'biz', basepath: '/foo/buz/' }
 				]
-			},
-			'site-mappings': {}
+			}
 		};
 
 		return Promise.resolve(config(env))
@@ -283,8 +281,6 @@ describe ('lib/config', () => {
 				expect(c.apps[i].appId).toBe('foo.net');
 				expect(c.apps[i].appName).toBe('foo.net');
 				expect(c.apps[i].appVersion).toBe('123');
-
-				expect(c['site-mappings']).toBeTruthy();
 
 				expect(logger.warn).toHaveBeenCalledWith('Could not fill in package values for app %s, because: %s', 'bar', expect.anything());
 			});
@@ -398,8 +394,11 @@ describe ('lib/config', () => {
 		const {clientConfig} = require('../config');
 		const context = {
 			username: 'foobar',
-			[SiteName]: 'some.site.nextthought.com',
-			[ServiceStash]: {} //fake service
+			pong: {Site: 'some.site.nextthought.com'},
+			[ServiceStash]: {}, //fake service
+			[SERVER_REF]: {
+				get: (rel) => (rel === 'SiteBrand') ? {'brand_name': 'Testing'} : void 0
+			}
 		};
 		const config = {
 			server: 'http://some-private-host:1234/dataserver2/',
@@ -415,12 +414,6 @@ describe ('lib/config', () => {
 				googleapi: {}
 			},
 			stuffAndThings: 'foobar',
-			'site-mappings': {
-				'some.site.nextthought.com': {
-					name: 'test',
-					title: 'Testing'
-				}
-			}
 		};
 
 		const res = await clientConfig(config, context.username, 'abc', context);
@@ -428,7 +421,7 @@ describe ('lib/config', () => {
 		expect(res).toBeTruthy();
 		expect(res.html).toEqual(expect.any(String));
 		expect(res.config.server).toBe('/dataserver2/');
-		expect(res.config.siteName).toBe('test');
+		expect(res.config.siteName).toBe('some.site.nextthought.com');
 		expect(res.config.siteTitle).toBe('Testing');
 		expect(res.config.username).toBe(context.username);
 		expect(res.config).not.toHaveProperty('webpack');
@@ -436,7 +429,6 @@ describe ('lib/config', () => {
 		expect(res.config).not.toHaveProperty('protocol');
 		expect(res.config).not.toHaveProperty('address');
 		expect(res.config).not.toHaveProperty('apps');
-		expect(res.config).not.toHaveProperty('site-mappings');
 		expect(res.config).not.toHaveProperty('keys');
 		expect(res.config.nodeService).toBeTruthy();
 		expect(res.config.nodeService).toBe(context[ServiceStash]);
@@ -475,12 +467,6 @@ describe ('lib/config', () => {
 					googleapi: {}
 				},
 				stuffAndThings: 'foobar',
-				'site-mappings': {
-					'some.site.nextthought.com': {
-						name: 'test',
-						title: 'Testing'
-					}
-				}
 			};
 		};
 
@@ -497,7 +483,7 @@ describe ('lib/config', () => {
 
 			return {
 				username: 'mock.user',
-				[SiteName]: 'mock.site.nextthought.com',
+				pong: {Site: 'mock.site.nextthought.com'},
 				[SERVER_REF]: {
 					get
 				}
@@ -621,7 +607,9 @@ describe ('lib/config', () => {
 		const {nodeConfigAsClientConfig} = require('../config');
 		const context = {
 			username: 'foobar',
-			[SiteName]: 'some.site.nextthought.com',
+			pong: {
+				Site: 'some.site.nextthought.com',
+			},
 			[ServiceStash]: {} //fake service
 		};
 		const config = {
@@ -634,19 +622,13 @@ describe ('lib/config', () => {
 				{appId: 'xyz', fluf: 'no'}
 			],
 			stuffAndThings: 'foobar',
-			'site-mappings': {
-				'some.site.nextthought.com': {
-					name: 'test',
-					title: 'Testing'
-				}
-			}
 		};
 
 		const res = nodeConfigAsClientConfig(config, 'abc', context);
 
 		expect(res).toBeTruthy();
 		expect(res.html).toBe('');
-		expect(res.config.siteName).toBe('test');
+		expect(res.config.siteName).toBe('some.site.nextthought.com');
 		expect(res.config.username).toBe(context.username);
 		expect(res.config.nodeService).toBeTruthy();
 		expect(res.config.nodeService).toBe(context[ServiceStash]);

@@ -289,7 +289,7 @@ async function clientConfig (baseConfig, username, appId, context) {
 		locale: getLocale(context)
 	};
 
-	logger.info('Generating config for %s (UserID: %s)', context.hostname, cfg.userId);
+	logger.info('Generating config for %s (SiteID: %s)', context.hostname, pong.Site);
 
 	const blacklist = [/webpack.*/i, 'port', 'protocol', 'address', 'apps', 'site-mappings', 'package', 'keys'];
 

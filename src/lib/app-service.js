@@ -9,7 +9,7 @@ const {default: dataserver} = require('@nti/lib-interfaces');
 
 const getApplication = require('./app-loader');
 const registerEndPoints = require('./api');
-const {SERVER_REF} = require('./constants');
+const {SERVER_REF, DATACACHE} = require('./constants');
 const {attachToExpress: setupCompression} = require('./compress');
 const apiProxy = require('./api-proxy');
 const cacheBuster = require('./no-cache');
@@ -30,7 +30,7 @@ const FORCE_ERROR_ROUTE = '/errortest*';
 const self = Object.assign(exports, {
 	contextualize,
 	forceError,
-	interfaceTagger,
+	setupInterface,
 	neverCacheManifestFiles,
 	resourceNotFound,
 	setupApplication,
@@ -68,26 +68,30 @@ function forceError () {
 	throw new Error('This is an error. Neato.');
 }
 
-
-function interfaceTagger (iface) {
-	return (r, _, next) => {
-		r[SERVER_REF] = iface;
+function setupInterface (config) {
+	return (req, res, next) => {
+		const {datacache, interface: _interface} = dataserver(config);
+		logger.info('DataServer end-point: %s', 'config.server');
+		req[SERVER_REF] = _interface;
+		req[DATACACHE] = datacache;
 		next();
 	};
 }
 
-
 async function setupApplication (server, config, restartRequest) {
+	if (!config || Object.keys(config).length === 0) {
+		throw new Error('No configuration');
+	}
+
 	//config.silent = true;
 
-	const params = {server, config, restartRequest, ...dataserver(config)};
+	const params = {server, config, restartRequest};
 
 	server.use(cookieParser());
 	server.use(cors);
 	server.use(frameOptions);
 	// server.use(cacheBuster);
 
-	logger.info('DataServer end-point: %s', config.server);
 	if (config.mode !== 'development') {
 		logger.attachToExpress(server);
 	}
@@ -100,10 +104,11 @@ async function setupApplication (server, config, restartRequest) {
 	if (config.proxy) {
 		server.use('*', apiProxy(config));
 	}
+
+	return server;
 }
 
-
-async function setupClient (client, {config, server, datacache, interface: _interface, restartRequest}) {
+async function setupClient (client, {config, server, restartRequest}) {
 	logger.info('Setting up app (version: %s):', client.appVersion || 'Unknown');
 
 	const flatConfig = {...config, ...client, logger};  //flattened config
@@ -116,6 +121,9 @@ async function setupClient (client, {config, server, datacache, interface: _inte
 
 	const clientRoute = self.contextualize(basepath, server);
 	logger.info('mount-point: %s', basepath);
+
+	// Tag the server interface reference on the request so we can use it in lower middlewares...
+	clientRoute.use(self.setupInterface(config));
 
 	try {
 		const registration = await Promise.resolve(register(clientRoute, flatConfig, restartRequest));
@@ -131,7 +139,7 @@ async function setupClient (client, {config, server, datacache, interface: _inte
 		//add the assets path to the client object (keep it out of the config)
 		client = {...client, assets, devmode};
 
-		const session = new Session(_interface, sessionSetup);
+		const session = new Session(sessionSetup);
 
 		clientRoute.use(requestLanguage({
 			languages: [...(locales || ['en'])],
@@ -161,14 +169,7 @@ async function setupClient (client, {config, server, datacache, interface: _inte
 		clientRoute.use(FORCE_ERROR_ROUTE, self.forceError);
 
 
-		registerEndPoints(
-			clientRoute, //express instance
-			flatConfig,
-			_interface); //interface
-
-		// Tag the server interface reference on the request so we can use it in lower middlewares...
-		clientRoute.use(self.interfaceTagger(_interface));
-
+		registerEndPoints(clientRoute, flatConfig);
 
 		if (flatConfig.public !== true) {
 			//Session manager...
@@ -179,7 +180,7 @@ async function setupClient (client, {config, server, datacache, interface: _inte
 		}
 
 		//HTML Renderer...
-		clientRoute.get('*', getPageRenderer(client, config, datacache, render, renderContent));
+		clientRoute.get('*', getPageRenderer(client, config, render, renderContent));
 
 		if (devmode) {
 			send({cmd: 'NOTIFY_DEVMODE'});

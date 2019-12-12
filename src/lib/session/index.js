@@ -1,17 +1,13 @@
 'use strict';
 const {ServiceStash} = require('@nti/lib-interfaces');
 
+const {SERVER_REF} = require('../constants');
 const Logger = require('../logger');
 
 const logger = Logger.get('SessionManager');
 
 module.exports = exports = class SessionManager {
-	constructor (server, sessionSetup) {
-		if (!server) {
-			throw new Error('No server interface!');
-		}
-		this.server = server;
-		this.config = server.config;
+	constructor (sessionSetup) {
 		this.sessionSetup = sessionSetup;
 	}
 
@@ -31,7 +27,7 @@ module.exports = exports = class SessionManager {
 
 
 	getServiceDocument (context) {
-		const {server} = this;
+		const {[SERVER_REF]: server} = context;
 		return server.ping(void 0, context)	// server.getServiceDocument() pings as well...
 		// if we didn't need the logon.logout url, we could omit this step here.
 			.then(pong => server.getServiceDocument(context)
@@ -44,9 +40,10 @@ module.exports = exports = class SessionManager {
 
 
 	setupIntitalData (context) {
-		let url = context.originalUrl || context.url;
+		const {[SERVER_REF]: server} = context;
+		const url = context.originalUrl || context.url;
 		logger.debug('SESSION [PRE-FETCHING DATA] %s %s (User: %s)', context.method, url, context.username);
-		return this.server.getServiceDocument(context)
+		return server.getServiceDocument(context)
 			.then(service => (
 				context[ServiceStash] = service,
 				this.sessionSetup && this.sessionSetup(service)
@@ -172,7 +169,8 @@ module.exports = exports = class SessionManager {
 
 
 	async anonymousMiddleware (basepath, context, res, next) {
-		await this.server.ping(void 0, context).catch(() => {});
+		const {[SERVER_REF]: server} = context;
+		await server.ping(void 0, context).catch(() => {});
 		next();
 	}
 

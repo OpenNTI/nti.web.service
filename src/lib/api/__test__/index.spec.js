@@ -1,6 +1,8 @@
 /*eslint-env jest*/
 'use strict';
 
+const {SERVER_REF} = require('../../constants');
+
 const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 describe ('lib/api - index', () => {
@@ -50,9 +52,8 @@ describe ('lib/api - index', () => {
 		const app = {use: jest.fn()};
 		const register = require('../index');
 		const config = {};
-		const dataserver = {getServiceDocument};
 
-		register(app, config, dataserver);
+		register(app, config);
 
 		expect(expressMock).toHaveBeenCalledTimes(1);
 		const api = expressApi;
@@ -62,7 +63,7 @@ describe ('lib/api - index', () => {
 		expect(app.use).toHaveBeenCalledWith(expect.any(RegExp), expect.objectContaining({use: expect.any(Function)}));
 
 		expect(endpoints).toHaveBeenCalledTimes(1);
-		expect(endpoints).toHaveBeenCalledWith(api, config, dataserver);
+		expect(endpoints).toHaveBeenCalledWith(api, config);
 
 		expect(api.param).toHaveBeenCalledTimes(1);
 		expect(api.param).toHaveBeenCalledWith('ntiid', expect.any(Function));
@@ -75,20 +76,20 @@ describe ('lib/api - index', () => {
 	});
 
 
-	test ('registerEndPoints(): ServiceMiddleWare', () => {
+	test ('registerEndPoints(): ServiceMiddleWare', async () => {
 		const app = {use: jest.fn()};
 		const register = require('../index');
 		const config = {};
 		const dataserver = {getServiceDocument};
 
-		register(app, config, dataserver);
+		register(app, config);
 
 		expect(expressMock).toHaveBeenCalledTimes(1);
 		const api = expressApi;
 		expect(api.ServiceMiddleWare).toEqual(expect.any(Function));
 		expect(api.ServiceMiddleWare.length).toEqual(3);
 
-		const req = {};
+		const req = {[SERVER_REF]: dataserver};
 		const res = {};
 		const next = jest.fn();
 

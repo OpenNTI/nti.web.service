@@ -1,6 +1,6 @@
 /*eslint-env jest*/
 'use strict';
-
+const {DATACACHE} = require('../constants');
 const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 describe('lib/renderer', () => {
@@ -40,7 +40,7 @@ describe('lib/renderer', () => {
 	});
 
 
-	test ('renderer: calls app.render twice to pre-flight network calls', () => {
+	test ('renderer: calls app.render twice to pre-flight network calls', async () => {
 		const {getPageRenderer} = require('../renderer');
 		const config = {};
 		const serialize = jest.fn(() => 'testHTML');
@@ -53,7 +53,8 @@ describe('lib/renderer', () => {
 		const req = {
 			url: '/test',
 			username: 'tester',
-			waitForPending: jest.fn()
+			waitForPending: jest.fn(),
+			[DATACACHE]: datacache
 		};
 
 		const res = {
@@ -63,32 +64,31 @@ describe('lib/renderer', () => {
 		};
 		const next = jest.fn();
 
-		const renderer = getPageRenderer({appId, basepath}, config, datacache, render);
+		const renderer = getPageRenderer({appId, basepath}, config, render);
 		expect(renderer).toEqual(expect.any(Function));
 
-		return renderer(req, res, next)
-			.then(() => {
-				expect(next).not.toHaveBeenCalled();
-				expect(res.end).not.toHaveBeenCalled();
-				expect(res.status).not.toHaveBeenCalled();
+		await renderer(req, res, next);
 
-				expect(req.waitForPending).toHaveBeenCalledTimes(1);
-				expect(req.waitForPending).toHaveBeenCalledWith(5 * 60000);
+		expect(next).not.toHaveBeenCalled();
+		expect(res.end).not.toHaveBeenCalled();
+		expect(res.status).not.toHaveBeenCalled();
 
-				expect(clientConfig).toHaveBeenCalledTimes(1);
-				expect(clientConfig).toHaveBeenCalledWith(config, req.username, appId, req);
+		expect(req.waitForPending).toHaveBeenCalledTimes(1);
+		expect(req.waitForPending).toHaveBeenCalledWith(5 * 60000);
 
-				expect(nodeConfigAsClientConfig).toHaveBeenCalledTimes(1);
-				expect(nodeConfigAsClientConfig).toHaveBeenCalledWith(config, appId, req);
+		expect(clientConfig).toHaveBeenCalledTimes(1);
+		expect(clientConfig).toHaveBeenCalledWith(config, req.username, appId, req);
 
-				expect(render).toHaveBeenCalledTimes(2);
-				expect(render).toHaveBeenCalledWith(basepath, req, expect.any(Object), expect.any(Function));
-				expect(render).toHaveBeenCalledWith(basepath, req, expect.any(Object));
-			});
+		expect(nodeConfigAsClientConfig).toHaveBeenCalledTimes(1);
+		expect(nodeConfigAsClientConfig).toHaveBeenCalledWith(config, appId, req);
+
+		expect(render).toHaveBeenCalledTimes(2);
+		expect(render).toHaveBeenCalledWith(basepath, req, expect.any(Object), expect.any(Function));
+		expect(render).toHaveBeenCalledWith(basepath, req, expect.any(Object));
 	});
 
 
-	test ('renderer: not-found', () => {
+	test ('renderer: not-found', async () => {
 		const {getPageRenderer} = require('../renderer');
 		const config = {};
 		const serialize = jest.fn(() => 'testHTML');
@@ -99,7 +99,8 @@ describe('lib/renderer', () => {
 		const basepath = '/mocks/';
 		const req = {
 			url: '/test',
-			username: 'tester'
+			username: 'tester',
+			[DATACACHE]: datacache
 		};
 
 		const o = {
@@ -120,22 +121,22 @@ describe('lib/renderer', () => {
 		};
 		const next = jest.fn();
 
-		const renderer = getPageRenderer({appId, basepath}, config, datacache, o.render);
+		const renderer = getPageRenderer({appId, basepath}, config, o.render);
 		expect(renderer).toEqual(expect.any(Function));
 
-		return renderer(req, res, next)
-			.then(() => {
-				expect(next).not.toHaveBeenCalled();
-				expect(res.end).not.toHaveBeenCalled();
-				expect(res.status).toHaveBeenCalled();
-				expect(res.status).toHaveBeenCalledWith(404);
+		await renderer(req, res, next);
 
-				expect(o.render).toHaveBeenCalledTwice;
-			});
+		expect(next).not.toHaveBeenCalled();
+		expect(res.end).not.toHaveBeenCalled();
+		expect(res.status).toHaveBeenCalled();
+		expect(res.status).toHaveBeenCalledWith(404);
+
+		expect(o.render).toHaveBeenCalledTwice;
+
 	});
 
 
-	test ('renderer: Error Thrown', () => {
+	test ('renderer: Error Thrown', async () => {
 		const {getPageRenderer} = require('../renderer');
 		const config = {};
 		const serialize = jest.fn(() => 'testHTML');
@@ -147,7 +148,8 @@ describe('lib/renderer', () => {
 		const basepath = '/mocks/';
 		const req = {
 			url: '/test',
-			username: 'tester'
+			username: 'tester',
+			[DATACACHE]: datacache
 		};
 		const err = new Error('Ooops');
 
@@ -161,16 +163,15 @@ describe('lib/renderer', () => {
 			status: jest.fn()
 		};
 
-		const renderer = getPageRenderer({appId, basepath}, config, datacache, render);
+		const renderer = getPageRenderer({appId, basepath}, config, render);
 		expect(renderer).toEqual(expect.any(Function));
 
-		return renderer(req, res, next)
-			.then(() => {
-				expect(next).toHaveBeenCalledWith(err);
-				expect(res.end).not.toHaveBeenCalled();
-				expect(res.status).not.toHaveBeenCalled();
+		await renderer(req, res, next);
 
-				expect(render).toHaveBeenCalledTimes(1);
-			});
+		expect(next).toHaveBeenCalledWith(err);
+		expect(res.end).not.toHaveBeenCalled();
+		expect(res.status).not.toHaveBeenCalled();
+
+		expect(render).toHaveBeenCalledTimes(1);
 	});
 });

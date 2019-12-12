@@ -4,9 +4,7 @@ const { PageInfo } = Models.content;
 
 
 class GetContextData {
-	constructor (config, server) {
-		this.server = server;
-	}
+	constructor (config) {}
 
 	handle (req, res, error) {
 		const {ntiidObject, ntiService} = req;
@@ -33,8 +31,8 @@ class GetContextData {
 	}
 }
 
-function register (api, config, dataserver) {
-	const handler = new GetContextData(config, dataserver);
+function register (api, config,) {
+	const handler = new GetContextData(config);
 	api.get('/ugd/context-data/:ntiid', (req, res, error) => handler.handle(req, res, error));
 }
 

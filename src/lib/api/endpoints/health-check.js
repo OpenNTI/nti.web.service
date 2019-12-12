@@ -1,13 +1,20 @@
 'use strict';
+const {SERVER_REF} = require('../../constants');
 
-exports.default = function register (api, config, server) {
+exports.default = function register (api, config) {
 
-	api.get(/^\/_ops\/ping-through/, (SERVER_CONTEXT, res) => {
-		server.get('/_ops/ping', SERVER_CONTEXT)
-			.then(() => 200, () => 503)
-			.then(status => {
-				res.status(status); res.end();
-			});
+	api.get(/^\/_ops\/ping-through/, async (SERVER_CONTEXT, res) => {
+		let status = 200;
+
+		try {
+			await SERVER_CONTEXT[SERVER_REF].get('/_ops/ping', SERVER_CONTEXT);
+		}
+		catch (e) {
+			status = 503;
+		}
+
+		res.status(status);
+		res.end();
 	});
 
 	api.get(/^\/_ops\/ping/, (_, res) => {

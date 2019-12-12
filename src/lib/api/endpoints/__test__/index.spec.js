@@ -21,8 +21,8 @@ describe ('lib/api/endpoints/index', () => {
 		jest.doMock('../videos', () => m);
 		const register = require('../index');
 
-		expect(() => register(1, 2, 3)).not.toThrow();
+		expect(() => register(1, 2)).not.toThrow();
 		expect(registerEndpoint).toHaveBeenCalledTimes(4);
-		expect(registerEndpoint).toHaveBeenCalledWith(1, 2, 3);
+		expect(registerEndpoint).toHaveBeenCalledWith(1, 2);
 	});
 });

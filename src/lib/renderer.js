@@ -1,4 +1,5 @@
 'use strict';
+const {DATACACHE} = require('./constants');
 const logger = require('./logger');
 const {clientConfig, nodeConfigAsClientConfig} = require('./config');
 const {getRenderer} = require('./page-renderer');
@@ -7,13 +8,14 @@ Object.assign(exports, {
 	getPageRenderer
 });
 
-function getPageRenderer ({appId, basepath, assets, devmode} = {}, config, datacache, render, renderContent) {
+function getPageRenderer ({appId, basepath, assets, devmode} = {}, config, render, renderContent) {
 
 	if (!render) {
 		render = getRenderer(assets, renderContent, devmode);
 	}
 
 	return async function renderPage (req, res, next) {
+		const {[DATACACHE]: datacache} = req;
 		logger.debug('Rendering Inital View: %s %s', req.url, req.username);
 		let isErrorPage = false;
 

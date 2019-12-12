@@ -1,19 +1,24 @@
 'use strict';
 const express = require('express');
 
+const {SERVER_REF} = require('../constants');
 const logger = require('../logger');
 
 const endpoints = require('./endpoints');
 
-module.exports = function registerEndPoints (app, config, dataserver) {
+module.exports = function registerEndPoints (app, config) {
 	const api = express();
 	app.use(/^\/api/i, api);
 
-	function getService (req) {
-		return req.ntiService
-			? Promise.resolve(req.ntiService)
-			: dataserver.getServiceDocument(req)
-				.then(service => req.ntiService = service);
+	async function getService (req) {
+		const {[SERVER_REF]: server} = req;
+		let service = req.ntiService;
+		if (!service) {
+			service = await server.getServiceDocument(req);
+			// eslint-disable-next-line require-atomic-updates
+			req.ntiService = service;
+		}
+		return service;
 	}
 
 	//Make Service resolving middleware available on the api router for sub routers to install
@@ -30,7 +35,7 @@ module.exports = function registerEndPoints (app, config, dataserver) {
 			.catch(next);
 	});
 
-	endpoints(api, config, dataserver);
+	endpoints(api, config);
 
 	api.use((err, req, res, next) => {//eslint-disable-line no-unused-vars
 		logger.error('API Error:\n\n%s\n\n', err.stack || err.body || JSON.stringify(err));

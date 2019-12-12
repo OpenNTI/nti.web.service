@@ -330,7 +330,7 @@ describe('lib/app-service', () => {
 		const service = require('../app-service');
 		const clientApp = expressMock();
 		stub(service, 'contextualize', () => clientApp);
-		stub(service, 'interfaceTagger', () => tagger);
+		stub(service, 'setupInterface', () => tagger);
 
 		//the freeze ensures attempts at modifying it will explode.
 		const clientConfig = Object.freeze({
@@ -343,8 +343,6 @@ describe('lib/app-service', () => {
 		const params = {
 			server,
 			config: Object.freeze({mockConfig: true}),
-			datacache: Object.freeze({}),
-			interface: Object.freeze({}),
 			restartRequest: jest.fn()
 		};
 
@@ -373,7 +371,6 @@ describe('lib/app-service', () => {
 		expect(registerEndPoints).toHaveBeenCalledWith(
 			clientApp,
 			expect.objectContaining({mockConfig: true, package: 'test-app1', basepath: '/basepath1/'}),
-			params.interface
 		);
 
 		expect(clientApp.use.mock.calls.length).toEqual(7);
@@ -400,7 +397,7 @@ describe('lib/app-service', () => {
 		expect(sessionMockInstance.middleware).toHaveBeenCalledWith(clientConfig.basepath, args[0], args[1], args[2]);
 
 		expect(getPageRenderer).toHaveBeenCalledTimes(1);
-		expect(getPageRenderer).toHaveBeenCalledWith(clientConfigWithAssets, params.config, params.datacache, mockReg.render, undefined);
+		expect(getPageRenderer).toHaveBeenCalledWith(clientConfigWithAssets, params.config, mockReg.render, undefined);
 
 		expect(process.send).not.toHaveBeenCalled();
 	});
@@ -421,7 +418,7 @@ describe('lib/app-service', () => {
 		const service = require('../app-service');
 		const clientApp = expressMock();
 		stub(service, 'contextualize', () => clientApp);
-		stub(service, 'interfaceTagger', () => tagger);
+		stub(service, 'setupInterface', () => tagger);
 
 		//the freeze ensures attempts at modifying it will explode.
 		const clientConfig = Object.freeze({
@@ -434,8 +431,6 @@ describe('lib/app-service', () => {
 		const params = {
 			server,
 			config: Object.freeze({mockConfig: true}),
-			datacache: Object.freeze({}),
-			interface: Object.freeze({}),
 			restartRequest: jest.fn()
 		};
 
@@ -461,7 +456,6 @@ describe('lib/app-service', () => {
 		expect(registerEndPoints).toHaveBeenCalledWith(
 			clientApp,
 			expect.objectContaining({mockConfig: true, package: 'test-app2', basepath: '/basepath/'}),
-			params.interface
 		);
 
 		expect(clientApp.use.mock.calls.length).toEqual(7);
@@ -488,7 +482,7 @@ describe('lib/app-service', () => {
 		expect(sessionMockInstance.middleware).toHaveBeenCalledWith(clientConfig.basepath, args[0], args[1], args[2]);
 
 		expect(getPageRenderer).toHaveBeenCalledTimes(1);
-		expect(getPageRenderer).toHaveBeenCalledWith(clientConfigWithAssets, params.config, params.datacache, mockReg.render, undefined);
+		expect(getPageRenderer).toHaveBeenCalledWith(clientConfigWithAssets, params.config, mockReg.render, undefined);
 
 		expect(process.send).toHaveBeenCalledTimes(1);
 		expect(process.send).toHaveBeenCalledWith(expect.objectContaining({cmd: 'NOTIFY_DEVMODE'}));

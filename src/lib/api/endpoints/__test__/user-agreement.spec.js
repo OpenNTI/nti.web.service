@@ -1,6 +1,8 @@
 /*eslint-env jest*/
 'use strict';
 
+const {SERVER_REF} = require('../../../constants');
+
 const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 describe ('lib/api/endpoints/user-agreement', () => {
@@ -28,14 +30,13 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		const api = {get: jest.fn()};
 
 		const config = {config: 1};
-		const server = {server: 1};
-		expect(() => register(api, config, server)).not.toThrow();
+		expect(() => register(api, config)).not.toThrow();
 		expect(api.get).toHaveBeenCalledTimes(1);
 		expect(api.get).toHaveBeenCalledWith(expect.any(RegExp), expect.any(Function));
 		const [, callback] = api.get.mock.calls[0];
 
 		expect(UA.getServeUserAgreement).toHaveBeenCalledTimes(1);
-		expect(UA.getServeUserAgreement).toHaveBeenCalledWith(config, server);
+		expect(UA.getServeUserAgreement).toHaveBeenCalledWith(config);
 
 		expect(handler).not.toHaveBeenCalled;
 		expect(() => callback(1, 2)).not.toThrow();
@@ -64,9 +65,9 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		const config = {config: 1};
 		const server = {server: 1};
 
-		const handler = UA.getServeUserAgreement(config, server);
+		const handler = UA.getServeUserAgreement(config);
 
-		const req = {req: 1};
+		const req = {req: 1, [SERVER_REF]: server};
 		const res = {res: 1};
 		return handler(req, res)
 			.then(() => {

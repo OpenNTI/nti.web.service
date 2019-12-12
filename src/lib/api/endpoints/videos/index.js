@@ -7,12 +7,12 @@ const HANDLERS = [
 	YouTube
 ];
 
-exports.default = function registerVideoDataProviders (api, config, dataserver) {
+exports.default = function registerVideoDataProviders (api, config) {
 	const videos = express();
 	api.use(/^\/videos/i, videos);
 
 	for (let handler of HANDLERS) {
-		handler(videos, config, dataserver);
+		handler(videos, config);
 	}
 
 };

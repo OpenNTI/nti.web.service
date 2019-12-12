@@ -11,10 +11,10 @@ const HANDLERS = [
 	VideoData
 ];
 
-module.exports = function registerEndPoints (api, config, dataserver) {
+module.exports = function registerEndPoints (api, config) {
 
 	for (let handler of HANDLERS) {
-		handler(api, config, dataserver);
+		handler(api, config);
 	}
 
 };

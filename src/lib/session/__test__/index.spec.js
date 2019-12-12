@@ -34,21 +34,11 @@ describe('lib/session', () => {
 	});
 
 
-	test ('Session constructor throws for no args', () => {
-		const Session = require('../index');
-
-		expect(() => new Session()).toThrow();
-	});
-
-
 	test ('Session constructor assigns server, and sessionSetup callback to self', () => {
 		const Session = require('../index');
-		const server = { config: {} };
 		const sessionSetup = jest.fn();
-		const session = new Session(server, sessionSetup);
+		const session = new Session(sessionSetup);
 
-		expect(session.server).toEqual(server);
-		expect(session.config).toEqual(server.config);
 		expect(session.sessionSetup).toBe(sessionSetup);
 		expect(sessionSetup).not.toHaveBeenCalled();
 	});
@@ -57,7 +47,7 @@ describe('lib/session', () => {
 	test ('Session::getUser() - fulfills with the username of the active user (resolved from the Title of the User workspace on the service document)', () => {
 		const workspace = {Title: 'testuser'};
 		const Session = require('../index');
-		const session = new Session({});
+		const session = new Session();
 		const doc = {getUserWorkspace: jest.fn(() => workspace)};
 		stub(session, 'getServiceDocument', () => Promise.resolve(doc));
 
@@ -76,7 +66,7 @@ describe('lib/session', () => {
 
 	test ('Session::getUser() - error case - no user workspace', () => {
 		const Session = require('../index');
-		const session = new Session({});
+		const session = new Session();
 		const doc = { getUserWorkspace: jest.fn() };
 		stub(session, 'getServiceDocument', () => Promise.resolve(doc));
 
@@ -96,12 +86,12 @@ describe('lib/session', () => {
 
 	test ('Session::getServiceDocument() - resolve the service document through a ping/handshake. Stash the logout-url.', () => {
 		const Session = require('../index');
-		const context = Object.create(null);
 		const pong = {getLink: jest.fn(x => x === 'logon.logout' ? 'lala' : void x)};
 		const ping = jest.fn(() => Promise.resolve(pong));
 		const doc = {setLogoutURL: jest.fn()};
 		const getServiceDocument = jest.fn(() => Promise.resolve(doc));
-		const session = new Session({getServiceDocument, ping});
+		const context = {[SERVER_REF]:{getServiceDocument, ping}};
+		const session = new Session();
 
 		return session.getServiceDocument(context)
 			.then(resolved => {
@@ -124,13 +114,12 @@ describe('lib/session', () => {
 		const Session = require('../index');
 		const setup = jest.fn();
 		const handler = {
-			get: jest.fn(),
 			set: jest.fn((x, y) => y === ServiceStash || void y)
 		};
-		const context = new Proxy({url: '...'}, handler);
 		const service = {};
 		const getServiceDocument = jest.fn(() => Promise.resolve(service));
-		const session = new Session({getServiceDocument}, setup);
+		const context = new Proxy({[SERVER_REF]: {getServiceDocument}, url: '...'}, handler);
+		const session = new Session(setup);
 
 		return session.setupIntitalData(context)
 			.then(() => {
@@ -148,7 +137,7 @@ describe('lib/session', () => {
 
 	test ('Session::middleware() - gets the user, assigns it to the request context, and setups up intital data', () => {
 		const Session = require('../index');
-		const session = new Session({});
+		const session = new Session();
 		stub(session, 'getUser', () => Promise.resolve('testuser'));
 		stub(session, 'setupIntitalData');
 		//Continue the rejections...we will test this function by itself.
@@ -200,7 +189,7 @@ describe('lib/session', () => {
 
 	test ('Session::middleware() - error case: closed connection', () => {
 		const Session = require('../index');
-		const session = new Session({});
+		const session = new Session();
 
 		const next = jest.fn();
 		const basepath = '/';
@@ -250,7 +239,7 @@ describe('lib/session', () => {
 
 	test ('Session::middleware() - error case: getUser rejects', () => {
 		const Session = require('../index');
-		const session = new Session({});
+		const session = new Session();
 
 		const next = jest.fn();
 		const basepath = '';
@@ -294,7 +283,7 @@ describe('lib/session', () => {
 
 	test ('Session::middleware() - error case: setupIntitalData rejects', () => {
 		const Session = require('../index');
-		const session = new Session({});
+		const session = new Session();
 
 		const next = jest.fn();
 		const basepath = '';
@@ -345,7 +334,7 @@ describe('lib/session', () => {
 
 	test ('Session::middleware() - failing to set headers does not kill the response', () => {
 		const Session = require('../index');
-		const session = new Session({});
+		const session = new Session();
 
 		const next = jest.fn();
 		const basepath = '';
@@ -392,7 +381,7 @@ describe('lib/session', () => {
 
 	test ('Session::maybeRedirect() - go to login', () => {
 		const Session = require('../index');
-		const session = new Session({});
+		const session = new Session();
 
 		const next = jest.fn();
 		const basepath = '/';
@@ -422,7 +411,7 @@ describe('lib/session', () => {
 
 	test ('Session::maybeRedirect() - drop on dead', () => {
 		const Session = require('../index');
-		const session = new Session({});
+		const session = new Session();
 
 		const next = jest.fn();
 		const basepath = '/';
@@ -452,7 +441,7 @@ describe('lib/session', () => {
 
 	test ('Session::maybeRedirect() - redirect to login without return param if at root', () => {
 		const Session = require('../index');
-		const session = new Session({});
+		const session = new Session();
 
 		const next = jest.fn();
 		const basepath = '/';
@@ -483,7 +472,7 @@ describe('lib/session', () => {
 
 	test ('Session::maybeRedirect() - does not redirect to login if route is login', () => {
 		const Session = require('../index');
-		const session = new Session({});
+		const session = new Session();
 
 		const next = jest.fn();
 		const basepath = '/';
@@ -513,7 +502,7 @@ describe('lib/session', () => {
 
 	test ('Session::maybeRedirect() - does not redirect to login if route is api', () => {
 		const Session = require('../index');
-		const session = new Session({});
+		const session = new Session();
 
 		const next = jest.fn();
 		const basepath = '/';
@@ -543,7 +532,7 @@ describe('lib/session', () => {
 
 	test ('Session::maybeRedirect() - calls next on Error', () => {
 		const Session = require('../index');
-		const session = new Session({});
+		const session = new Session();
 
 		const next = jest.fn();
 		const basepath = '/';
@@ -572,7 +561,7 @@ describe('lib/session', () => {
 
 	test ('Session::maybeRedirect() - logon action', () => {
 		const Session = require('../index');
-		const session = new Session({});
+		const session = new Session();
 
 		const next = jest.fn();
 		const basepath = '/';
@@ -601,7 +590,7 @@ describe('lib/session', () => {
 
 	test ('Session::maybeRedirect() - logon action (preserve return url)', () => {
 		const Session = require('../index');
-		const session = new Session({});
+		const session = new Session();
 
 		const next = jest.fn();
 		const basepath = '/';
@@ -630,7 +619,7 @@ describe('lib/session', () => {
 
 	test ('Session::maybeRedirect() - logon action (nested route)', () => {
 		const Session = require('../index');
-		const session = new Session({});
+		const session = new Session();
 
 		const next = jest.fn();
 		const basepath = '/';
@@ -659,7 +648,7 @@ describe('lib/session', () => {
 
 	test ('Session::maybeRedirect() - res.redirect failed', () => {
 		const Session = require('../index');
-		const session = new Session({});
+		const session = new Session();
 
 		const next = jest.fn();
 		const basepath = '/';
@@ -689,14 +678,16 @@ describe('lib/session', () => {
 	test ('Session::anonymousMiddleware() - calls next()', async () => {
 		const Session = require('../index');
 		const next = jest.fn();
-		const session = new Session({
-			async ping () {}
-		});
+		const session = new Session();
 		// For now, this middleware doesn't do anything... when we add to it, we
 		// should change these two frozen objects to allow mutation and validate
 		// the middleware.
 		const response = Object.freeze({});
-		const request = Object.freeze({});
+		const request = Object.freeze({
+			[SERVER_REF]: {
+				async ping () {}
+			}
+		});
 
 		expect(next).not.toHaveBeenCalled();
 		await session.anonymousMiddleware(null, request, response, next);

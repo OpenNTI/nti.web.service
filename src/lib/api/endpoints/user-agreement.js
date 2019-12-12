@@ -4,6 +4,7 @@ const Url = require('url');
 const {TOS_NOT_ACCEPTED, getLink} = require('@nti/lib-interfaces');
 
 const {getStackOrMessage} = require('../../utils');
+const {SERVER_REF} = require('../../constants');
 
 const tagPattern = tag => new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)</' + tag + '>', 'ig');
 const BODY_REGEX = /<body[^>]*>([\s\S]*)<\/body/i;//no g
@@ -22,15 +23,16 @@ const self = Object.assign(exports, {
 
 
 
-function register (api, config, server) {
-	const handler = self.getServeUserAgreement(config, server);
-	api.get(/^\/user-agreement/, (req, res) => void handler(req, res));
+function register (api, config) {
+	const handler = self.getServeUserAgreement(config);
+	api.get(/^\/user-agreement/, async (req, res) => void await handler(req, res));
 }
 
 
-function getServeUserAgreement (config, server) {
+function getServeUserAgreement (config) {
 
 	return function handler (req, res) {
+		const server = req[SERVER_REF];
 
 		return self.resolveUrl(req, config, server)
 

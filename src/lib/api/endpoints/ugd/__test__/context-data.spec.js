@@ -31,7 +31,7 @@ describe ('lib/api/endpoints/ugd/context-data', () => {
 		const {default: register} = require('../context-data');
 		const api = {get: jest.fn()};
 
-		expect(() => register(api, {}, {})).not.toThrow();
+		expect(() => register(api, {})).not.toThrow();
 		expect(api.get).toHaveBeenCalledTimes(1);
 		expect(api.get).toHaveBeenCalledWith(expect.any(String), expect.any(Function));
 		const [, callback] = api.get.mock.calls[0];

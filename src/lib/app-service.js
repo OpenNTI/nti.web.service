@@ -70,7 +70,9 @@ function forceError () {
 
 function setupInterface (config) {
 	return (req, res, next) => {
-		const {datacache, interface: _interface} = dataserver(config);
+		const {protocol, headers: { host }} = req;
+		const server = new URL(config.server, `${protocol}://${host}`).toString();
+		const {datacache, interface: _interface} = dataserver({...config, server});
 		logger.info('DataServer end-point: %s', 'config.server');
 		req[SERVER_REF] = _interface;
 		req[DATACACHE] = datacache;

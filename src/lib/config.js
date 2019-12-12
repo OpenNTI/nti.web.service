@@ -1,6 +1,5 @@
 'use strict';
 const fs = require('fs');
-const url = require('url');
 const path = require('path');
 
 const yargs = require('yargs');
@@ -38,11 +37,9 @@ const opt = yargs
 			default: 'proxy',
 			desc: 'Protocol to use (proxy or http)'
 		},
-		'dataserver-host': {
-			desc: 'Override DataServer host (this trumps the config)'
-		},
-		'dataserver-port': {
-			desc: 'Override DataServer port (this trumps the config)'
+		'dataserver': {
+			desc: 'Override DataServer uri',
+			default: '/dataserver2/'
 		},
 		'webpack': {
 			desc: 'Prefix with "no-" to force the dev-server off.',
@@ -65,47 +62,48 @@ const opt = yargs
 	.argv;
 
 
-function loadConfig () {
+async function loadConfig () {
 	if (!opt.config) {
 		return Promise.reject('No config file specified');
 	}
 
-	return new Promise((pass, fail)=> {
+	let uri = new URL(opt.config, 'file://');
+	if (uri.protocol === 'file:') {
+		uri = opt.config.replace(/^file:\/\//i, '');
 
-		let uri = url.parse(opt.config);
-		if (uri.protocol == null || uri.protocol === 'file:') {
-			uri = opt.config.replace(/^file:\/\//i, '');
+		const resolveOrder = [
+			path.resolve(process.cwd(), uri),
+			path.resolve(__dirname, uri),
+			path.resolve(__dirname, '../../config/env.json.example')
+		];
 
-			const resolveOrder = [
-				path.resolve(process.cwd(), uri),
-				path.resolve(__dirname, uri),
-				path.resolve(__dirname, '../../config/env.json.example')
-			];
-
-			logger.debug('Attempting to resolve & load config with path: %s', uri);
-			for (let p of resolveOrder) {
-				try {
-					logger.debug('Attempting Config at: %s', p);
-					return pass(self.config(JSON.parse(fs.readFileSync(p))));
-				} catch (e) {
-					logger.debug('Config not available at: %s\n\t%s', p, e.message);
-				}
+		logger.debug('Attempting to resolve & load config with path: %s', uri);
+		for (let p of resolveOrder) {
+			try {
+				logger.debug('Attempting Config at: %s', p);
+				return self.config(JSON.parse(fs.readFileSync(p)));
+			} catch (e) {
+				logger.debug('Config not available at: %s\n\t%s', p, e.message);
 			}
-
-			return fail('Config Failed to load');
 		}
 
-		fetch(opt.config)
-			.then(response => response.ok ? response.json() : Promise.reject(response.statusText))
-			.then(body => {
-				pass(self.config(body));
-			})
-			.catch(e => {
-				logger.error(e);
-				fail(e);
-			});
+		return Promise.reject('Config Failed to load');
+	}
 
-	});
+	try {
+		const response = await fetch(opt.config);
+		if (!response.ok) {
+			return Promise.reject(response.statusText);
+		}
+		const body = await response.json();
+
+		return self.config(body);
+	}
+	catch(e) {
+		logger.error(e);
+		throw e;
+	}
+
 }
 
 
@@ -134,8 +132,7 @@ function showFlags (config) {
 function config (env) {
 	const base = 'development';
 
-	const serverHost = opt['dataserver-host'];
-	const serverPort = opt['dataserver-port'];
+	const serverOverride = opt['dataserver'];
 
 	if (opt.env && env[opt.env] == null) {
 		logger.error('Environment specified does not exist in config: %s', opt.env);
@@ -212,16 +209,8 @@ function config (env) {
 		}
 	}
 
-	if (serverHost || serverPort) {
-		let server = url.parse(c.server);
-		server.host = null;
-		if (serverHost) {
-			server.hostname = serverHost;
-		}
-		if (serverPort) {
-			server.port = serverPort;
-		}
-		c.server = server.format();
+	if (serverOverride) {
+		c.server = new URL(serverOverride, c.server).toString();
 	}
 
 	return c;
@@ -269,19 +258,17 @@ function serviceRef (service, cfg) {
 async function clientConfig (baseConfig, username, appId, context) {
 	//unsafe to send to client raw... lets reduce it to essentials
 	const app = (baseConfig.apps || []).reduce((r, o) => r || o.appId === appId && o, null) || {};
-	const {pong = {}} = context;
+	const {pong = {}, protocol = 'http', headers: {host: hostname = '-'} = {}} = context;
 	const userId = ({AuthenticatedUserId: x}) => x || null;
+
+	const publicHost = new URL(`${protocol}://${hostname}`);
+	const server = new URL(baseConfig.server, publicHost);
+
 	const cfg = {
 		...baseConfig,
 		...app,
 		//hide internal hostnames... If we ever host server & web-app on different domains this will have to be removed.
-		server: Object.assign(url.parse(baseConfig.server || ''), {
-			slashes: false,
-			host:null,
-			hostname: null,
-			protocol: null,
-			port: null
-		}).format(),
+		server: server.pathname,
 		userId: userId(pong),
 		siteName: pong.Site || 'default',
 		siteTitle: 'nextthought',

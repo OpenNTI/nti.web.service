@@ -2,7 +2,6 @@
 const wantsCompressed = RegExp.prototype.test.bind(/gzip/i);
 
 const path = require('path');
-const url = require('url');
 const fs = require('fs');
 
 const mimes = require('mime-types');
@@ -23,9 +22,11 @@ function attachToExpress (expressApp, assetPath) {
 	expressApp.use(compression({filter: self.compressionFilter}));
 }
 
+const getExt = (req) => path.extname(new URL(req.url, 'file://').pathname);
+
 
 function compressionFilter (req, res) {
-	const isGz = path.extname(url.parse(req.url).pathname) === '.gz';
+	const isGz = getExt(req) === '.gz';
 	const blocked = !!req.get('x-no-compression');
 
 	if (blocked || isGz) {
@@ -51,7 +52,7 @@ function precompressed (assetPath) {
 				return next();
 			}
 
-			const ext = path.extname(url.parse(req.url).pathname);
+			const ext = getExt(req);
 			const type = mimes.lookup(ext);
 
 			req.url = gz;

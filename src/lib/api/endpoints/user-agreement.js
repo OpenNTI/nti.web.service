@@ -1,6 +1,4 @@
 'use strict';
-const Url = require('url');
-
 const {TOS_NOT_ACCEPTED, getLink} = require('@nti/lib-interfaces');
 
 const {getStackOrMessage} = require('../../utils');
@@ -49,27 +47,27 @@ function getServeUserAgreement (config) {
 }
 
 
-function resolveUrl (request, config, server) {
-	const {server: host, ['user-agreement']: fallbackUrl} = config || {};
+async function resolveUrl (request, config, server) {
+	const {['user-agreement']: fallbackUrl} = config || {};
 	const SERVER_CONTEXT = request;
+	const host = `${request.protocol}://${request.headers.host}`;
+	const pong = await server.get('logon.ping', SERVER_CONTEXT);
+	let url = getLink(pong, TOS_NOT_ACCEPTED) || fallbackUrl;
 
-	return server.get('logon.ping', SERVER_CONTEXT)
-		.then(pong => getLink(pong, TOS_NOT_ACCEPTED))
+	if (url) {
+		url = new URL(url, host).toString();
+	}
 
-		.then(url => {
-			url = Url.parse(host || '').resolve(url || fallbackUrl || '');
+	//If there is a @NamedLink we have to pass request context,
+	//if its an external link like docs.google... blank out context.
+	const context = (url && url.startsWith(host))
+		? {headers: self.copyRequestHeaders(request), redirect: 'manual'}
+		: void 0;
 
-			//If there is a @NamedLink we have to pass request context,
-			//if its an external link like docs.google... blank out context.
-			const context = (url && url.startsWith(host))
-				? {headers: self.copyRequestHeaders(request), redirect: 'manual'}
-				: void 0;
-
-			return !url ? void 0 : {
-				url,
-				context
-			};
-		});
+	return !url ? void 0 : {
+		url,
+		context
+	};
 }
 
 

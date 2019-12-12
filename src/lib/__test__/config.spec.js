@@ -241,7 +241,7 @@ describe ('lib/config', () => {
 	});
 
 
-	test ('config(): normal case', () => {
+	test ('config(): normal case', async () => {
 		const {config} = require('../config');
 		jest.doMock('foo/package.json', () => ({name: 'foo.net', version: '123'}), {virtual: true});
 
@@ -258,39 +258,31 @@ describe ('lib/config', () => {
 			}
 		};
 
-		return Promise.resolve(config(env))
-			.then(c => {
-				expect(c).toEqual(expect.any(Object));
-
-				for (let x = 0; x < c.apps.length; x++ ) {
-					expect(c.apps[x].appId).toBeTruthy();
-					expect(c.apps[x].appId).toEqual(expect.any(String));
-				}
-
-				expect(c.apps.map(x => x.basepath)).toEqual([
-					'/foo/baz/',
-					'/foo/buz/',
-					'/foo/buz/',
-					'/bar/',
-					'/foo/'
-				]);
-
-				const i = c.apps.findIndex(x => x.appId === 'foo.net');
-
-				expect(i).not.toBe(-1);
-				expect(c.apps[i].appId).toBe('foo.net');
-				expect(c.apps[i].appName).toBe('foo.net');
-				expect(c.apps[i].appVersion).toBe('123');
-
-				expect(logger.warn).toHaveBeenCalledWith('Could not fill in package values for app %s, because: %s', 'bar', expect.anything());
-			});
+		const c = await Promise.resolve(config(env));
+		expect(c).toEqual(expect.any(Object));
+		for (let x = 0; x < c.apps.length; x++) {
+			expect(c.apps[x].appId).toBeTruthy();
+			expect(c.apps[x].appId).toEqual(expect.any(String));
+		}
+		expect(c.apps.map(x => x.basepath)).toEqual([
+			'/foo/baz/',
+			'/foo/buz/',
+			'/foo/buz/',
+			'/bar/',
+			'/foo/'
+		]);
+		const i = c.apps.findIndex(x => x.appId === 'foo.net');
+		expect(i).not.toBe(-1);
+		expect(c.apps[i].appId).toBe('foo.net');
+		expect(c.apps[i].appName).toBe('foo.net');
+		expect(c.apps[i].appVersion).toBe('123');
+		expect(logger.warn).toHaveBeenCalledWith('Could not fill in package values for app %s, because: %s', 'bar', expect.anything());
 	});
 
 
-	test ('config(): override server', () => {
+	test ('config(): override server', async () => {
 		Object.assign(yargs.argv, {
-			'dataserver-host': 'lalaland',
-			'dataserver-port': 1234
+			'dataserver': 'http://lalaland:1234/'
 		});
 		jest.doMock('yargs', () => yargs);
 
@@ -298,75 +290,19 @@ describe ('lib/config', () => {
 
 		const env = {
 			development: {
-				server: 'http://localhost:80012/dataserver2/',
+				server: 'http://localhost:8012/dataserver2/',
 				port: 8081,
 				apps: [{ package: 'bar' }]
 			},
 		};
 
-		return Promise.resolve(config(env))
-			.then(c => {
-				expect(c).toEqual(expect.any(Object));
-
-				expect(c.server).not.toBe(env.development.server);
-				expect(c.server).toBe('http://lalaland:1234/dataserver2/');
-			});
+		const c = await Promise.resolve(config(env));
+		expect(c).toEqual(expect.any(Object));
+		expect(c.server).toBe('http://lalaland:1234/');
 	});
 
 
-	test ('config(): override server (host only)', () => {
-		Object.assign(yargs.argv, {
-			'dataserver-host': 'lalaland',
-		});
-		jest.doMock('yargs', () => yargs);
-
-		const {config} = require('../config');
-
-		const env = {
-			development: {
-				server: 'http://localhost:80012/dataserver2/',
-				port: 8081,
-				apps: [{ package: 'bar' }]
-			},
-		};
-
-		return Promise.resolve(config(env))
-			.then(c => {
-				expect(c).toEqual(expect.any(Object));
-
-				expect(c.server).not.toBe(env.development.server);
-				expect(c.server).toBe('http://lalaland:80012/dataserver2/');
-			});
-	});
-
-
-	test ('config(): override server (port only)', () => {
-		Object.assign(yargs.argv, {
-			'dataserver-port': 1234
-		});
-		jest.doMock('yargs', () => yargs);
-
-		const {config} = require('../config');
-
-		const env = {
-			development: {
-				server: 'http://localhost:80012/dataserver2/',
-				port: 8081,
-				apps: [{ package: 'bar' }]
-			},
-		};
-
-		return Promise.resolve(config(env))
-			.then(c => {
-				expect(c).toEqual(expect.any(Object));
-
-				expect(c.server).not.toBe(env.development.server);
-				expect(c.server).toBe('http://localhost:1234/dataserver2/');
-			});
-	});
-
-
-	test ('config(): prints environment warning (only once)', () => {
+	test ('config(): prints environment warning (only once)', async () => {
 		delete yargs.argv.env;
 		jest.doMock('yargs', () => yargs);
 		jest.doMock('bar/package.json', () => ({}), {virtual: true});
@@ -378,15 +314,11 @@ describe ('lib/config', () => {
 			},
 		};
 
-		return Promise.resolve(config(env))
-			.then(() => {
-				expect(logger.warn).toHaveBeenCalledWith('In default "development" mode. Consider --env "production" or setting NODE_ENV="production"');
-				logger.warn.mockClear();
-				return config(env);
-			})
-			.then(() => {
-				expect(logger.warn).not.toHaveBeenCalled();
-			});
+		await Promise.resolve(config(env));
+		expect(logger.warn).toHaveBeenCalledWith('In default "development" mode. Consider --env "production" or setting NODE_ENV="production"');
+		logger.warn.mockClear();
+		config(env);
+		expect(logger.warn).not.toHaveBeenCalled();
 	});
 
 
@@ -395,6 +327,10 @@ describe ('lib/config', () => {
 		const context = {
 			username: 'foobar',
 			pong: {Site: 'some.site.nextthought.com'},
+			protocol: 'https',
+			headers: {
+				host: 'some.site.nextthought.com:8080',
+			},
 			[ServiceStash]: {}, //fake service
 			[SERVER_REF]: {
 				get: (rel) => (rel === 'SiteBrand') ? {'brand_name': 'Testing'} : void 0
@@ -438,7 +374,7 @@ describe ('lib/config', () => {
 	test ('clientConfig(): blows up if no service on context', async () => {
 		const {clientConfig} = require('../config');
 		const context = {};
-		const config = {};
+		const config = {server: '/dataserver2/'};
 
 		const out = await clientConfig(config, context.username, 'abc', context);
 

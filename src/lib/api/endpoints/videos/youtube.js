@@ -1,5 +1,5 @@
 'use strict';
-const url = require('url');
+
 const util = require('util');
 
 const memored = require('memored');
@@ -100,12 +100,10 @@ exports.default = function register (api, config) {
 
 
 	function origin (uri) {
-		return Object.assign(url.parse(uri), {
-			hash: null,
-			search: null,
-			query: null,
-			pathname: null,
-			path: null
+		return Object.assign(new URL(uri), {
+			hash: '',
+			search: '',
+			pathname: '',
 		}).format();
 	}
 };

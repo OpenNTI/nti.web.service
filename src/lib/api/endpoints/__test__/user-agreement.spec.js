@@ -137,7 +137,7 @@ describe ('lib/api/endpoints/user-agreement', () => {
 			'user-agreement': 'https://some-fallback-url'
 		};
 
-		const request = {request: 1};
+		const request = {request: 1, protocol: 'http', headers: {host: 'localhost:8082'}};
 
 		return resolveUrl(request, config, server)
 			.then(o => {
@@ -165,7 +165,7 @@ describe ('lib/api/endpoints/user-agreement', () => {
 			'user-agreement': 'https://some-fallback-url'
 		};
 
-		const request = {request: 1};
+		const request = {request: 1, protocol: 'http', headers: {host: 'localhost:8082'}};
 
 		return resolveUrl(request, config, server)
 			.then(o => {
@@ -178,18 +178,17 @@ describe ('lib/api/endpoints/user-agreement', () => {
 	});
 
 
-	test ('resolveUrl(): error case', () => {
+	test ('resolveUrl(): error case', async () => {
 		const {resolveUrl} = require('../user-agreement');
-		const request = {request: 1};
+		const request = {request: 1, protocol: 'http', headers: {host: 'localhost:8082'}};
 		const server = {
 			get: jest.fn(x => x === 'logon.ping' ? Promise.resolve() : void x)
 		};
 
 
-		return resolveUrl(request, null, server)
-			.then(o => {
-				expect(o).toEqual(undefined);
-			});
+		const o = await resolveUrl(request, null, server);
+
+		expect(o).toEqual(undefined);
 	});
 
 
@@ -289,7 +288,7 @@ describe ('lib/api/endpoints/user-agreement', () => {
 	});
 
 
-	test ('handleFetchResponse(): normal', () => {
+	test ('handleFetchResponse(): normal', async () => {
 		const {handleFetchResponse} = require('../user-agreement');
 
 		const responseMock = {
@@ -297,14 +296,12 @@ describe ('lib/api/endpoints/user-agreement', () => {
 			text: jest.fn(() => 'response-text')
 		};
 
-		return Promise.resolve(handleFetchResponse(responseMock))
-			.then(text => {
-				expect(text).toEqual('response-text');
-			});
+		const text = await Promise.resolve(handleFetchResponse(responseMock));
+		expect(text).toEqual('response-text');
 	});
 
 
-	test ('handleFetchResponse(): redirect', () => {
+	test ('handleFetchResponse(): redirect', async () => {
 		const {handleFetchResponse} = require('../user-agreement');
 
 		const get = jest.fn(x => x === 'location' ? 'new-place' : void x);
@@ -321,22 +318,22 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		});
 
 
-		return Promise.resolve(handleFetchResponse({ok: false, status: 302, headers: {get}}))
-			.then(text => {
-				expect(text).toEqual('response-text');
-			});
+		const text = await Promise.resolve(handleFetchResponse({ ok: false, status: 302, headers: { get } }));
+		expect(text).toEqual('response-text');
 	});
 
 
-	test ('handleFetchResponse(): error', () => {
+	test ('handleFetchResponse(): error', async () => {
 		const {handleFetchResponse} = require('../user-agreement');
 
-		return Promise.resolve(handleFetchResponse({ok: false, status: 404, statusText: 'Not Found'}))
-			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
-			.catch(er => {
-				expect(er).toEqual(expect.any(Error));
-				expect(er.message).toEqual('Not Found');
-			});
+		try {
+			await Promise.resolve(handleFetchResponse({ ok: false, status: 404, statusText: 'Not Found' }));
+			return await Promise.reject('Unexpected Promise fulfillment. It should have failed.');
+		}
+		catch (er) {
+			expect(er).toEqual(expect.any(Error));
+			expect(er.message).toEqual('Not Found');
+		}
 
 	});
 

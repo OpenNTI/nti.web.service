@@ -100,12 +100,11 @@ describe('Test End-to-End', () => {
 			}],
 		};
 
-		return request(await getApp(config))
+		const res = await request(await getApp(config))
 			.get('/test')
-			.expect(301)
-			.expect(res => {
-				expect(res.headers.location).toEqual('/test/');
-			});
+			.expect(301);
+
+		expect(res.headers.location).toEqual('/test/');
 	});
 
 
@@ -116,12 +115,11 @@ describe('Test End-to-End', () => {
 			basepath: '/app/'
 		}],};
 
-		return request(await getApp(config))
+		const res = await request(await getApp(config))
 			.get('/app/')
-			.expect(302)
-			.expect(res => {
-				expect(res.headers.location).toEqual('/app/login/');
-			});
+			.expect(302);
+
+		expect(res.headers.location).toEqual('/app/login/');
 	});
 
 
@@ -132,15 +130,15 @@ describe('Test End-to-End', () => {
 			basepath: '/app/'
 		}],};
 
-		return request(await getApp(config))
+		const res = await request(await getApp(config))
 			.get('/app/')
 			//This isn't testing the authentication itself, just the behavior of "authenticated" or not...
 			.set('Authentication', 'foobar')
-			.expect(200)
-			.expect(res => {
-				expect(res.text).toEqual(expect.stringContaining('Page! at /app/'));
-				expect(res.text).toEqual(expect.stringContaining('branding":{"brand_name":"yo-brand"}'));
-			});
+			.expect(200);
+
+		expect(res.text).toEqual(expect.stringContaining('Page! at /app/'));
+		expect(res.text).toEqual(expect.stringContaining('branding":{"brand_name":"yo-brand"}'));
+
 	});
 
 
@@ -152,13 +150,13 @@ describe('Test End-to-End', () => {
 			basepath: '/test/'
 		}],};
 
-		return request(await getApp(config))
+		const res = await request(await getApp(config))
 			.get('/test/')
-			.expect(200)
-			.expect(res => {
-				expect(res.text).toEqual(expect.stringContaining('Page! at /test/'));
-				expect(res.text).toEqual(expect.stringContaining('branding":{"brand_name":"yo-brand"}'));
-			});
+			.expect(200);
+
+		expect(res.text).toEqual(expect.stringContaining('Page! at /test/'));
+		expect(res.text).toEqual(expect.stringContaining('branding":{"brand_name":"yo-brand"}'));
+
 	});
 
 
@@ -170,24 +168,24 @@ describe('Test End-to-End', () => {
 			basepath: '/test/'
 		}],};
 
-		return request(await getApp(config))
+		const res = await request(await getApp(config))
 			.get('/test/')
-			.expect(200)
-			.expect(res => {
-				expect(res.text).toEqual(expect.stringContaining('Page! at /test/'));
-				//Variables injected:
-				expect(res.text).toEqual(expect.stringContaining('<title>yo-brand</title>'));
-				expect(res.text).not.toEqual(expect.stringContaining('"<[cfg:missing]>"'));
-				expect(res.text).toEqual(expect.stringContaining('"MissingConfigValue[missing]"'));
-				//Rerooting should not effect absolute urls:
-				expect(res.text).toEqual(expect.stringContaining('<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react.js"></script>'));
-				//Rerooted Urls:
-				expect(res.text).not.toEqual(expect.stringContaining('"/resources/images/favicon.ico"'));
-				expect(res.text).toEqual(expect.stringContaining('"/test/resources/images/favicon.ico"'));
+			.expect(200);
 
-				//Check against double printing
-				expect(res.text.match(/\$AppConfig/g).length).toEqual(1);
-			});
+		expect(res.text).toEqual(expect.stringContaining('Page! at /test/'));
+		//Variables injected:
+		expect(res.text).toEqual(expect.stringContaining('<title>yo-brand</title>'));
+		expect(res.text).not.toEqual(expect.stringContaining('"<[cfg:missing]>"'));
+		expect(res.text).toEqual(expect.stringContaining('"MissingConfigValue[missing]"'));
+		//Rerooting should not effect absolute urls:
+		expect(res.text).toEqual(expect.stringContaining('<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react.js"></script>'));
+		//Rerooted Urls:
+		expect(res.text).not.toEqual(expect.stringContaining('"/resources/images/favicon.ico"'));
+		expect(res.text).toEqual(expect.stringContaining('"/test/resources/images/favicon.ico"'));
+
+		//Check against double printing
+		expect(res.text.match(/\$AppConfig/g).length).toEqual(1);
+
 	});
 
 
@@ -199,16 +197,15 @@ describe('Test End-to-End', () => {
 			basepath: '/test/'
 		}],};
 
-		return request(await getApp(config))
+		const res = await request(await getApp(config))
 			.get('/test/')
-			.expect(200)
-			.expect(res => {
+			.expect(200);
 
-				expect(res.headers).not.toHaveProperty('etag');
-				expect(res.headers).toHaveProperty('cache-control', 'no-cache, no-store, must-revalidate, max-age=0');
-				expect(res.headers).toHaveProperty('expires', 'Thu, 01 Jan 1970 00:00:00 GMT');
-				expect(res.headers).toHaveProperty('pragma', 'no-cache');
-			});
+		expect(res.headers).not.toHaveProperty('etag');
+		expect(res.headers).toHaveProperty('cache-control', 'no-cache, no-store, must-revalidate, max-age=0');
+		expect(res.headers).toHaveProperty('expires', 'Thu, 01 Jan 1970 00:00:00 GMT');
+		expect(res.headers).toHaveProperty('pragma', 'no-cache');
+
 	});
 
 
@@ -220,18 +217,16 @@ describe('Test End-to-End', () => {
 			basepath: '/test/'
 		}],};
 
-		return request(await getApp(config))
+		const res = await request(await getApp(config))
 			.get('/test/existing.asset')
-			.expect(200)
-			.expect(res => {
+			.expect(200);
 
-				expect(res.headers).not.toHaveProperty('expires');
-				expect(res.headers).not.toHaveProperty('pragma');
+		expect(res.headers).not.toHaveProperty('expires');
+		expect(res.headers).not.toHaveProperty('pragma');
 
-				expect(res.headers).toHaveProperty('etag');
-				expect(res.headers).toHaveProperty('last-modified');
-				expect(res.headers).toHaveProperty('cache-control', 'public, max-age=3600');
-			});
+		expect(res.headers).toHaveProperty('etag');
+		expect(res.headers).toHaveProperty('last-modified');
+		expect(res.headers).toHaveProperty('cache-control', 'public, max-age=3600');
 	});
 
 
@@ -285,12 +280,11 @@ describe('Test End-to-End', () => {
 			basepath: '/test/'
 		}],};
 
-		return request(await getApp(config))
+		const res = await request(await getApp(config))
 			.get('/test/foo.500')
-			.expect(500)
-			.expect(r => {
-				expect(r.text).toEqual(expect.stringContaining('App Error Page'));
-			});
+			.expect(500);
+
+		expect(res.text).toEqual(expect.stringContaining('App Error Page'));
 	});
 
 
@@ -302,14 +296,13 @@ describe('Test End-to-End', () => {
 			basepath: '/test/'
 		}],};
 
-		return request(await getApp(config))
+		const res = await request(await getApp(config))
 			.get('/test/foo.throw')
-			.expect(500)
-			.expect(r => {
-				expect(logger.error).toHaveBeenCalled();
-				expect(r.text).toEqual(expect.stringContaining('<title>Error</title>'));
-				expect(r.text).toEqual(expect.stringContaining('<div id="error">An error occurred.</div>'));
-			});
+			.expect(500);
+
+		expect(logger.error).toHaveBeenCalled();
+		expect(res.text).toEqual(expect.stringContaining('<title>Error</title>'));
+		expect(res.text).toEqual(expect.stringContaining('<div id="error">An error occurred.</div>'));
 	});
 
 
@@ -320,13 +313,12 @@ describe('Test End-to-End', () => {
 			basepath: '/test/'
 		}],};
 
-		return request(await getApp(config))
+		const res = await request(await getApp(config))
 			.get('/test/')
 			.set('Authentication', 'tos')
-			.expect(302)
-			.expect(res => {
-				expect(res.headers.location).toEqual('/test/onboarding/tos');
-			});
+			.expect(302);
+
+		expect(res.headers.location).toEqual('/test/onboarding/tos');
 	});
 
 
@@ -375,13 +367,12 @@ describe('Test End-to-End', () => {
 				basepath: '/test/'
 			}],};
 
-			return request(await getApp(config))
+			const res = await request(await getApp(config))
 				.get('/test/?q=aa')
 				.set('Authentication', user)
-				.expect(302)
-				.expect(res => {
-					expect(res.headers.location).toEqual('/test/');
-				});
+				.expect(302);
+
+			expect(res.headers.location).toEqual('/test/');
 		});
 
 
@@ -392,13 +383,12 @@ describe('Test End-to-End', () => {
 				basepath: '/test/'
 			}],};
 
-			return request(await getApp(config))
+			const res = await request(await getApp(config))
 				.get('/test/?q=library/courses/available/invitations/accept/token')
 				.set('Authentication', user)
-				.expect(302)
-				.expect(res => {
-					expect(res.headers.location).toEqual('/test/catalog/code/token');
-				});
+				.expect(302);
+
+			expect(res.headers.location).toEqual('/test/catalog/code/token');
 		});
 
 
@@ -409,13 +399,12 @@ describe('Test End-to-End', () => {
 				basepath: '/test/'
 			}],};
 
-			return request(await getApp(config))
+			const res = await request(await getApp(config))
 				.get('/test/?q=/app/library/courses/available/NTI-CourseInfo-iLed_iLed_001/...')
 				.set('Authentication', user)
-				.expect(302)
-				.expect(res => {
-					expect(res.headers.location).toEqual('/test/catalog/item/NTI-CourseInfo-iLed_iLed_001/...');
-				});
+				.expect(302);
+
+			expect(res.headers.location).toEqual('/test/catalog/item/NTI-CourseInfo-iLed_iLed_001/...');
 		});
 
 
@@ -426,13 +415,12 @@ describe('Test End-to-End', () => {
 				basepath: '/test/'
 			}],};
 
-			return request(await getApp(config))
+			const res = await request(await getApp(config))
 				.get('/test/?q=library/availablecourses/IUB0YWc6bmV4dHRob3VnaHQuY29tLDIwMTEtMTA6TlRJLUNvdXJzZUluZm8tU3ByaW5nMjAxNV9MU1REXzExNTM/redeem/code')
 				.set('Authentication', user)
-				.expect(302)
-				.expect(res => {
-					expect(res.headers.location).toEqual('/test/catalog/redeem/NTI-CourseInfo-Spring2015_LSTD_1153/code');
-				});
+				.expect(302);
+
+			expect(res.headers.location).toEqual('/test/catalog/redeem/NTI-CourseInfo-Spring2015_LSTD_1153/code');
 		});
 
 
@@ -443,13 +431,12 @@ describe('Test End-to-End', () => {
 				basepath: '/test/'
 			}],};
 
-			return request(await getApp(config))
+			const res = await request(await getApp(config))
 				.get('/test/?q=/app/id/unknown-OID-0x021cae18:5573657273:V0wWNR9EBJd')
 				.set('Authentication', user)
-				.expect(302)
-				.expect(res => {
-					expect(res.headers.location).toEqual('/test/object/unknown-OID-0x021cae18%3A5573657273%3AV0wWNR9EBJd');
-				});
+				.expect(302);
+
+			expect(res.headers.location).toEqual('/test/object/unknown-OID-0x021cae18%3A5573657273%3AV0wWNR9EBJd');
 		});
 
 
@@ -460,13 +447,12 @@ describe('Test End-to-End', () => {
 				basepath: '/test/'
 			}],};
 
-			return request(await getApp(config))
+			const res = await request(await getApp(config))
 				.get('/test/?q=object/ntiid/tag:nextthought.com,2011-10:unknown-OID-0x021cae18:5573657273:V0wWNR9EBJd')
 				.set('Authentication', user)
-				.expect(302)
-				.expect(res => {
-					expect(res.headers.location).toEqual('/test/object/unknown-OID-0x021cae18%3A5573657273%3AV0wWNR9EBJd');
-				});
+				.expect(302);
+
+			expect(res.headers.location).toEqual('/test/object/unknown-OID-0x021cae18%3A5573657273%3AV0wWNR9EBJd');
 		});
 	}
 

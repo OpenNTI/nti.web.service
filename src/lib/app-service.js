@@ -73,7 +73,7 @@ function setupInterface (config) {
 		const {protocol, headers: { host }} = req;
 		const server = new URL(config.server, `${protocol}://${host}`).toString();
 		const {datacache, interface: _interface} = dataserver({...config, server});
-		logger.info('DataServer end-point: %s', 'config.server');
+		logger.debug('DataServer end-point: %s', config.server);
 		req[SERVER_REF] = _interface;
 		req[DATACACHE] = datacache;
 		next();

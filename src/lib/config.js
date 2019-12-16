@@ -270,7 +270,7 @@ async function clientConfig (baseConfig, username, appId, context) {
 	//unsafe to send to client raw... lets reduce it to essentials
 	const app = (baseConfig.apps || []).reduce((r, o) => r || o.appId === appId && o, null) || {};
 	const {pong = {}} = context;
-	const userId = ({AuthenticatedUserID: x}) => x || null;
+	const userId = ({AuthenticatedUserId: x}) => x || null;
 	const cfg = {
 		...baseConfig,
 		...app,

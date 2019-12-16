@@ -40,7 +40,7 @@ function middleware (err, req, res, next) {
 	}
 
 	const errorid = uuid();
-	logger.error(errorid, err);
+	logger.error(errorid, err, '\n    Headers: ' + JSON.stringify(req.headers, null, '\t'));
 
 	const data = {
 		err,

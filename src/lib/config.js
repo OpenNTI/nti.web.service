@@ -234,7 +234,7 @@ async function loadBranding (context) {
 
 		return siteBrand;
 	} catch (e) {
-		logger.warn('Could not load SiteBrand: %s', JSON.stringify(e, null, '\t'));
+		logger.warn(`Could not load SiteBrand: ${JSON.stringify(e.error || e)}\n\t-> Request Headers: ${JSON.stringify({...context.headers, cookie: void 0})}`);
 		return null;
 	}
 }

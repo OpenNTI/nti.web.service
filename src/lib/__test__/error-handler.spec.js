@@ -60,7 +60,7 @@ describe('lib/error-handler (middleware)', () => {
 		jest.spyOn(res, 'send');
 		jest.spyOn(res, 'status');
 
-		expect(() => fn(new Error(), null, res, next)).not.toThrow(); //and .toEqual(undefined)
+		expect(() => fn(new Error(), {}, res, next)).not.toThrow(); //and .toEqual(undefined)
 
 		expect(next).not.toHaveBeenCalled();
 	});
@@ -83,7 +83,7 @@ describe('lib/error-handler (middleware)', () => {
 		const err = {toJSON: () => json};
 		jest.spyOn(err, 'toJSON');
 
-		expect(() => fn(err, null, res, next)).not.toThrow(); //and .toEqual(undefined)
+		expect(() => fn(err, {}, res, next)).not.toThrow(); //and .toEqual(undefined)
 
 		expect(err.toJSON).toHaveBeenCalledOnce;
 		expect(res.status).toHaveBeenCalledOnce;
@@ -106,7 +106,7 @@ describe('lib/error-handler (middleware)', () => {
 
 		const err = {abc: '123'};
 
-		expect(() => fn(err, null, res, next)).not.toThrow(); //and .toEqual(undefined)
+		expect(() => fn(err, {}, res, next)).not.toThrow(); //and .toEqual(undefined)
 
 		expect(res.status).toHaveBeenCalledOnce;
 		expect(res.status).toHaveBeenCalledWith(500);
@@ -126,7 +126,7 @@ describe('lib/error-handler (middleware)', () => {
 		jest.spyOn(res, 'send');
 		jest.spyOn(res, 'status');
 
-		expect(() => fn('aborted', null, res, next)).not.toThrow(); //and .toEqual(undefined)
+		expect(() => fn('aborted', {}, res, next)).not.toThrow(); //and .toEqual(undefined)
 
 		expect(res.status).toHaveBeenCalledWith(204);
 		expect(res.end).toHaveBeenCalled();
@@ -147,7 +147,7 @@ describe('lib/error-handler (middleware)', () => {
 		jest.spyOn(res, 'render');
 		jest.spyOn(res, 'status');
 
-		expect(() => handler.middleware(null, null, res, next)).not.toThrow(); //and .toEqual(undefined)
+		expect(() => handler.middleware(null, {}, res, next)).not.toThrow(); //and .toEqual(undefined)
 
 		expect(res.status).toHaveBeenCalledWith(500);
 		expect(res.render).toHaveBeenCalledWith('error', { contact: '', err: 'Unknown Error', errorid: 'some-guid', message: ''});

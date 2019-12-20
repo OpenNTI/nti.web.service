@@ -1,7 +1,6 @@
 'use strict';
 const {TOS_NOT_ACCEPTED, getLink} = require('@nti/lib-interfaces');
 
-const {getStackOrMessage} = require('../../utils');
 const {SERVER_REF} = require('../../constants');
 
 const tagPattern = tag => new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)</' + tag + '>', 'ig');
@@ -11,7 +10,6 @@ const SHOULD_REDIRECT = RegExp.prototype.test.bind(/\/view/);
 const self = Object.assign(exports, {
 	default: register,
 	copyRequestHeaders,
-	handleError,
 	handleFetch,
 	handleFetchResponse,
 	processAndRespond,
@@ -22,27 +20,31 @@ const self = Object.assign(exports, {
 
 
 function register (api, config) {
-	const handler = self.getServeUserAgreement(config);
-	api.get(/^\/user-agreement/, async (req, res) => void await handler(req, res));
+	api.get(/^\/user-agreement/, self.getServeUserAgreement(config));
 }
 
 
 function getServeUserAgreement (config) {
 
-	return function handler (req, res) {
+	return async function handler (req, res,next) {
 		const server = req[SERVER_REF];
+		const fetcher = self.handleFetch(req, res);
+		const send = self.processAndRespond(res);
 
-		return self.resolveUrl(req, config, server)
+		try {
+			const o = await self.resolveUrl(req, config, server);
+			if (!o) {
+				throw new Error('No user-agreement url set');
+			}
 
-			.then(o => o || Promise.reject(new Error('No user-agreement url set')))
-
-			.then(self.handleFetch(req, res))
-
-			.then(self.handleFetchResponse)
-
-			.then(self.processAndRespond(res))
-
-			.catch(self.handleError(res));
+			send(
+				await self.handleFetchResponse(
+					await fetcher(o)
+				)
+			);
+		} catch(e) {
+			next(e);
+		}
 	};
 }
 
@@ -80,15 +82,6 @@ function copyRequestHeaders (req) {
 	}
 
 	return headers;
-}
-
-
-function handleError (response) {
-	return (e) => {
-		response.status(500);
-		response.json({body: getStackOrMessage(e)});
-		response.end();
-	};
 }
 
 

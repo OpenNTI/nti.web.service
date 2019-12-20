@@ -53,14 +53,13 @@ describe ('lib/api/endpoints/user-agreement', () => {
 	});
 
 
-	test ('getServeUserAgreement(): handler behavior', () => {
+	test ('getServeUserAgreement(): handler behavior', async () => {
 		const context = {context: 1};
 		const UA = require('../user-agreement');
 		stub(UA, 'resolveUrl', () => Promise.resolve({url: '...', context}));
 		stub(UA, 'handleFetch', () => () => Promise.resolve({fetch: 1}));
 		stub(UA, 'handleFetchResponse', () => Promise.resolve({fetchResponse: 1}));
 		stub(UA, 'processAndRespond', () => () => Promise.resolve({processed: 1}));
-		stub(UA, 'handleError', () => {});
 
 		const config = {config: 1};
 		const server = {server: 1};
@@ -69,34 +68,32 @@ describe ('lib/api/endpoints/user-agreement', () => {
 
 		const req = {req: 1, [SERVER_REF]: server};
 		const res = {res: 1};
-		return handler(req, res)
-			.then(() => {
-				expect(UA.resolveUrl).toHaveBeenCalledTimes(1);
-				expect(UA.resolveUrl).toHaveBeenCalledWith(req, config, server);
+		const next = jest.fn();
 
-				expect(UA.handleFetch).toHaveBeenCalledTimes(1);
-				expect(UA.handleFetch).toHaveBeenCalledWith(req, res);
+		await handler(req, res, next);
 
-				expect(UA.handleFetchResponse).toHaveBeenCalledTimes(1);
-				expect(UA.handleFetchResponse).toHaveBeenCalledWith({fetch: 1});
+		expect(UA.resolveUrl).toHaveBeenCalledTimes(1);
+		expect(UA.resolveUrl).toHaveBeenCalledWith(req, config, server);
 
-				expect(UA.processAndRespond).toHaveBeenCalledTimes(1);
-				expect(UA.processAndRespond).toHaveBeenCalledWith(res);
+		expect(UA.handleFetch).toHaveBeenCalledTimes(1);
+		expect(UA.handleFetch).toHaveBeenCalledWith(req, res);
 
-				expect(UA.handleError).toHaveBeenCalledTimes(1);
-				expect(UA.handleError).toHaveBeenCalledWith(res);
-			});
+		expect(UA.handleFetchResponse).toHaveBeenCalledTimes(1);
+		expect(UA.handleFetchResponse).toHaveBeenCalledWith({fetch: 1});
+
+		expect(UA.processAndRespond).toHaveBeenCalledTimes(1);
+		expect(UA.processAndRespond).toHaveBeenCalledWith(res);
+
+		expect(next).toHaveBeenCalledTimes(0);
 	});
 
 
-	test ('getServeUserAgreement(): handler rejects if no url', () => {
+	test ('getServeUserAgreement(): handler rejects if no url', async () => {
 		const UA = require('../user-agreement');
-		const errorHandler = jest.fn();
 		stub(UA, 'resolveUrl', () => Promise.resolve());
 		stub(UA, 'handleFetch', () => () => Promise.resolve({fetch: 1}));
 		stub(UA, 'handleFetchResponse', () => Promise.resolve({fetchResponse: 1}));
 		stub(UA, 'processAndRespond', () => () => Promise.resolve({processed: 1}));
-		stub(UA, 'handleError', () => errorHandler);
 
 		const config = {config: 1};
 		const server = {server: 1};
@@ -105,18 +102,16 @@ describe ('lib/api/endpoints/user-agreement', () => {
 
 		const req = {req: 1};
 		const res = {res: 1};
-		return handler(req, res)
-			.then(() => {
-				expect(UA.handleError).toHaveBeenCalledTimes(1);
-				expect(UA.handleError).toHaveBeenCalledWith(res);
+		const next = jest.fn();
 
-				expect(errorHandler).toHaveBeenCalledTimes(1);
-				expect(errorHandler).toHaveBeenCalledWith(expect.any(Error));
-			});
+		await handler(req, res, next);
+
+		expect(next).toHaveBeenCalledTimes(1);
+		expect(next).toHaveBeenCalledWith(expect.any(Error));
 	});
 
 
-	test ('resolveUrl(): server defines url', () => {
+	test ('resolveUrl(): server defines url', async () => {
 		const {resolveUrl} = require('../user-agreement');
 
 		const pong = {
@@ -139,19 +134,18 @@ describe ('lib/api/endpoints/user-agreement', () => {
 
 		const request = {request: 1, protocol: 'http', headers: {host: 'localhost:8082'}};
 
-		return resolveUrl(request, config, server)
-			.then(o => {
-				expect(o.url).toEqual(expect.any(String));
-				expect(o.url.startsWith(config.server)).toBeTruthy();
+		const o = await resolveUrl(request, config, server);
 
-				expect(o.context).toBeTruthy();
-				expect(o.context).toHaveProperty('headers');
-				expect(o.context).toHaveProperty('redirect');
-			});
+		expect(o.url).toEqual(expect.any(String));
+		expect(o.url.startsWith(config.server)).toBeTruthy();
+
+		expect(o.context).toBeTruthy();
+		expect(o.context).toHaveProperty('headers');
+		expect(o.context).toHaveProperty('redirect');
 	});
 
 
-	test ('resolveUrl(): config fallback url', () => {
+	test ('resolveUrl(): config fallback url', async () => {
 		const {resolveUrl} = require('../user-agreement');
 
 		const pong = {};
@@ -167,14 +161,13 @@ describe ('lib/api/endpoints/user-agreement', () => {
 
 		const request = {request: 1, protocol: 'http', headers: {host: 'localhost:8082'}};
 
-		return resolveUrl(request, config, server)
-			.then(o => {
-				expect(o.url).toEqual(expect.any(String));
-				expect(o.url.startsWith(config.server)).toBeFalsy();
-				expect(o.url.startsWith(config['user-agreement'])).toBeTruthy();
+		const o = await resolveUrl(request, config, server)
 
-				expect(o.context).toEqual(undefined);
-			});
+		expect(o.url).toEqual(expect.any(String));
+		expect(o.url.startsWith(config.server)).toBeFalsy();
+		expect(o.url.startsWith(config['user-agreement'])).toBeTruthy();
+
+		expect(o.context).toEqual(undefined);
 	});
 
 
@@ -220,36 +213,6 @@ describe ('lib/api/endpoints/user-agreement', () => {
 			expect(req.headers).toHaveProperty(header);
 		}
 
-	});
-
-
-	test ('handleError(): returns a handler', () => {
-		const {handleError} = require('../user-agreement');
-
-		const handler = handleError();
-		expect(handler).toEqual(expect.any(Function));
-	});
-
-
-	test ('handleError(): handler sets status to 500, sends a json body, and closes the request', () => {
-		const {handleError} = require('../user-agreement');
-		const responseMock = {
-			status: jest.fn(),
-			json: jest.fn(),
-			end: jest.fn()
-		};
-		const handler = handleError(responseMock);
-
-		handler({error: 1});
-
-		expect(responseMock.status).toHaveBeenCalledTimes(1);
-		expect(responseMock.status).toHaveBeenCalledWith(500);
-
-		expect(responseMock.json).toHaveBeenCalledTimes(1);
-		expect(responseMock.json).toHaveBeenCalledWith({body: {error: 1}});
-
-		expect(responseMock.end).toHaveBeenCalledTimes(1);
-		expect(responseMock.end).toHaveBeenCalledWith();
 	});
 
 

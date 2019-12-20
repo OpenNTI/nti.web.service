@@ -77,7 +77,10 @@ async function readFile (uri, resolveOrderForRelativePaths = [process.cwd()]) {
 					p = path.resolve(p, uri);
 				}
 				logger.debug('Attempting file at: %s', p);
-				return await read(p);
+				return {
+					text: (await read(p)).toString('utf8'),
+					path: new URL(p, 'file://').toString()
+				};
 			} catch (e) {
 				logger.debug('File not available at: %s\n\t%s', p, e.message);
 			}
@@ -86,13 +89,76 @@ async function readFile (uri, resolveOrderForRelativePaths = [process.cwd()]) {
 		return Promise.reject('File Failed to load: ' + uri);
 	}
 
-
+	logger.debug('Fetching file: %s', uri);
 	const response = await fetch(uri);
 	if (!response.ok) {
 		return Promise.reject(response.statusText);
 	}
 
-	return response.text();
+	return {
+		text: await response.text(),
+		path: uri.toString()
+	};
+}
+
+
+function parsePlacement (placement) {
+	const [tagName, ix] = placement.toLowerCase().split('|');
+	const sort = parseInt(ix, 10);
+	return {
+		tagName,
+		sort: ix == null || !isFinite(sort) ? null : sort
+	};
+}
+
+
+async function loadTemplateInjections (cfg, relativeAnchor) {
+	const {templateInjections: injections} = cfg;
+	const m = (cfg.templateInjections = {});
+
+	if (!Array.isArray(injections)) {
+		return;
+	}
+
+	const max = {};
+
+	for (let i of injections) {
+		const {tagName, sort} = parsePlacement(i.placement);
+		i.content = (await readFile(new URL(i.source, relativeAnchor))).text;
+		i.sort = sort;
+
+		max[tagName] = Math.max(sort, max[tagName] || -Infinity);
+
+		const bin = m[tagName] = m[tagName] || [];
+		bin.push(i);
+	}
+
+	const combine = a => !a.length ? null : a.reduce((o, i) => (
+		o.sources.push(i.source),
+		o.content += i.content,
+		o
+	), {
+		sources: [],
+		content: ''
+	});
+
+
+	for (const [tagName, bin] of Object.entries(m)) {
+		for (const i of bin) {
+			if (i.sort == null) {
+				i.sort = ++max[tagName];
+			}
+		}
+		bin.sort((a,b) => a.sort - b.sort);
+		const out = m[tagName] = {
+			start: combine(bin.filter(x => x.sort >= 0)),
+			end: combine(bin.filter(x => x.sort < 0))
+		};
+
+		for (const [k,v] of Object.entries(out)) {
+			if (!v) {delete out[k];}
+		}
+	}
 }
 
 
@@ -103,13 +169,17 @@ async function loadConfig () {
 
 	try {
 		const uri = new URL(opt.config, 'file://');
-		const text = await readFile(uri, [
+		const {text, path: relativeAnchor} = await readFile(uri, [
 			path.resolve(process.cwd()),
 			path.resolve(__dirname),
 			path.resolve(__dirname, '../../config/env.json.example')
 		]);
 
-		return self.config(JSON.parse(text));
+		const out = self.config(JSON.parse(text));
+
+		await loadTemplateInjections(out, relativeAnchor);
+
+		return out;
 	}
 	catch(e) {
 		logger.error(e);
@@ -290,7 +360,7 @@ async function clientConfig (baseConfig, username, appId, context) {
 
 	logger.info('Generating config for %s (SiteID: %s)', context.hostname, pong.Site);
 
-	const blacklist = [/webpack.*/i, 'port', 'protocol', 'address', 'apps', 'site-mappings', 'package', 'keys'];
+	const blacklist = [/webpack.*/i, 'templateInjections', 'port', 'protocol', 'address', 'apps', 'site-mappings', 'package', 'keys'];
 
 	for (let blocked of blacklist) {
 		if (typeof blocked === 'string') {

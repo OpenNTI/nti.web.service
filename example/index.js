@@ -1,4 +1,5 @@
 'use strict';
+const {join} = require('path');
 
 exports = module.exports = {
 
@@ -9,8 +10,8 @@ exports = module.exports = {
 
 			assets: __dirname,
 
-			render (base, req, clientConfig) {
-				return 'Page! at ' + base + clientConfig.html;
+			renderContent ({html, url, basepath}) {
+				return 'Page! at ' + join(basepath, url) + html;
 			}
 		};
 

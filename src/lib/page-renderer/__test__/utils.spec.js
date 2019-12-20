@@ -125,7 +125,7 @@ describe('lib/page-renderer (utils)', () => {
 			[dfile]: 'dev-template'
 		};
 
-		const args = [assets, {template: dfile}];
+		const args = [assets, void 0, {template: dfile}];
 
 		expect(fn).toEqual(expect.any(Function));
 

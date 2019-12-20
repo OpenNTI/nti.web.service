@@ -73,7 +73,8 @@ function setupInterface (config) {
 		const {protocol, headers: { host }} = req;
 		const server = new URL(config.server, `${protocol}://${host}`).toString();
 		const {datacache, interface: _interface} = dataserver({...config, server});
-		logger.debug('DataServer end-point: %s', config.server);
+		logger.debug('DataServer end-point: %s', server);
+		req.config = config;
 		req[SERVER_REF] = _interface;
 		req[DATACACHE] = datacache;
 		next();
@@ -169,7 +170,6 @@ async function setupClient (client, {config, server, restartRequest}) {
 		clientRoute.use(cacheBuster);
 
 		clientRoute.use(FORCE_ERROR_ROUTE, self.forceError);
-
 
 		registerEndPoints(clientRoute, flatConfig);
 

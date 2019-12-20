@@ -13,7 +13,7 @@
     "fix": "lib-scripts fix",
     "prepack": "npm test",
     "release": "lib-scripts release",
-    "start": "node ./src --protocol http --config ./config/env.json.example",
+    "start": "node ./src --config ./config/env.json.example",
     "test": "lib-scripts test"
   },
   "repository": {

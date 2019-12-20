@@ -45,117 +45,103 @@ describe ('lib/config', () => {
 	});
 
 
-	test ('loadConfig(): missing config', () => {
+	test ('loadConfig(): missing config', async () => {
 		yargs.argv.config = void 0;
 		jest.doMock('yargs', () => yargs);
 		const {loadConfig} = require('../config');
 
-		return loadConfig()
-			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
-			.catch(e => {
-				expect(e).toBe('No config file specified');
-			});
+		await expect(loadConfig()).rejects.toBe('No config file specified');
 	});
 
 
-	test ('loadConfig(): local config file (not found)', () => {
+	test ('loadConfig(): local config file (not found)', async () => {
 		yargs.argv.config = './mock/config.json';
-		const readFileSync = jest.fn(() => { throw new Error('File Not Found');});
+		const stat = jest.fn((f, fn) => fn(null, {isDirectory: () => true}));
+		const readFile = jest.fn((f,fn) => fn(new Error('File Not Found')));
 		jest.doMock('yargs', () => yargs);
-		jest.doMock('fs', () => ({readFileSync}));
+		jest.doMock('fs', () => ({readFile, stat}));
 		const {loadConfig} = require('../config');
 
-		return loadConfig()
-			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
-			.catch(e => {
-				expect(e).toBe('Config Failed to load');
-				expect(readFileSync).toHaveBeenCalledTimes(3);
-			});
+		await expect(loadConfig()).rejects.toBe('File Failed to load: /mock/config.json');
+		expect(readFile).toHaveBeenCalledTimes(3);
 	});
 
 
-	test ('loadConfig(): file:// local config file (not found)', () => {
+	test ('loadConfig(): file:// local config file (not found)', async () => {
 		yargs.argv.config = 'file:///mock/config.json';
-		const readFileSync = jest.fn(() => { throw new Error('File Not Found');});
+		const stat = jest.fn((f, fn) => fn(null, {isDirectory: () => true}));
+		const readFile = jest.fn((f,fn) => fn(new Error('File Not Found')));
 		jest.doMock('yargs', () => yargs);
-		jest.doMock('fs', () => ({readFileSync}));
+		jest.doMock('fs', () => ({readFile, stat}));
 		const {loadConfig} = require('../config');
 
-		return loadConfig()
-			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
-			.catch(e => {
-				expect(e).toBe('Config Failed to load');
-				expect(readFileSync).toHaveBeenCalledTimes(3);
-			});
+		await expect(loadConfig()).rejects.toBe('File Failed to load: /mock/config.json');
+		expect(readFile).toHaveBeenCalledTimes(3);
 	});
 
 
-	test ('loadConfig(): local config file', () => {
+	test ('loadConfig(): local config file', async () => {
 		yargs.argv.config = './mock/config.json';
-		const readFileSync = jest.fn(() => '{"mock": true}');
+		const stat = jest.fn((f, fn) => fn(null, {isDirectory: () => true}));
+		const readFile = jest.fn((f,fn) => fn(null, '{"mock": true}'));
 		jest.doMock('yargs', () => yargs);
-		jest.doMock('fs', () => ({readFileSync}));
+		jest.doMock('fs', () => ({readFile, stat}));
 
 		const cfg = require('../config');
-		stub(cfg, 'config');
+		stub(cfg, 'config', () => ({}));
 
-		return cfg.loadConfig()
-			.then(() => {
-				expect(cfg.config).toHaveBeenCalledTimes(1);
-				expect(cfg.config).toHaveBeenCalledWith({mock: true});
-			});
+		await cfg.loadConfig();
+
+		expect(cfg.config).toHaveBeenCalledTimes(1);
+		expect(cfg.config).toHaveBeenCalledWith({mock: true});
 	});
 
 
-	test ('loadConfig(): file:// local config file', () => {
+	test ('loadConfig(): file:// local config file', async () => {
 		yargs.argv.config = 'file:///mock/config.json';
-		const readFileSync = jest.fn(() => '{"mock": true}');
+		const stat = jest.fn((f, fn) => fn(null, {isDirectory: () => true}));
+		const readFile = jest.fn((f,fn) => fn(null, '{"mock": true}'));
 		jest.doMock('yargs', () => yargs);
-		jest.doMock('fs', () => ({readFileSync}));
+		jest.doMock('fs', () => ({readFile, stat}));
 
 		const cfg = require('../config');
-		stub(cfg, 'config');
+		stub(cfg, 'config', () => ({}));
 
-		return cfg.loadConfig()
-			.then(() => {
-				expect(cfg.config).toHaveBeenCalledTimes(1);
-				expect(cfg.config).toHaveBeenCalledWith({mock: true});
-			});
+		await cfg.loadConfig();
+
+		expect(cfg.config).toHaveBeenCalledTimes(1);
+		expect(cfg.config).toHaveBeenCalledWith({mock: true});
+
 	});
 
 
-	test ('loadConfig(): remote config file (bad)', () => {
+	test ('loadConfig(): remote config file (bad)', async () => {
 		yargs.argv.config = 'http://lala/mock/config.json';
 		jest.doMock('yargs', () => yargs);
 
 		stub(global, 'fetch', () => Promise.resolve({ok: false, statusText: 'Not Found'}));
 
 		const cfg = require('../config');
-		stub(cfg, 'config');
+		stub(cfg, 'config', () => ({}));
 
-		return cfg.loadConfig()
-			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
-			.catch(e => {
-				expect(cfg.config).not.toHaveBeenCalled();
-				expect(e).toBe('Not Found');
-			});
+		await expect(cfg.loadConfig()).rejects.toBe('Not Found');
+		expect(cfg.config).not.toHaveBeenCalled();
 	});
 
 
-	test ('loadConfig(): remote config file (good)', () => {
+	test ('loadConfig(): remote config file (good)', async () => {
 		yargs.argv.config = 'http://lala/mock/config.json';
 		jest.doMock('yargs', () => yargs);
-		const o = {};
-		stub(global, 'fetch', () => Promise.resolve({ok: true, json: () => o}));
+		const o = '{"my-config": true}';
+		stub(global, 'fetch', () => Promise.resolve({ok: true, text: () => o}));
 
 		const cfg = require('../config');
-		stub(cfg, 'config');
+		stub(cfg, 'config', () => ({}));
 
-		return cfg.loadConfig()
-			.then(() => {
-				expect(cfg.config).toHaveBeenCalledTimes(1);
-				expect(cfg.config).toHaveBeenCalledWith(o);
-			});
+		await cfg.loadConfig();
+
+		expect(cfg.config).toHaveBeenCalledTimes(1);
+		expect(cfg.config).toHaveBeenCalledWith(expect.objectContaining({'my-config': true}));
 	});
 
 
@@ -193,20 +179,18 @@ describe ('lib/config', () => {
 	});
 
 
-	test ('config(): fails if no env specified', () => {
+	test ('config(): fails if no env specified', async () => {
 		yargs.argv.env = 'nope';
 		jest.doMock('yargs', () => yargs);
 		const {config} = require('../config');
 
-		return config({})
-			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
-			.catch(e => {
-				expect(e.reason).toBe('Missing Environment key');
-			});
+		await expect(config({})).rejects.toEqual(expect.objectContaining({
+			reason: 'Missing Environment key'
+		}));
 	});
 
 
-	test ('config(): fails if no apps are configured.', () => {
+	test ('config(): fails if no apps are configured.', async () => {
 		yargs.argv.env = 'test';
 		jest.doMock('yargs', () => yargs);
 		const {config} = require('../config');
@@ -216,15 +200,13 @@ describe ('lib/config', () => {
 			test: {}
 		};
 
-		return config(env)
-			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
-			.catch(e => {
-				expect(e.reason).toBe('No apps key in config.');
-			});
+		await expect(config(env)).rejects.toEqual(expect.objectContaining({
+			reason: 'No apps key in config.'
+		}));
 	});
 
 
-	test ('config(): fails a bad port is configured.', () => {
+	test ('config(): fails a bad port is configured.', async () => {
 		const {config} = require('../config');
 
 		const env = {
@@ -233,11 +215,9 @@ describe ('lib/config', () => {
 			},
 		};
 
-		return config(env)
-			.then(() => Promise.reject('Unexpected Promise fulfillment. It should have failed.'))
-			.catch(e => {
-				expect(e.reason).toBe('Bad Port');
-			});
+		await expect(config(env)).rejects.toEqual(expect.objectContaining({
+			reason: 'Bad Port'
+		}));
 	});
 
 

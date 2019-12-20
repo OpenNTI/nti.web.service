@@ -21,6 +21,10 @@ const self = Object.assign(exports, {
 	getFaviconFromBranding
 });
 
+const promisify = fn => (...args) => new Promise((f,r) => fn(...args, (er, v) => er ? r(er) : f(v)));
+const stat = promisify(fs.stat);
+const read = promisify(fs.readFile);
+
 
 const opt = yargs
 	.options({
@@ -61,43 +65,51 @@ const opt = yargs
 	.usage('WebApp Instance')
 	.argv;
 
+async function readFile (uri, resolveOrderForRelativePaths = [process.cwd()]) {
+	if (uri.protocol === 'file:') {
+		uri = uri.toString().replace(/^file:\/\//i, '');
+
+		logger.debug('Attempting to resolve & load file with path: %s', uri);
+
+		for (let p of resolveOrderForRelativePaths) {
+			try {
+				if ((await stat(p)).isDirectory()) {
+					p = path.resolve(p, uri);
+				}
+				logger.debug('Attempting file at: %s', p);
+				return await read(p);
+			} catch (e) {
+				logger.debug('File not available at: %s\n\t%s', p, e.message);
+			}
+		}
+
+		return Promise.reject('File Failed to load: ' + uri);
+	}
+
+
+	const response = await fetch(uri);
+	if (!response.ok) {
+		return Promise.reject(response.statusText);
+	}
+
+	return response.text();
+}
+
 
 async function loadConfig () {
 	if (!opt.config) {
 		return Promise.reject('No config file specified');
 	}
 
-	let uri = new URL(opt.config, 'file://');
-	if (uri.protocol === 'file:') {
-		uri = opt.config.replace(/^file:\/\//i, '');
-
-		const resolveOrder = [
-			path.resolve(process.cwd(), uri),
-			path.resolve(__dirname, uri),
-			path.resolve(__dirname, '../../config/env.json.example')
-		];
-
-		logger.debug('Attempting to resolve & load config with path: %s', uri);
-		for (let p of resolveOrder) {
-			try {
-				logger.debug('Attempting Config at: %s', p);
-				return self.config(JSON.parse(fs.readFileSync(p)));
-			} catch (e) {
-				logger.debug('Config not available at: %s\n\t%s', p, e.message);
-			}
-		}
-
-		return Promise.reject('Config Failed to load');
-	}
-
 	try {
-		const response = await fetch(opt.config);
-		if (!response.ok) {
-			return Promise.reject(response.statusText);
-		}
-		const body = await response.json();
+		const uri = new URL(opt.config, 'file://');
+		const text = await readFile(uri, [
+			path.resolve(process.cwd()),
+			path.resolve(__dirname),
+			path.resolve(__dirname, '../../config/env.json.example')
+		]);
 
-		return self.config(body);
+		return self.config(JSON.parse(text));
 	}
 	catch(e) {
 		logger.error(e);

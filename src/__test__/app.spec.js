@@ -90,6 +90,35 @@ describe('Test End-to-End', () => {
 	});
 
 
+	test ('Injections', async () => {
+		const {getApp} = require('../worker');
+		const config = {
+			...commonConfigs,
+			apps: [{
+				package: '../example',
+				basepath: '/test/',
+				public: true
+			}],
+
+			templateInjections: {
+				head: {
+					start: {content: 'A'},
+					end: {content: 'B'},
+				},
+				body: {
+					start: {content: 'C'}
+				}
+			}
+		};
+
+		const res = await request(await getApp(config))
+			.get('/test/');
+
+		expect(res.text).toMatch(/<head[^>]*>A/);
+		expect(res.text).toMatch(/B<\/head>/);
+		expect(res.text).toMatch(/<body[^>]*>C/);
+	});
+
 	test ('Route File redirects to Route Dir', async () => {
 		const {getApp} = require('../worker');
 		const config = {

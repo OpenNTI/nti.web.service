@@ -15,6 +15,7 @@ const self = Object.assign(exports, {
 	clientConfig,
 	config,
 	loadConfig,
+	loadTemplateInjections,
 	nodeConfigAsClientConfig,
 	showFlags,
 	loadBranding,
@@ -159,6 +160,8 @@ async function loadTemplateInjections (cfg, relativeAnchor) {
 			if (!v) {delete out[k];}
 		}
 	}
+
+	return m;
 }
 
 

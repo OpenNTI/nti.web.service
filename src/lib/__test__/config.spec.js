@@ -145,6 +145,41 @@ describe ('lib/config', () => {
 	});
 
 
+	test ('loadTemplateInjections() parses order', async () => {
+		const stat = jest.fn((f, fn) => fn(null, {isDirectory: () => true}));
+		const readFile = jest.fn((f,fn) => fn(null, `mock: ${f}`));
+		jest.doMock('yargs', () => yargs);
+		jest.doMock('fs', () => ({readFile, stat}));
+
+		const cfg = require('../config');
+
+		const i = {
+			templateInjections: [
+				{
+					placement: 'head',
+					source: 'head-pre'
+				},
+				{
+					placement: 'head|-1',
+					source: 'head-post'
+				},
+				{
+					placement: 'body',
+					source: 'body-pre'
+				}
+			],
+		};
+
+		const m = await cfg.loadTemplateInjections(i, new URL('file:///'));
+
+		expect(m).toBe(i.templateInjections);
+
+		expect(m.head.start).toEqual(expect.objectContaining({content: 'mock: /head-pre'}));
+		expect(m.head.end).toEqual(expect.objectContaining({content: 'mock: /head-post'}));
+		expect(m.body.start).toEqual(expect.objectContaining({content: 'mock: /body-pre'}));
+	});
+
+
 	test ('showFlags(): no flags', () => {
 		const {showFlags} = require('../config');
 		const o = {};

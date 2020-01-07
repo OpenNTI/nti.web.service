@@ -4,6 +4,19 @@ const path = require('path');
 
 jest.mock('fs');
 
+const HTML = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+</head>
+<body>
+<!--html:server-values-->
+</body>
+</html>
+`;
+
 describe('lib/page-renderer (utils)', () => {
 
 	beforeEach(() => {
@@ -24,6 +37,44 @@ describe('lib/page-renderer (utils)', () => {
 		jest.resetModules();
 	});
 
+
+	test.only ('applyInjections()', () => {
+		const {applyInjections} = require('../utils');
+
+		const data = {
+			data: HTML
+		};
+
+		const injeections = {
+			head: {
+				start: {content: 'A'},
+				end: {content: 'B'},
+			},
+			body: {
+				start: {content: 'C'}
+			}
+		};
+
+		expect(data).not.toHaveProperty('injected');
+
+		const result = applyInjections(data, injeections);
+
+		expect(result).toEqual(data.injected);
+		expect(result).toMatchInlineSnapshot(`
+		"
+		<!DOCTYPE html>
+		<html lang=\\"en\\">
+		<head>A
+			<meta charset=\\"UTF-8\\">
+			<title>Document</title>
+		B</head>
+		<body>C
+		<!--html:server-values-->
+		</body>
+		</html>
+		"
+		`);
+	});
 
 	test ('getTemplate (io failure)', async () => {
 		const fs = require('fs');

@@ -104,5 +104,6 @@ async function getTemplate (assets, injections, devmode) {
 
 
 Object.assign(exports, {
+	applyInjections,
 	getTemplate,
 });

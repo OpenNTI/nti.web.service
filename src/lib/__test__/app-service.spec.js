@@ -7,6 +7,7 @@ describe('lib/app-service', () => {
 	const cacheBusterMiddleware = Object.freeze({});
 	const corsMiddleware = Object.freeze({});
 	const foMiddleware = Object.freeze({});
+	const unsupportedMiddleware = Object.freeze({});
 
 	let apiProxyMiddleware;
 	let cookieParserConstructor;
@@ -65,19 +66,20 @@ describe('lib/app-service', () => {
 
 		jest.doMock('cookie-parser', () => cookieParserConstructor);
 		jest.doMock('express-request-language', () => expressRequestLanguageMock);
-		jest.doMock('../logger', () => logger);
 		jest.doMock('express', () => expressMock);
 		jest.doMock('serve-static', () => staticMock);
 		jest.doMock('@nti/lib-interfaces', () => ({default: setupDataserver}));
 		jest.doMock('../api', () => registerEndPoints);
 		jest.doMock('../api-proxy', () => apiProxyMiddleware);
 		jest.doMock('../compress', () => ({attachToExpress: compressionMock}));
-		jest.doMock('../no-cache', () => cacheBusterMiddleware);
 		jest.doMock('../cors', () => corsMiddleware);
 		jest.doMock('../frame-options', () => foMiddleware);
-		jest.doMock('../session', () => sessionMock);
+		jest.doMock('../logger', () => logger);
+		jest.doMock('../no-cache', () => cacheBusterMiddleware);
 		jest.doMock('../renderer', () => ({getPageRenderer}));
 		jest.doMock('../restart', () => ({restartOnModification}));
+		jest.doMock('../session', () => sessionMock);
+		jest.doMock('../unsupported', () => () => unsupportedMiddleware);
 
 		if (!process.send) {
 			process.send = function fakeSend () {};
@@ -192,10 +194,11 @@ describe('lib/app-service', () => {
 		expect(service.setupClient).toHaveBeenCalledWith(config.apps[0], expect.any(Object));
 		expect(service.setupClient).toHaveBeenCalledWith(config.apps[1], expect.any(Object));
 
-		expect(server.use).toHaveBeenCalledTimes(3);
+		expect(server.use).toHaveBeenCalledTimes(4);
 		expect(server.use).toHaveBeenCalledWith('cookie-parser-middleware');
 		expect(server.use).toHaveBeenCalledWith(corsMiddleware);
 		expect(server.use).toHaveBeenCalledWith(foMiddleware);
+		expect(server.use).toHaveBeenCalledWith(expect.any(RegExp), unsupportedMiddleware);
 
 		expect(apiProxyMiddleware).not.toHaveBeenCalled();
 	});
@@ -230,10 +233,11 @@ describe('lib/app-service', () => {
 		expect(service.setupClient).toHaveBeenCalledWith(config.apps[0], expect.any(Object));
 		expect(service.setupClient).toHaveBeenCalledWith(config.apps[1], expect.any(Object));
 
-		expect(server.use).toHaveBeenCalledTimes(3);
+		expect(server.use).toHaveBeenCalledTimes(4);
 		expect(server.use).toHaveBeenCalledWith('cookie-parser-middleware');
 		expect(server.use).toHaveBeenCalledWith(corsMiddleware);
 		expect(server.use).toHaveBeenCalledWith(foMiddleware);
+		expect(server.use).toHaveBeenCalledWith(expect.any(RegExp), unsupportedMiddleware);
 	});
 
 	test ('setupApplication(): with proxy, dev mode does not attach logger middleware', async () => {
@@ -266,11 +270,12 @@ describe('lib/app-service', () => {
 		expect(service.setupClient).toHaveBeenCalledWith(config.apps[0], expect.any(Object));
 		expect(service.setupClient).toHaveBeenCalledWith(config.apps[1], expect.any(Object));
 
-		expect(server.use).toHaveBeenCalledTimes(4);
+		expect(server.use).toHaveBeenCalledTimes(5);
 		expect(server.use).toHaveBeenCalledWith('*', 'apiProxyMiddleware');
 		expect(server.use).toHaveBeenCalledWith('cookie-parser-middleware');
 		expect(server.use).toHaveBeenCalledWith(corsMiddleware);
 		expect(server.use).toHaveBeenCalledWith(foMiddleware);
+		expect(server.use).toHaveBeenCalledWith(expect.any(RegExp), unsupportedMiddleware);
 
 		expect(apiProxyMiddleware).toHaveBeenCalledTimes(1);
 		expect(apiProxyMiddleware).toHaveBeenCalledWith(config);

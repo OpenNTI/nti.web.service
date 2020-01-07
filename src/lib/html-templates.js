@@ -1,9 +1,14 @@
 'use strict';
 const fs = require('fs');
 
+const {applyInjections} = require('./page-renderer/utils');
+
+const configValues = /<(!\[CDATA)?\[cfg:([^\]]*)\]\]?>/igm;
+const fillInValues = (cfg, orginal, _, prop) => cfg[prop] === null ? '' : (cfg[prop] || `MissingConfigValue[${prop}]`);
+
 module.exports = exports = function (filePath, options, callback) {
 
-	const configValues = /\{([^}\n\s]*)\}/igm;
+	const runtimeValues = /\{([a-z0-9]*)\}/igm;
 	const injectValues = (cfg, original, prop) =>
 		prop in cfg ? cfg[prop] : `MissingTemplateValue: ${original}`;
 
@@ -12,9 +17,17 @@ module.exports = exports = function (filePath, options, callback) {
 			return callback(err);
 		}
 
+		content = content.toString();
+
+		if (options.templateInjections) {
+			content = applyInjections({data: content}, options.templateInjections);
+		}
+
 		// this is an extremely simple template engine
-		const rendered = content.toString()
-			.replace(configValues, injectValues.bind(this, options));
+		const rendered = content
+			.replace(runtimeValues, injectValues.bind(this, options))
+			//support config placeholders too
+			.replace(configValues, fillInValues.bind(this, options));
 
 		return callback(null, rendered);
 	}

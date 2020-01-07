@@ -17,6 +17,7 @@ const Session = require('./session');
 const logger = require('./logger');
 const cors = require('./cors');
 const frameOptions = require('./frame-options');
+const unsupportedPage = require('./unsupported');
 const {getPageRenderer} = require('./renderer');
 const {restartOnModification} = require('./restart');
 const {send} = require('./utils');
@@ -94,6 +95,7 @@ async function setupApplication (server, config, restartRequest) {
 	server.use(cors);
 	server.use(frameOptions);
 	// server.use(cacheBuster);
+	server.use(/.*\/unsupported(\.html)?/, unsupportedPage(config));
 
 	if (config.mode !== 'development') {
 		logger.attachToExpress(server);

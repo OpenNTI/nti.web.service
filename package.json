@@ -1,6 +1,6 @@
 {
   "name": "@nti/web-service",
-  "version": "1.31.0-alpha",
+  "version": "1.31.0",
   "description": "Service to serve and manage client UIs",
   "main": "src/index.js",
   "bin": {

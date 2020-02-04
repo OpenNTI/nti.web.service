@@ -294,7 +294,7 @@ function config (env) {
 	}
 
 	if (serverOverride) {
-		c.server = new URL(serverOverride, c.server).toString();
+		c.server = c.server ? new URL(serverOverride, c.server).toString() : serverOverride;
 	}
 
 	return c;

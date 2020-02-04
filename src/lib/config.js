@@ -43,8 +43,7 @@ const opt = yargs
 			desc: 'Protocol to use (proxy or http)'
 		},
 		'dataserver': {
-			desc: 'Override DataServer uri',
-			default: '/dataserver2/'
+			desc: 'Override DataServer uri'
 		},
 		'webpack': {
 			desc: 'Prefix with "no-" to force the dev-server off.',

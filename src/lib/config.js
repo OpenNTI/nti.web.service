@@ -349,6 +349,7 @@ async function clientConfig (baseConfig, username, appId, context) {
 	const server = new URL(baseConfig.server, publicHost);
 
 	const cfg = {
+		branded: true, //defaults to true
 		...baseConfig,
 		...app,
 		//hide internal hostnames... If we ever host server & web-app on different domains this will have to be removed.
@@ -376,8 +377,10 @@ async function clientConfig (baseConfig, username, appId, context) {
 		}
 	}
 
-	cfg.branding = await loadBranding(context);
-	cfg.favicon = getFaviconFromBranding(cfg.branding);
+	if (cfg.branded) {
+		cfg.branding = await loadBranding(context);
+		cfg.favicon = getFaviconFromBranding(cfg.branding);
+	}
 
 	if (cfg.branding && cfg.branding['brand_name']) {
 		cfg.siteTitle = cfg.branding['brand_name'];

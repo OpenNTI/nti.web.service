@@ -456,6 +456,53 @@ describe ('lib/config', () => {
 			expect(context[SERVER_REF].get).toHaveBeenCalledTimes(1);
 		});
 
+		test('adds site branding to the config (app overrides global disabled)', async () => {
+			const {clientConfig} = require('../config');
+			const siteBrand = {};
+
+			const context = getContext(siteBrand);
+			const config = getConfig();
+
+			config.branded = false;
+			config.apps[0].branded = true;
+
+			const out = await clientConfig(config, context.username, 'abc', context);
+
+			expect(out.config.branding).toBe(siteBrand);
+			expect(context[SERVER_REF].get).toHaveBeenCalledWith('SiteBrand', context);
+			expect(context[SERVER_REF].get).toHaveBeenCalledTimes(1);
+		});
+
+		test('branding disabled (app overrides global enabled)', async () => {
+			const {clientConfig} = require('../config');
+			const siteBrand = {};
+
+			const context = getContext(siteBrand);
+			const config = getConfig();
+
+			config.apps[0].branded = false;
+
+			const out = await clientConfig(config, context.username, 'abc', context);
+
+			expect(out.config.branding).toBeUndefined();
+			expect(context[SERVER_REF].get).not.toHaveBeenCalled();
+		});
+
+		test('branding disabled (global)', async () => {
+			const {clientConfig} = require('../config');
+			const siteBrand = {};
+
+			const context = getContext(siteBrand);
+			const config = getConfig();
+
+			config.branded = false;
+
+			const out = await clientConfig(config, context.username, 'abc', context);
+
+			expect(out.config.branding).toBeUndefined();
+			expect(context[SERVER_REF].get).not.toHaveBeenCalled();
+		});
+
 		test('site branding fails', async () => {
 			const {clientConfig} = require('../config');
 

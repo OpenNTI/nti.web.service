@@ -16,6 +16,7 @@ const cacheBuster = require('./no-cache');
 const Session = require('./session');
 const logger = require('./logger');
 const cors = require('./cors');
+const {htmlAcceptsFilter} = require('./accepts-filters');
 const frameOptions = require('./frame-options');
 const unsupportedPage = require('./unsupported');
 const {getPageRenderer} = require('./renderer');
@@ -174,6 +175,8 @@ async function setupClient (client, {config, server, restartRequest}) {
 		clientRoute.use(FORCE_ERROR_ROUTE, self.forceError);
 
 		registerEndPoints(clientRoute, flatConfig);
+
+		clientRoute.use(htmlAcceptsFilter);
 
 		if (flatConfig.public !== true) {
 			//Session manager...

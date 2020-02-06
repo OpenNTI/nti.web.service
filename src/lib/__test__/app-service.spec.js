@@ -9,6 +9,7 @@ describe('lib/app-service', () => {
 	const foMiddleware = Object.freeze({});
 	const unsupportedMiddleware = Object.freeze({});
 
+	let htmlAcceptsFilterMiddleware;
 	let apiProxyMiddleware;
 	let cookieParserConstructor;
 	let compressionMock;
@@ -35,6 +36,7 @@ describe('lib/app-service', () => {
 		stub(logger, 'info');
 		stub(logger, 'warn');
 
+		htmlAcceptsFilterMiddleware = jest.fn(() => 'htmlAcceptsFilterMiddleware');
 		apiProxyMiddleware = jest.fn(() => 'apiProxyMiddleware');
 		cookieParserConstructor = jest.fn(() => 'cookie-parser-middleware');
 		expressRequestLanguageMock = jest.fn(() => 'express-request-language-middleware');
@@ -64,11 +66,13 @@ describe('lib/app-service', () => {
 		getPageRenderer = jest.fn(() => 'page-renderer');
 		registerEndPoints = jest.fn();
 
+
 		jest.doMock('cookie-parser', () => cookieParserConstructor);
 		jest.doMock('express-request-language', () => expressRequestLanguageMock);
 		jest.doMock('express', () => expressMock);
 		jest.doMock('serve-static', () => staticMock);
 		jest.doMock('@nti/lib-interfaces', () => ({default: setupDataserver}));
+		jest.doMock('../accepts-filters', () => ({htmlAcceptsFilter: htmlAcceptsFilterMiddleware}));
 		jest.doMock('../api', () => registerEndPoints);
 		jest.doMock('../api-proxy', () => apiProxyMiddleware);
 		jest.doMock('../compress', () => ({attachToExpress: compressionMock}));
@@ -378,12 +382,13 @@ describe('lib/app-service', () => {
 			expect.objectContaining({mockConfig: true, package: 'test-app1', basepath: '/basepath1/'}),
 		);
 
-		expect(clientApp.use.mock.calls.length).toEqual(7);
+		expect(clientApp.use.mock.calls.length).toEqual(8);
 		expect(clientApp.use).toHaveBeenCalledWith('staticMiddleware');
 		expect(clientApp.use).toHaveBeenCalledWith('express-request-language-middleware');
 		expect(clientApp.use).toHaveBeenCalledWith(cacheBusterMiddleware);
 		expect(clientApp.use).toHaveBeenCalledWith(tagger);
 		expect(clientApp.use).toHaveBeenCalledWith(service.FORCE_ERROR_ROUTE, service.forceError);
+		expect(clientApp.use).toHaveBeenCalledWith(htmlAcceptsFilterMiddleware);
 		expect(clientApp.use).toHaveBeenCalledWith(service.ANONYMOUS_ROUTES, expect.any(Function));
 		expect(clientApp.use).toHaveBeenCalledWith(service.AUTHENTICATED_ROUTES, expect.any(Function));
 
@@ -463,12 +468,13 @@ describe('lib/app-service', () => {
 			expect.objectContaining({mockConfig: true, package: 'test-app2', basepath: '/basepath/'}),
 		);
 
-		expect(clientApp.use.mock.calls.length).toEqual(7);
+		expect(clientApp.use.mock.calls.length).toEqual(8);
 		expect(clientApp.use).toHaveBeenCalledWith('staticMiddleware');
 		expect(clientApp.use).toHaveBeenCalledWith('express-request-language-middleware');
 		expect(clientApp.use).toHaveBeenCalledWith(cacheBusterMiddleware);
 		expect(clientApp.use).toHaveBeenCalledWith(tagger);
 		expect(clientApp.use).toHaveBeenCalledWith(service.FORCE_ERROR_ROUTE, service.forceError);
+		expect(clientApp.use).toHaveBeenCalledWith(htmlAcceptsFilterMiddleware);
 		expect(clientApp.use).toHaveBeenCalledWith(service.ANONYMOUS_ROUTES, expect.any(Function));
 		expect(clientApp.use).toHaveBeenCalledWith(service.AUTHENTICATED_ROUTES, expect.any(Function));
 

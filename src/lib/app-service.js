@@ -73,12 +73,18 @@ function forceError () {
 function setupInterface (config) {
 	return (req, res, next) => {
 		const {protocol, headers: { host }} = req;
-		const server = new URL(config.server, `${protocol}://${host}`).toString();
+		const origin = `${protocol}://${host}/`;
+		const server = new URL(config.server || '', origin).toString();
+
 		const {datacache, interface: _interface} = dataserver({...config, server});
-		logger.debug('DataServer end-point: %s', server);
 		req.config = config;
-		req[SERVER_REF] = _interface;
-		req[DATACACHE] = datacache;
+		if (config.server) {
+			logger.debug('DataServer end-point: %s', server);
+			req[SERVER_REF] = _interface;
+			req[DATACACHE] = datacache;
+		} else {
+			logger.debug('DataServer end-point: disabled');
+		}
 		next();
 	};
 }

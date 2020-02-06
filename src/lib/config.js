@@ -303,9 +303,7 @@ function config (env) {
 async function loadBranding (context) {
 	try {
 		const serverRef = context[SERVER_REF];
-		const siteBrand = await serverRef.get('SiteBrand', context);
-
-		return siteBrand;
+		return serverRef && serverRef.get('SiteBrand', context);
 	} catch (e) {
 		logger.warn(`Could not load SiteBrand: ${JSON.stringify(e.error || e)}\n\t-> Request Headers: ${JSON.stringify({...context.headers, cookie: void 0})}`);
 		return null;

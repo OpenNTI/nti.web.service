@@ -32,7 +32,9 @@ function getPageRenderer ({appId, basepath, assets, devmode} = {}, config, rende
 			]);
 
 			const configForClient = await clientConfig(config, req.username, appId, req);
-			configForClient.html += datacache.getForContext(req).serialize();
+			if (datacache) {
+				configForClient.html += datacache.getForContext(req).serialize();
+			}
 
 			//Final render
 			const content = await Promise.resolve(render(basepath, req, configForClient));

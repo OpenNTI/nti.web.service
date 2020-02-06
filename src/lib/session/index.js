@@ -170,7 +170,9 @@ module.exports = exports = class SessionManager {
 
 	async anonymousMiddleware (basepath, context, res, next) {
 		const {[SERVER_REF]: server} = context;
-		await server.ping(void 0, context).catch(() => {});
+		if (server) {
+			await server.ping(void 0, context).catch(() => {});
+		}
 		next();
 	}
 

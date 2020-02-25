@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const yargs = require('yargs');
-const uuid = require('uuid/v4');
+const uuid = require('uuid');
 const {ServiceStash} = require('@nti/lib-interfaces');
 
 const {SERVER_REF} = require('./constants');
@@ -280,7 +280,7 @@ function config (env) {
 		}
 
 		if (!a.appId) {
-			a.appId = a.basepath || uuid();
+			a.appId = a.basepath || uuid.v4();
 		}
 	}
 

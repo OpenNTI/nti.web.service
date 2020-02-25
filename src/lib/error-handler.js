@@ -1,5 +1,5 @@
 'use strict';
-const uuid = require('uuid/v4');
+const uuid = require('uuid');
 
 const logger = require('./logger');
 
@@ -39,7 +39,7 @@ function middleware (err, req, res, next) {
 		err = err.stack;
 	}
 
-	const errorid = uuid();
+	const errorid = uuid.v4();
 	logger.error(errorid, err, '\n    Headers: ' + JSON.stringify(req.headers, null, '\t'));
 
 	const data = {

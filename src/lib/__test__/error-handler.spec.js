@@ -18,7 +18,7 @@ describe('lib/error-handler (middleware)', () => {
 		stub(logger, 'info');
 		stub(logger, 'warn');
 
-		jest.doMock('uuid/v4', () => () => 'some-guid');
+		jest.doMock('uuid', () => ({ v4:() => 'some-guid' }));
 	});
 
 

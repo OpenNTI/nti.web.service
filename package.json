@@ -11,7 +11,6 @@
     "check": "lib-scripts check",
     "clean": "lib-scripts clean",
     "fix": "lib-scripts fix",
-    "prepack": "npm test",
     "release": "lib-scripts release",
     "start": "DEBUG=NodeService:* node ./src --config ./config/env.json.example --protocol http",
     "test": "lib-scripts test"

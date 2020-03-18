@@ -41,7 +41,9 @@ function getServeUserAgreement (config) {
 
 			send(
 				await self.handleFetchResponse(
-					await fetcher(o)
+					await fetcher(o),
+					o.context,
+					o.isInternal,
 				)
 			);
 		} catch(e) {
@@ -64,17 +66,20 @@ async function resolveUrl (request, config, server) {
 		url = new URL(url || fallbackUrl, host).toString();
 	}
 
+	const isInternal = x => x?.startsWith(host);
+
 	logger.debug('Resolved url: %s', url);
 
 	//If there is a @NamedLink we have to pass request context,
 	//if its an external link like docs.google... blank out context.
-	const context = (url && url.startsWith(host))
+	const context = isInternal(url)
 		? {headers: self.copyRequestHeaders(request), redirect: 'manual'}
 		: void 0;
 
 	logger.debug('Passing request context? ', context ? 'yes' : 'no');
 
 	return !url ? void 0 : {
+		isInternal,
 		url,
 		context
 	};
@@ -108,12 +113,13 @@ function handleFetch (request, response) {
 }
 
 
-function handleFetchResponse (response) {
+function handleFetchResponse (response, context, isInternal = () => false) {
 	if (!response.ok) {
 		if (response.status >= 300 && response.status < 400) {
 			const redirectURL = response.headers.get('location');
 			logger.debug('Attempting to follow redirect %s...', redirectURL);
-			return fetch(redirectURL).then(handleFetchResponse);
+			return fetch(redirectURL, isInternal(redirectURL) ? context : void 0)
+				.then(r => handleFetchResponse(r, context, isInternal));
 		}
 
 		logger.debug('Response NOT OK: %o', response);

@@ -45,7 +45,7 @@ describe ('lib/api/endpoints/user-agreement', () => {
 	});
 
 
-	test ('getServeUserAgreement(): returns a handler fuction', () => {
+	test ('getServeUserAgreement(): returns a handler function', () => {
 		const UA = require('../user-agreement');
 
 		const handler = UA.getServeUserAgreement();
@@ -79,7 +79,7 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		expect(UA.handleFetch).toHaveBeenCalledWith(req, res);
 
 		expect(UA.handleFetchResponse).toHaveBeenCalledTimes(1);
-		expect(UA.handleFetchResponse).toHaveBeenCalledWith({fetch: 1});
+		expect(UA.handleFetchResponse).toHaveBeenCalledWith({ fetch: 1 }, {context: 1}, undefined);
 
 		expect(UA.processAndRespond).toHaveBeenCalledTimes(1);
 		expect(UA.processAndRespond).toHaveBeenCalledWith(res);
@@ -161,7 +161,7 @@ describe ('lib/api/endpoints/user-agreement', () => {
 
 		const request = {request: 1, protocol: 'http', headers: {host: 'localhost:8082'}};
 
-		const o = await resolveUrl(request, config, server)
+		const o = await resolveUrl(request, config, server);
 
 		expect(o.url).toEqual(expect.any(String));
 		expect(o.url.startsWith(config.server)).toBeFalsy();

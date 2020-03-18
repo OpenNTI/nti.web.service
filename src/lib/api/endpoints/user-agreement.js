@@ -1,7 +1,9 @@
 'use strict';
+//TOS_NOT_ACCEPTED = content.initial_tos_page
 const {TOS_NOT_ACCEPTED, getLink} = require('@nti/lib-interfaces');
 
-const {SERVER_REF} = require('../../constants');
+const { SERVER_REF } = require('../../constants');
+const logger = require('../../logger').get('api:user-agreement');
 
 const tagPattern = tag => new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)</' + tag + '>', 'ig');
 const BODY_REGEX = /<body[^>]*>([\s\S]*)<\/body/i;//no g
@@ -54,17 +56,23 @@ async function resolveUrl (request, config, server) {
 	const SERVER_CONTEXT = request;
 	const host = `${request.protocol}://${request.headers.host}`;
 	const pong = await server.get('logon.ping', SERVER_CONTEXT);
-	let url = getLink(pong, TOS_NOT_ACCEPTED) || fallbackUrl;
+	let url = getLink(pong, TOS_NOT_ACCEPTED);
+	logger.debug(`pong: ${TOS_NOT_ACCEPTED}: "${url}"`);
+	logger.debug(`fallback (from config): ${fallbackUrl}"`);
 
-	if (url) {
-		url = new URL(url, host).toString();
+	if (url || fallbackUrl) {
+		url = new URL(url || fallbackUrl, host).toString();
 	}
+
+	logger.debug('Resolved url: %s', url);
 
 	//If there is a @NamedLink we have to pass request context,
 	//if its an external link like docs.google... blank out context.
 	const context = (url && url.startsWith(host))
 		? {headers: self.copyRequestHeaders(request), redirect: 'manual'}
 		: void 0;
+
+	logger.debug('Passing request context? ', context ? 'yes' : 'no');
 
 	return !url ? void 0 : {
 		url,
@@ -89,10 +97,12 @@ function handleFetch (request, response) {
 	return ({url, context}) => {
 
 		if (SHOULD_REDIRECT(request.url)) {
+			logger.debug('Redirecting... %s', url);
 			response.redirect(url);
 			return;
 		}
 
+		logger.debug('Fetching %s...', url);
 		return fetch(url, context);
 	};
 }
@@ -102,9 +112,11 @@ function handleFetchResponse (response) {
 	if (!response.ok) {
 		if (response.status >= 300 && response.status < 400) {
 			const redirectURL = response.headers.get('location');
+			logger.debug('Attempting to follow redirect %s...', redirectURL);
 			return fetch(redirectURL).then(handleFetchResponse);
 		}
 
+		logger.debug('Response NOT OK: %o', response);
 		return Promise.reject(new Error(response.statusText));
 	}
 

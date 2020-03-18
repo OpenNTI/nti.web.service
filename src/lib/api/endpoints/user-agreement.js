@@ -1,5 +1,6 @@
 'use strict';
-// const {TOS_NOT_ACCEPTED, getLink} = require('@nti/lib-interfaces');
+//TOS_NOT_ACCEPTED = content.initial_tos_page
+const {TOS_NOT_ACCEPTED, getLink} = require('@nti/lib-interfaces');
 
 const { SERVER_REF } = require('../../constants');
 const logger = require('../../logger').get('api:user-agreement');
@@ -7,8 +8,6 @@ const logger = require('../../logger').get('api:user-agreement');
 const tagPattern = tag => new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)</' + tag + '>', 'ig');
 const BODY_REGEX = /<body[^>]*>([\s\S]*)<\/body/i;//no g
 const SHOULD_REDIRECT = RegExp.prototype.test.bind(/\/view/);
-
-const HardCodedToS = 'https://docs.google.com/document/d/e/2PACX-1vRJd0Irh_YFX7Ci9irWLmqrEqddrxSLrDkrJMANlCqQAo-PrLznTjk4G0hfCsjxD8M21Vd54iQ1Rqbn/pub';
 
 const self = Object.assign(exports, {
 	default: register,
@@ -55,15 +54,14 @@ function getServeUserAgreement (config) {
 
 
 async function resolveUrl (request, config, server) {
-	// const {['user-agreement']: fallbackUrl} = config || {};
-	// const SERVER_CONTEXT = request;
+	const {['user-agreement']: fallbackUrl} = config || {};
+	const SERVER_CONTEXT = request;
 	const host = `${request.protocol}://${request.headers.host}`;
-	// const pong = await server.get('logon.ping', SERVER_CONTEXT);
-	//TODO: there is a weird redirect issue where we end up getting the login app,
-	//the quickest fix for now is to just hard code the ToS google doc link.
-	let url = HardCodedToS;//getLink(pong, TOS_NOT_ACCEPTED) || fallbackUrl;
-	// logger.debug(`pong: ${TOS_NOT_ACCEPTED}: "${url}"`);
-	// logger.debug(`fallback (from config): ${fallbackUrl}"`);
+	const pong = await server.get('logon.ping', SERVER_CONTEXT);
+	let url = getLink(pong, TOS_NOT_ACCEPTED);
+	logger.debug(`pong: ${TOS_NOT_ACCEPTED}: "${url}"`);
+	logger.debug(`fallback (from config): ${fallbackUrl}"`);
+
 
 	if (url || fallbackUrl) {
 		url = new URL(url || fallbackUrl, host).toString();

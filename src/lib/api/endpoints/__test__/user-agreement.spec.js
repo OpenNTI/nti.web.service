@@ -231,7 +231,7 @@ describe ('lib/api/endpoints/user-agreement', () => {
 	});
 
 
-	xtest ('resolveUrl(): config fallback url', async () => {
+	test ('resolveUrl(): config fallback url', async () => {
 		const {resolveUrl} = require('../user-agreement');
 
 		const pong = {};
@@ -257,7 +257,7 @@ describe ('lib/api/endpoints/user-agreement', () => {
 	});
 
 
-	xtest ('resolveUrl(): error case', async () => {
+	test ('resolveUrl(): error case', async () => {
 		const {resolveUrl} = require('../user-agreement');
 		const request = {request: 1, protocol: 'http', headers: {host: 'localhost:8082'}};
 		const server = {

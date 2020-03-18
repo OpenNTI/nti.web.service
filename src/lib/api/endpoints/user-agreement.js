@@ -58,18 +58,17 @@ function getServeUserAgreement (config) {
 async function resolveUrl (request, config, server) {
 	const {['user-agreement']: fallbackUrl} = config || {};
 	const SERVER_CONTEXT = request;
-	const host = `${request.protocol}://${request.headers.host}`;
+	const { host } = request.headers;
 	const pong = await server.get('logon.ping', SERVER_CONTEXT);
 	let url = getLink(pong, TOS_NOT_ACCEPTED);
 	logger.debug(`pong: ${TOS_NOT_ACCEPTED}: "${url}"`);
 	logger.debug(`fallback (from config): ${fallbackUrl}"`);
 
-
 	if (url || fallbackUrl) {
-		url = new URL(url || fallbackUrl, host).toString();
+		url = new URL(url || fallbackUrl, `${request.protocol}://${host}`).toString();
 	}
 
-	const isInternal = x => x && x.startsWith(host);
+	const isInternal = x => x && new URL(x, 'null:/').host === host;
 
 	logger.debug('Resolved url: %s', url);
 
@@ -117,7 +116,7 @@ function handleFetch (request, response) {
 
 
 function handleFetchResponse (response, context, isInternal = () => false) {
-	logger.debug('Handling response: %o', response);
+	logger.debug('Handling response: (%s) %s', response.status, response.url);
 	if (!response.ok) {
 		if (response.status >= 300 && response.status < 400) {
 			const redirectURL = response.headers.get('location');

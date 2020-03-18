@@ -122,7 +122,7 @@ function handleFetchResponse (response, context, isInternal = () => false) {
 			const redirectURL = response.headers.get('location');
 			logger.debug('Attempting to follow redirect %s...', redirectURL);
 			return fetch(redirectURL, isInternal(redirectURL) ? context : void 0)
-				.then(r => handleFetchResponse(r, context, isInternal));
+				.then(r => self.handleFetchResponse(r, context, isInternal));
 		}
 
 		logger.debug('Response NOT OK: %o', response);

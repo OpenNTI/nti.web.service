@@ -88,6 +88,60 @@ describe ('lib/api/endpoints/user-agreement', () => {
 	});
 
 
+	test('getServeUserAgreement(): handler behavior with redirect', async () => {
+		const redirect1 = { fetch: 1, ok: false, status: 303, headers: { get: () => 'internal1' } };
+		const redirect2 = { fetch: 2, ok: false, status: 303, headers: { get: () => 'internal2' } };
+		const redirect3 = { fetch: 3, ok: false, status: 303, headers: { get: () => 'external' } };
+		const result = { ok: true, status: 200, text: () => 'hello' };
+
+		global.fetch = jest.fn()
+			.mockReturnValueOnce(Promise.resolve(redirect2))
+			.mockReturnValueOnce(Promise.resolve(redirect3))
+			.mockReturnValue(Promise.resolve(result));
+
+		const context = { context: 1 };
+		const isInternal = x => /^internal/.test(x);
+		const UA = require('../user-agreement');
+		stub(UA, 'resolveUrl', () => Promise.resolve({url: '...', isInternal, context}));
+		stub(UA, 'handleFetch', () => () => Promise.resolve(redirect1));
+		stub(UA, 'processAndRespond', () => () => Promise.resolve({processed: 1}));
+		jest.spyOn(UA, 'handleFetchResponse');
+
+		const config = {config: 1};
+		const server = {server: 1};
+
+		const handler = UA.getServeUserAgreement(config);
+
+		const req = {req: 1, [SERVER_REF]: server};
+		const res = {res: 1};
+		const next = jest.fn();
+
+		await handler(req, res, next);
+
+		expect(UA.resolveUrl).toHaveBeenCalledTimes(1);
+		expect(UA.resolveUrl).toHaveBeenCalledWith(req, config, server);
+
+		expect(UA.handleFetch).toHaveBeenCalledTimes(1);
+		expect(UA.handleFetch).toHaveBeenCalledWith(req, res);
+
+		expect(UA.handleFetchResponse).toHaveBeenCalledTimes(4);
+		expect(UA.handleFetchResponse).toHaveBeenCalledWith(redirect1, context, isInternal);
+		expect(UA.handleFetchResponse).toHaveBeenCalledWith(redirect2, context, isInternal);
+		expect(UA.handleFetchResponse).toHaveBeenCalledWith(redirect3, context, isInternal);
+		expect(UA.handleFetchResponse).toHaveBeenCalledWith(result, context, isInternal);
+
+		expect(fetch).toHaveBeenCalledTimes(3);
+		expect(fetch).toHaveBeenCalledWith('internal1', context);
+		expect(fetch).toHaveBeenCalledWith('internal2', context);
+		expect(fetch).toHaveBeenCalledWith('external', undefined);
+
+		expect(UA.processAndRespond).toHaveBeenCalledTimes(1);
+		expect(UA.processAndRespond).toHaveBeenCalledWith(res);
+
+		expect(next).toHaveBeenCalledTimes(0);
+	});
+
+
 	test ('getServeUserAgreement(): handler rejects if no url', async () => {
 		const UA = require('../user-agreement');
 		stub(UA, 'resolveUrl', () => Promise.resolve());
@@ -111,7 +165,7 @@ describe ('lib/api/endpoints/user-agreement', () => {
 	});
 
 
-	xtest ('resolveUrl(): server defines url', async () => {
+	test ('resolveUrl(): dataserver defines url', async () => {
 		const {resolveUrl} = require('../user-agreement');
 
 		const pong = {
@@ -132,12 +186,44 @@ describe ('lib/api/endpoints/user-agreement', () => {
 			'user-agreement': 'https://some-fallback-url'
 		};
 
-		const request = {request: 1, protocol: 'http', headers: {host: 'localhost:8082'}};
+		const request = {request: 1, protocol: 'http', headers: {host: 'app.localhost'}};
+
+		const o = await resolveUrl(request, config, server);
+
+		expect(o.url).toEqual(new URL(pong.Links[0].href, `${request.protocol}://${request.headers.host}`).toString());
+
+		expect(o.context).toBeTruthy();
+		expect(o.context).toHaveProperty('headers');
+		expect(o.context).toHaveProperty('redirect');
+	});
+
+	test ('resolveUrl(): dataserver defines url (request relative ds)', async () => {
+		const {resolveUrl} = require('../user-agreement');
+
+		const pong = {
+			Links: [
+				{
+					href: '/dataserver2/@@some-url',
+					rel: TOS_NOT_ACCEPTED
+				}
+			]
+		};
+
+		const server = {
+			get: jest.fn(x => x === 'logon.ping' ? Promise.resolve(pong) : void 0)
+		};
+
+		const config = {
+			'server': '/dataserver2/',
+			'user-agreement': 'https://some-fallback-url'
+		};
+
+		const request = {request: 1, protocol: 'https', headers: {host: 'app.localhost:8443'}};
 
 		const o = await resolveUrl(request, config, server);
 
 		expect(o.url).toEqual(expect.any(String));
-		expect(o.url.startsWith(config.server)).toBeTruthy();
+		expect(o.url).toEqual(new URL(pong.Links[0].href, `${request.protocol}://${request.headers.host}`).toString());
 
 		expect(o.context).toBeTruthy();
 		expect(o.context).toHaveProperty('headers');

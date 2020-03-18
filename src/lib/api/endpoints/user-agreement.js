@@ -67,7 +67,7 @@ async function resolveUrl (request, config, server) {
 		url = new URL(url || fallbackUrl, host).toString();
 	}
 
-	const isInternal = x => x?.startsWith(host);
+	const isInternal = x => x && x.startsWith(host);
 
 	logger.debug('Resolved url: %s', url);
 

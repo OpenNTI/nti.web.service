@@ -330,7 +330,12 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		};
 
 		const handler = handleFetch(req, resp);
-		handler({url, context});
+		try {
+			handler({ url, context });
+			throw new Error('Did not throw');
+		} catch (e) {
+			expect(e).toBe(resp);
+		}
 
 		expect(resp.redirect).toHaveBeenCalledTimes(1);
 		expect(resp.redirect).toHaveBeenCalledWith(url);

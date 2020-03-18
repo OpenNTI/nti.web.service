@@ -46,8 +46,10 @@ function getServeUserAgreement (config) {
 					o.isInternal,
 				)
 			);
-		} catch(e) {
-			next(e);
+		} catch (e) {
+			if (e !== res) {
+				next(e);
+			}
 		}
 	};
 }
@@ -105,7 +107,7 @@ function handleFetch (request, response) {
 		if (SHOULD_REDIRECT(request.url)) {
 			logger.debug('Redirecting... %s', url);
 			response.redirect(url);
-			return;
+			throw response;
 		}
 
 		logger.debug('Fetching %s...', url);
@@ -115,11 +117,14 @@ function handleFetch (request, response) {
 
 
 function handleFetchResponse (response, context, isInternal = () => false) {
+	logger.debug('Handling response: %o', response);
 	if (!response.ok) {
 		if (response.status >= 300 && response.status < 400) {
 			const redirectURL = response.headers.get('location');
+			const ctx = isInternal(redirectURL) ? context : void 0;
 			logger.debug('Attempting to follow redirect %s...', redirectURL);
-			return fetch(redirectURL, isInternal(redirectURL) ? context : void 0)
+			logger.debug('Context for "%s": %o', redirectURL, ctx);
+			return fetch(redirectURL, ctx)
 				.then(r => self.handleFetchResponse(r, context, isInternal));
 		}
 

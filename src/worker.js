@@ -87,7 +87,7 @@ async function getApp (config) {
 
 function createServer (protocol, app) {
 	const FACTORIES = {
-		proxy: () => createProxy(https).createServer(app),
+		proxy: () => createProxy(http).createServer(app),
 		http: () => http.createServer(app),
 		https: () => {
 			try {

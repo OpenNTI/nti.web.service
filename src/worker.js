@@ -73,7 +73,7 @@ async function getApp (config) {
 	const app = express();
 	app.engine('html', htmlTemplates);
 
-	app.set('trust proxy', 1); // trust first proxy
+	app.set('trust proxy', true);
 	app.set('views', path.resolve(__dirname, 'templates'));
 	app.set('view engine', 'html');
 

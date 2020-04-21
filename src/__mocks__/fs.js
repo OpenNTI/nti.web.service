@@ -4,7 +4,7 @@
 // const path = require('path');
 
 const fs = jest.genMockFromModule('fs');
-
+fs.promises = fs;
 
 // fs.__setMockFiles = () => {};
 // fs.readFile = read;

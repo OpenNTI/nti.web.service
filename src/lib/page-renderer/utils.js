@@ -1,20 +1,9 @@
 'use strict';
 const path = require('path');
-const fs = require('fs');
+const {promises: {stat, readFile}} = require('fs');
 
 const logger = require('../logger');
 const {getStackOrMessage} = require('../utils');
-
-const wrapfs = (method, ...locked) =>
-	(...args) => new Promise((fulfill, rej) =>
-		fs[method](...[...args, ...locked], (er, data) =>
-			er ? rej(er) : fulfill(data)
-		)
-	);
-
-const stat = wrapfs('stat');
-const read = wrapfs('readFile', 'utf8');
-
 
 function getCached (key) {
 	const cache = getCached.cache || (getCached.cache = {});
@@ -22,7 +11,7 @@ function getCached (key) {
 }
 
 
-async function readFile (file) {
+async function read (file) {
 	const cache = getCached(file);
 	logger.debug('Checking Template: %s', file);
 
@@ -39,7 +28,7 @@ async function readFile (file) {
 	}
 
 	cache.mtime = mtime.getTime();
-	const data = await read(file);
+	const data = await readFile(file, 'utf8');
 
 	logger.info('template loaded (file: %s, length: %s)', file, data && data.length);
 	cache.data = data;
@@ -88,7 +77,7 @@ async function getTemplate (assets, injections, devmode) {
 
 	try {
 
-		let cache = await readFile(file);
+		let cache = await read(file);
 
 		if(injections) {
 			return applyInjections(cache, injections);

@@ -6,8 +6,9 @@ describe('lib/page-renderer (index)', () => {
 
 	beforeEach(() => {
 		jest.resetModules();
+		jest.clearAllMocks();
 		const logger = require('../../logger');
-		const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
+		const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => { }));
 
 		stub(logger, 'get', () => logger);
 		stub(logger, 'attachToExpress');
@@ -22,7 +23,7 @@ describe('lib/page-renderer (index)', () => {
 		jest.resetModules();
 	});
 
-	test ('getRenderer', () => {
+	test('getRenderer', () => {
 		const fn = require('../index').getRenderer;
 		expect(fn).toEqual(expect.any(Function));
 		expect(fn.length).toEqual(3);
@@ -32,12 +33,12 @@ describe('lib/page-renderer (index)', () => {
 	});
 
 
-	test ('render (Bad Template)', async () => {
-		const fs = require('fs');
+	test('render (Bad Template)', async () => {
+		const fs = require('fs').promises;
 		const fn = require('../index').getRenderer;
 
-		jest.spyOn(fs, 'stat').mockImplementation((f, cb) => cb(null, {mtime: new Date('2018-04-02T16:35:42.000Z')}));
-		jest.spyOn(fs, 'readFile').mockImplementation((f, _, cb) => cb(null, ''));
+		jest.spyOn(fs, 'stat').mockImplementation(async (f) => ({ mtime: new Date('2018-04-02T16:35:42.000Z') }));
+		jest.spyOn(fs, 'readFile').mockImplementation(async (f, _, cb) => '');
 
 		expect(fn).toEqual(expect.any(Function));
 		expect(fn.length).toEqual(3);

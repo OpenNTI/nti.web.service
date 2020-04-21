@@ -62,7 +62,9 @@ describe('lib/page-renderer (index)', () => {
 				<![CDATA[cfg:title]]>
 				<![CDATA[cfg:title|html]]>
 				<![CDATA[cfg:title|string]]>
-			`);
+				<![CDATA[cfg:title|raw]]>
+				<![CDATA[cfg:title|unknown]]>
+			`.trim());
 
 
 			const render = fn('/test/');
@@ -71,7 +73,9 @@ describe('lib/page-renderer (index)', () => {
 				Kibbles &apos;n Bits
 				Kibbles &apos;n Bits
 				Kibbles \\'n Bits
-			`);
+				Kibbles 'n Bits
+				Kibbles 'n Bits
+			`.trim());
 		});
 
 		test('inline style', async () => {
@@ -79,7 +83,9 @@ describe('lib/page-renderer (index)', () => {
 				<[cfg:title]>
 				<[cfg:title|html]>
 				<[cfg:title|string]>
-			`);
+				<[cfg:title|raw]>
+				<[cfg:title|unknown]>
+			`.trim());
 
 
 			const render = fn('/test/');
@@ -88,7 +94,9 @@ describe('lib/page-renderer (index)', () => {
 				Kibbles &apos;n Bits
 				Kibbles &apos;n Bits
 				Kibbles \\'n Bits
-			`);
+				Kibbles 'n Bits
+				Kibbles 'n Bits
+			`.trim());
 		});
 	});
 

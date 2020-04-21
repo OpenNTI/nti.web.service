@@ -14,6 +14,7 @@ Object.assign(exports, {
 const Identity = x => x;
 const NOOP = () => { };
 const ESCAPES = {
+	raw: x => x,
 	html: x => x
 		.replace(/&/g, '&amp;')
 		.replace(/</g, '&lt;')
@@ -58,7 +59,7 @@ const fillInValues = (cfg, original, _, prop) => {
 };
 
 
-function getRenderer (assets, renderContent, devmode) {
+function getRenderer(assets, renderContent, devmode) {
 
 	if (!renderContent) {
 		renderContent = ({ html }) => html;
@@ -73,7 +74,7 @@ function getRenderer (assets, renderContent, devmode) {
 	 *                                      that fulfills with a string.
 	 * @return {Promise<string>}            Fulfills with the rendered page as a string
 	 */
-	return async function render (basePath, { url, config: { templateInjections } = {} } = {}, { html, config } = {}, markError = NOOP) {
+	return async function render(basePath, { url, config: { templateInjections } = {} } = {}, { html, config } = {}, markError = NOOP) {
 		const template = (await getTemplate(assets, templateInjections, devmode)) || 'Bad Template';
 
 		// There are non-enumerable properties on config, and we need them passed to renderContent, so create a new cfg

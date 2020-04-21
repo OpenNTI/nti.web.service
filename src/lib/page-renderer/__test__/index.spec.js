@@ -2,8 +2,6 @@
 'use strict';
 jest.mock('fs');
 
-const unTab = x => (x[0].trim().replace(/\t+/g, ''));
-
 describe('lib/page-renderer (index)', () => {
 
 	beforeEach(() => {

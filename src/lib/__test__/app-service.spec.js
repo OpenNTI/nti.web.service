@@ -68,6 +68,7 @@ describe('lib/app-service', () => {
 
 
 		jest.doMock('cookie-parser', () => cookieParserConstructor);
+		jest.doMock('cors', () => () => corsMiddleware);
 		jest.doMock('express-request-language', () => expressRequestLanguageMock);
 		jest.doMock('express', () => expressMock);
 		jest.doMock('serve-static', () => staticMock);
@@ -76,7 +77,6 @@ describe('lib/app-service', () => {
 		jest.doMock('../api', () => registerEndPoints);
 		jest.doMock('../api-proxy', () => apiProxyMiddleware);
 		jest.doMock('../compress', () => ({attachToExpress: compressionMock}));
-		jest.doMock('../cors', () => corsMiddleware);
 		jest.doMock('../frame-options', () => foMiddleware);
 		jest.doMock('../logger', () => logger);
 		jest.doMock('../no-cache', () => cacheBusterMiddleware);

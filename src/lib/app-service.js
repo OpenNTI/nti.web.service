@@ -2,6 +2,7 @@
 global.SERVER = true;
 
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
 const express = require('express');
 const requestLanguage = require('express-request-language');
 const staticFiles = require('serve-static');
@@ -15,7 +16,6 @@ const apiProxy = require('./api-proxy');
 const cacheBuster = require('./no-cache');
 const Session = require('./session');
 const logger = require('./logger');
-const cors = require('./cors');
 const {htmlAcceptsFilter} = require('./accepts-filters');
 const frameOptions = require('./frame-options');
 const unsupportedPage = require('./unsupported');
@@ -99,7 +99,7 @@ async function setupApplication (server, config, restartRequest) {
 	const params = {server, config, restartRequest};
 
 	server.use(cookieParser());
-	server.use(cors);
+	server.use(cors());
 	server.use(frameOptions);
 	// server.use(cacheBuster);
 	server.use(/.*\/unsupported(\.html)?/, unsupportedPage(config));

@@ -2,7 +2,7 @@
 const uuid = require('uuid');
 
 const logger = require('./logger');
-
+const UNKNOWN = 'Unknown Error';
 
 const self = Object.assign(exports, {
 	setupErrorHandler,
@@ -10,7 +10,7 @@ const self = Object.assign(exports, {
 });
 
 
-function setupErrorHandler (express/*, config*/) {
+function setupErrorHandler(express/*, config*/) {
 	express.use(self.middleware);
 }
 
@@ -18,33 +18,50 @@ function setupErrorHandler (express/*, config*/) {
 // We need the signature to be 4 args long
 // for express to treat it as a error handler
 // eslint-disable-next-line no-unused-vars
-function middleware (err, req, res, next) {
-	if (!err) {
-		err = 'Unknown Error';
-	}
-	else if (err === 'aborted') {
+function middleware(err, req, res, next) {
+	if (err === 'aborted') {
 		if (res.headersSent) {
 			return;
 		}
 
 		return res.status(204).end();
 	}
-	else if (err.statusCode === 503 || err.message === 'Service Unavailable') {
-		return res.status(503).send(err.message);
+
+	if (!err) {
+		err = UNKNOWN;
 	}
-	else if (err.toJSON) {
-		err = err.toJSON();
+
+	const { message = UNKNOWN } = err;
+
+	if (message === 'Service Unavailable') {
+		return res.status(503).send(message);
+	}
+
+	// API calls that do not respond in the 200 range abort like errors.
+	if (err.statusCode > 300) {
+		return res.status(err.statusCode).send(message);
+	}
+
+	if (!err.stack && typeof err !== 'string') {
+		err = JSON.stringify(err, null, '\t');
 	}
 	else if (err.stack) {
 		err = err.stack;
 	}
 
-	const errorid = uuid.v4();
-	logger.error(errorid, err, '\n    Headers: ' + JSON.stringify(req.headers, null, '\t'));
+	const errorId = uuid.v4();
+	logger.error(`${errorId} - ${message}
+=== error context ===
+${err}
+---
+URL: ${req.originalUrl}
+Headers: ${JSON.stringify(req.headers, null, '\t')}
+=== error context ===
+`);
 
 	const data = {
 		err,
-		errorid,
+		errorid: errorId,
 		contact: '',
 		message: ''
 	};
@@ -52,6 +69,7 @@ function middleware (err, req, res, next) {
 	try {
 		res.status(err.statusCode || 500).render('error', data);
 	} catch (e) {
+		logger.error(`Could not report error ${errorId} to client.`, e.stack || e.message || e);
 		//socket closed... oh well.
 	}
 }

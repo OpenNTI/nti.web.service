@@ -35,11 +35,11 @@ describe('lib/html-templates', () => {
 		const render = require('../html-templates');
 		const fn = jest.fn();
 
-		stub(fs, 'readFile', (file, cb) => cb(null, '{} {option} {option2}'));
+		stub(fs, 'readFile', (file, cb) => cb(null, '{} {option} { } {option2}'));
 
 		render('file', {option: 'a'}, fn);
 
-		expect(fn).toHaveBeenCalledWith(null, '{} a MissingTemplateValue: {option2}');
+		expect(fn).toHaveBeenCalledWith(null, '{} a { } MissingTemplateValue: {option2}');
 	});
 
 

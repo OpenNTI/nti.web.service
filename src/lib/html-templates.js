@@ -8,7 +8,7 @@ const fillInValues = (cfg, orginal, _, prop) => cfg[prop] === null ? '' : (cfg[p
 
 module.exports = exports = function (filePath, options, callback) {
 
-	const runtimeValues = /\{([a-z0-9]*)\}/igm;
+	const runtimeValues = /\{([a-z0-9]+)\}/igm;
 	const injectValues = (cfg, original, prop) =>
 		prop in cfg ? cfg[prop] : `MissingTemplateValue: ${original}`;
 

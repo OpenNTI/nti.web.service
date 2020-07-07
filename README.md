@@ -1,6 +1,6 @@
 # Web Service
 
-![Build Status](https://github.com/NextThought/nti.web.service/workflows/Tests/badge.svg)
+![Build Status](https://github.com/NextThought/nti.web.service/workflows/Project%20Health/badge.svg)
 
 
 This component hosts and runs the client applications. It provides initial page view acceleration as well as a hand-full of apis.

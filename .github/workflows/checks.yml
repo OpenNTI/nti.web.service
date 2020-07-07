@@ -1,0 +1,48 @@
+name: Project Health
+
+on:
+  schedule:
+    # every weekday morning at 7:00am
+    - cron:  '0 7 * * 1-5'
+
+  push:
+    branches:
+      - master
+    tags:
+      - 'v[0-9]+*'
+
+  pull_request:
+    branches:
+      - master
+
+env:
+  CI: true
+
+jobs:
+  Verify:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Install SSH key
+        uses: webfactory/ssh-agent@v0.4.0
+        with:
+          ssh-private-key: ${{ secrets.ACTIONS_REPO_ACCESS }}
+
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "14.x"
+
+      - name: npm config
+        run: |
+          npm config set loglevel error
+          npm config set progress false
+          npm config set '@nti:registry' 'https://npm.nextthought.com'
+
+      - run: npm install
+
+      - run: npm test
+
+      - run: npm run check --if-present
+

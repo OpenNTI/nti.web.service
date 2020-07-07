@@ -1,5 +1,8 @@
 # Web Service
 
+![Build Status](https://github.com/NextThought/nti.web.service/workflows/Tests/badge.svg)
+
+
 This component hosts and runs the client applications. It provides initial page view acceleration as well as a hand-full of apis.
 
 The configuration is located in `./config/env.json` (you may specify an alternate location for this.) There is an example file in this path already. The structure is basically a dictionary with two primary keys: "production" and "development".

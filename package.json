@@ -7,7 +7,6 @@
     "web-service": "src/index.js"
   },
   "scripts": {
-    "build": "lib-scripts build",
     "check": "lib-scripts check",
     "clean": "lib-scripts clean",
     "fix": "lib-scripts fix",
@@ -50,9 +49,9 @@
   ],
   "dependencies": {
     "@nti/dev-ssl-config": "^2.12.5",
-    "@nti/lib-commons": "^2.14.0",
-    "@nti/lib-interfaces": "^1.78.0",
-    "@nti/util-logger": "^1.0.0",
+    "@nti/lib-commons": "NextThought/nti.lib.commons",
+    "@nti/lib-interfaces": "NextThought/nti.lib.interfaces",
+    "@nti/util-logger": "NextThought/nti.util.logger",
     "abort-controller": "^3.0.0",
     "atob": "^2.0.3",
     "btoa": "^1.1.2",

@@ -23,26 +23,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: Install SSH key
+      - name: install SSH key
         uses: webfactory/ssh-agent@v0.4.0
         with:
           ssh-private-key: ${{ secrets.ACTIONS_REPO_ACCESS }}
 
-      - uses: actions/checkout@v2
+      - name: clone
+        uses: actions/checkout@v2
 
-      - uses: actions/setup-node@v1
+      - name: setup nodejs
+        uses: actions/setup-node@v1
         with:
           node-version: "14.x"
 
-      - name: npm config
+      - name: configure npm
+        env:
+          NPM_REGISTRY: ${{ secrets.NPM_REGISTRY }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           npm config set loglevel error
           npm config set progress false
-          npm config set '@nti:registry' 'https://npm.nextthought.com'
+          npm config set '@nti:registry' "$NPM_REGISTRY"
+          npm config set "${NPM_REGISTRY/https:/}/:_authToken" "$NPM_TOKEN"
 
-      - run: npm install
+      - name: install dependencies
+        run: npm install
 
-      - run: npm test
+      - name: test
+        run: npm test
 
-      - run: npm run check --if-present
+      - name: lint
+        run: npm run check --if-present
 
+      - name: notify of failure
+        if: failure()
+        env:
+          LINK: ${{ format('<https://github.com/{0}/actions|{0} failed>', github.repository) }}
+        run: |
+          MESSAGE="{\"text\": \"\n#### :stop_sign: $LINK :eyes:\" }"
+          curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}

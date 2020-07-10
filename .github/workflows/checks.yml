@@ -2,12 +2,16 @@ name: Project Health
 
 on:
   schedule:
-    # every weekday morning at 7:00am
-    - cron:  '0 7 * * 1-5'
+    # every monday morning at 7:00am (central)
+    # https://crontab.guru/#0_13_*_*_1
+    - cron:  '0 13 * * 1'
 
   push:
     branches:
       - master
+      - 'maint-*'
+    paths-ignore:
+      - '*.yml'
     tags:
       - 'v[0-9]+*'
 

@@ -16,7 +16,7 @@
 	"rules": {
 		"strict": ["error", "global"],
 		"import/no-commonjs": 0,
-		"import/no-extraneous-dependencies": ["error", {"devDependencies": ["**/test/*.js", "**/*.spec.js"]}],
+		"import/no-extraneous-dependencies": ["error", {"devDependencies": true}],
 		"no-restricted-globals": 0
 	}
 }

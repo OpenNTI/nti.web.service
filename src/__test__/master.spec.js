@@ -206,27 +206,33 @@ describe('Master', () => {
 	test ('startWorker() forks a new process and sends it the config', () => {
 		const cfg = {};
 		const utils = {
-			getConfig: jest.fn(() => cfg)
+			getConfig: jest.fn(() => cfg),
+			getConfiguredWorkerCount: jest.fn(() => 12)
 		};
 		const w = {
 			send: jest.fn()
 		};
 		const cluster = {
-			fork: jest.fn(() => w)
+			fork: jest.fn(() => w),
+			listeners: jest.fn(() => []),
+			on: jest.fn(() => {})
 		};
 
 		jest.doMock('cluster', () => cluster);
 		jest.doMock('../lib/master-utils', () => utils);
+		jest.useFakeTimers();
 
 		const master = require('../master');
 
 		const res = master.startWorker();
+		jest.runAllTimers();
 
 		expect(cluster.fork).toHaveBeenCalledTimes(1);
 		expect(w.send).toHaveBeenCalledTimes(1);
 		expect(w.send).toHaveBeenCalledWith({cmd: 'init', config: cfg, topic: 'default'});
 
 		expect(res).toBe(w);
+		jest.useRealTimers();
 	});
 
 

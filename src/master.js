@@ -94,7 +94,7 @@ function startWorker () {
 	try {
 		logger.info('Starting Worker...');
 
-		if (callThresholdMet(startWorker, 10)) {
+		if (callThresholdMet(startWorker, getConfiguredWorkerCount() * 2)) {
 			logger.error('Too many worker cycles in a second');
 			return process.exit(1);
 		}

@@ -1,22 +1,28 @@
 {
 	"extends": "@nti/eslint-config-lib-scripts",
-
+	"parser": "espree",
 	"parserOptions": {
 		"sourceType": "script",
 		"ecmaFeatures": {
 			"impliedStrict": false
 		}
 	},
-
 	"globals": {
 		"fetch": true,
 		"self": "off"
 	},
-
 	"rules": {
-		"strict": ["error", "global"],
+		"strict": [
+			"error",
+			"global"
+		],
 		"import/no-commonjs": 0,
-		"import/no-extraneous-dependencies": ["error", {"devDependencies": true}],
+		"import/no-extraneous-dependencies": [
+			"error",
+			{
+				"devDependencies": true
+			}
+		],
 		"no-restricted-globals": 0
 	}
 }

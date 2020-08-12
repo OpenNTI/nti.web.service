@@ -51,8 +51,6 @@ function getPageRenderer ({appId, basepath, assets, devmode} = {}, config, rende
 			res.send(content);
 		}
 		catch (error) {
-			/* istanbul ignore next */
-			logger.error(error.stack || error.message || error);
 			next(error);
 		}
 	};

@@ -1,6 +1,6 @@
 'use strict';
 const {DATACACHE} = require('./constants');
-const logger = require('./logger');
+const logger = require('./logger').get('renderer');
 const {clientConfig, nodeConfigAsClientConfig} = require('./config');
 const {getRenderer} = require('./page-renderer');
 

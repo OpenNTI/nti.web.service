@@ -2,7 +2,7 @@
 const path = require('path');
 const {promises: {stat, readFile}} = require('fs');
 
-const logger = require('../logger');
+const logger = require('../logger').get('page-renderer-utils');
 const {getStackOrMessage} = require('../utils');
 
 function getCached (key) {

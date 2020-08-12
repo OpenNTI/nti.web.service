@@ -19,7 +19,7 @@ function setupErrorHandler (express/*, config*/) {
 // for express to treat it as a error handler
 // eslint-disable-next-line no-unused-vars
 function middleware (err, req, res, next) {
-	if (err === 'aborted') {
+	if (err === 'aborted' || err?.error?.type === 'aborted') {
 		if (res.headersSent) {
 			return;
 		}
@@ -31,7 +31,7 @@ function middleware (err, req, res, next) {
 		err = UNKNOWN;
 	}
 
-	const { message = UNKNOWN } = err;
+	const { message = err.Message || UNKNOWN } = err;
 
 	if (message === 'Service Unavailable') {
 		return res.status(503).send(message);

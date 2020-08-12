@@ -23,30 +23,6 @@
   },
   "author": "nextthought",
   "license": "UNLICENSED",
-  "bundledDependencies": [
-    "@nti/lib-commons",
-    "@nti/lib-interfaces",
-    "@nti/util-logger",
-    "abort-controller",
-    "atob",
-    "btoa",
-    "compression",
-    "cookie-parser",
-    "express",
-    "express-request-language",
-    "findhit-proxywrap",
-    "invariant",
-    "memored",
-    "mime-types",
-    "morgan",
-    "node-fetch",
-    "regenerator-runtime",
-    "response-time",
-    "serve-static",
-    "uuid",
-    "yargs",
-    "zpad"
-  ],
   "devDependencies": {
     "@nti/dev-ssl-config": "^2.24.0",
     "@nti/lib-commons": "^2.14.0",
@@ -81,5 +57,29 @@
     "setupFiles": [
       "<rootDir>/src/polyfills.js"
     ]
-  }
+  },
+  "bundleDependencies": [
+    "@nti/lib-commons",
+    "@nti/lib-interfaces",
+    "@nti/util-logger",
+    "abort-controller",
+    "atob",
+    "btoa",
+    "compression",
+    "cookie-parser",
+    "express",
+    "express-request-language",
+    "findhit-proxywrap",
+    "invariant",
+    "memored",
+    "mime-types",
+    "morgan",
+    "node-fetch",
+    "regenerator-runtime",
+    "response-time",
+    "serve-static",
+    "uuid",
+    "yargs",
+    "zpad"
+  ]
 }

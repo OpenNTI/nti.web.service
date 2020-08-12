@@ -8,6 +8,13 @@ describe('lib/html-templates', () => {
 
 	beforeEach(() => {
 		jest.resetModules();
+		const logger = require('../logger');
+		stub(logger, 'get', () => logger);
+		stub(logger, 'attachToExpress');
+		stub(logger, 'debug');
+		stub(logger, 'error');
+		stub(logger, 'info');
+		stub(logger, 'warn');
 	});
 
 

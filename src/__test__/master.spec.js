@@ -10,6 +10,7 @@ describe('Master', () => {
 		jest.resetModules();
 		jest.dontMock('cluster');
 		logger = require('../lib/logger');
+		stub(logger, 'get', () => logger);
 		stub(logger, 'debug');
 		stub(logger, 'error');
 		stub(logger, 'info');

@@ -14,6 +14,7 @@ describe('Worker', () => {
 		jest.dontMock('cluster');
 		restart = require('../lib/restart').restart;
 		logger = require('../lib/logger');
+		stub(logger, 'get', () => logger);
 		stub(logger, 'debug');
 		stub(logger, 'error');
 		stub(logger, 'info');

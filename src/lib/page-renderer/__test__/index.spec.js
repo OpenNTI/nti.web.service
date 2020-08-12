@@ -50,12 +50,14 @@ describe('lib/page-renderer (index)', () => {
 	});
 
 	describe('Variables', () => {
-		const fs = require('fs').promises;
-		const fn = require('../index').getRenderer;
+		let fn,fs;
 
-		jest.spyOn(fs, 'stat').mockImplementation(async (f) => ({ mtime: new Date('2018-04-02T16:35:42.000Z') }));
-
-		beforeEach(() => jest.clearAllMocks());
+		beforeEach(() => {
+			jest.clearAllMocks();
+			fs = require('fs').promises;
+			jest.spyOn(fs, 'stat').mockImplementation(async (f) => ({ mtime: new Date('2018-04-02T16:35:42.000Z') }));
+			fn = require('../index').getRenderer;
+		});
 
 		test('CDATA style', async () => {
 			jest.spyOn(fs, 'readFile').mockImplementation(async (f) => `

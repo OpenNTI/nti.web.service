@@ -75,6 +75,7 @@ describe('Test End-to-End', () => {
 		jest.resetModules();
 		logger = require('../lib/logger');
 
+		stub(logger, 'get', () => logger);
 		stub(logger, 'attachToExpress');
 		stub(logger, 'debug');
 		stub(logger, 'error');

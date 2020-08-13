@@ -1,0 +1,65 @@
+name: Snapshot
+
+on:
+  push:
+    branches:
+      - master
+  repository_dispatch:
+    types: [snapshot]
+
+env:
+  CI: true
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: install SSH key
+        uses: webfactory/ssh-agent@v0.4.0
+        with:
+          ssh-private-key: ${{ secrets.ACTIONS_REPO_ACCESS }}
+
+      - name: clone
+        uses: actions/checkout@v2
+
+      - name: setup nodejs
+        uses: actions/setup-node@v1
+        with:
+          node-version: "14.x"
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: configure npm
+        env:
+          NPM_REGISTRY: ${{ secrets.NPM_REGISTRY }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm config set loglevel error
+          npm config set progress false
+          npm config set '@nti:registry' "$NPM_REGISTRY"
+          npm config set "${NPM_REGISTRY/https:/}/:_authToken" "$NPM_TOKEN"
+
+      - name: Generate snapshot
+        run: npx @nti/ci-scripts snapshot
+
+      - name: notify of failure
+        if: failure()
+        env:
+          LINK: ${{ format('<https://github.com/{0}/actions|{1} failed>', github.repository, env.SNAPSHOT_ID) }}
+        run: |
+          MESSAGE="{\"text\": \"#### :stop_sign: $LINK :eyes:\" }"
+          curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}
+
+      - name: notify of new snap
+        if: success()
+        env:
+          LINK: ${{ format('<https://github.com/{0}/actions|New snapshot {1}>', github.repository, env.SNAPSHOT_ID) }}
+        run: |
+          MESSAGE="{\"text\": \"#### :white_check_mark: $LINK\", \"channel\":\"Jenkins\" }"
+          curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}

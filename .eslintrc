@@ -18,13 +18,6 @@
 			"global"
 		],
 		"import/no-commonjs": 0,
-		"import/no-extraneous-dependencies": [
-			"error",
-			{
-				"devDependencies": false,
-				"bundledDependencies": true
-			}
-		],
 		"no-restricted-globals": 0
 	}
 }

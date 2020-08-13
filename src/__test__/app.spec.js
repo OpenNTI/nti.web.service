@@ -1,4 +1,3 @@
-/* eslint-disable import/no-extraneous-dependencies */
 /* eslint-env jest */
 'use strict';
 const request = require('supertest');

@@ -181,8 +181,6 @@ describe ('lib/api - index', () => {
 		callback(err, req, res, next);
 
 		expect(next).not.toHaveBeenCalled();
-		expect(logger.error).toHaveBeenCalledTimes(1);
-		expect(logger.error).toHaveBeenCalledWith(expect.any(String),expect.any(String));
 
 		expect(res.status).toHaveBeenCalledTimes(1);
 		expect(res.status).toHaveBeenCalledWith(500);

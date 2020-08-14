@@ -28,24 +28,9 @@ The render function will be called twice per request. Once to (potentially) pref
 
 ### Requirements
 
-You'll need to have the following items installed before continuing.
-
-  * [Node.js](http://nodejs.org):
-    * Use [nvm](https://github.com/creationix/nvm) to install NodeJS.
-        * `nvm install v5.5.0`
-        * Setup default node:
-          ```bash
-          echo v5.5.0 > ~/.nvmrc
-          ```
-          or
-          ```
-          nvm alias default 5.5.0
-          ```
-  * ...
-
-Optional:
-  * Node Inspector: `npm install -g node-inspector`
-
+* Use [nvm](https://github.com/nvm-sh/nvm) to install NodeJS.
+  * `nvm install node`
+  
 
 
 ## Quickstart

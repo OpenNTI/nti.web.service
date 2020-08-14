@@ -38,7 +38,7 @@ module.exports = function registerEndPoints (app, config) {
 	endpoints(api, config);
 
 	api.use((err, req, res, next) => {//eslint-disable-line no-unused-vars
-		if (err.error?.type !== 'aborted') {
+		if ((err.error || {}).type !== 'aborted') {
 			logger.error('API Error (%s): \n\n%s\n\n', req.originalUrl || req.url, err.stack || err.body || JSON.stringify(err));
 		}
 		res.status(500).json(err);

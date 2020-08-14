@@ -99,7 +99,9 @@ function startWorker () {
 			return process.exit(1);
 		}
 
-		fs.accessSync(__filename);
+		if (!fs.existsSync(process.argv[1])) {
+			throw new Error('Missing Code, cannot fork.');
+		}
 
 		const config = getConfig();
 		const worker = cluster.fork();
@@ -107,7 +109,7 @@ function startWorker () {
 		return worker;
 	} catch (e) {
 		logger.warn('MISSING CODE: Cannot start a worker.');
-		logger.debug('MISSING CODE: Cannot access "%s"', __filename);
+		logger.debug('MISSING CODE: Cannot access "%s"', process.argv[1]);
 		clearTimeout(self.missingCode);
 		self.missingCode = setTimeout(self.maintainWorkerCount, 1000);
 	}

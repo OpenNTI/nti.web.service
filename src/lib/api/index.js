@@ -1,14 +1,11 @@
 'use strict';
-const express = require('express');
-
 const {SERVER_REF} = require('../constants');
 const logger = require('../logger');
 
 const endpoints = require('./endpoints');
 
-module.exports = function registerEndPoints (app, config) {
-	const api = express();
-	app.use(/^\/api/i, api);
+module.exports = function registerEndPoints (app, config, routeFactory) {
+	const api = routeFactory(/^\/api/i, app);
 
 	async function getService (req) {
 		const {[SERVER_REF]: server} = req;
@@ -35,7 +32,7 @@ module.exports = function registerEndPoints (app, config) {
 			.catch(next);
 	});
 
-	endpoints(api, config);
+	endpoints(api, config, routeFactory);
 
 	api.use((err, req, res, next) => {//eslint-disable-line no-unused-vars
 		if ((err.error || {}).type !== 'aborted') {

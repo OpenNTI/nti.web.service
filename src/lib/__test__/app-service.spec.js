@@ -380,6 +380,7 @@ describe('lib/app-service', () => {
 		expect(registerEndPoints).toHaveBeenCalledWith(
 			clientApp,
 			expect.objectContaining({mockConfig: true, package: 'test-app1', basepath: '/basepath1/'}),
+			expect.any(Function)
 		);
 
 		expect(clientApp.use.mock.calls.length).toEqual(8);
@@ -466,6 +467,7 @@ describe('lib/app-service', () => {
 		expect(registerEndPoints).toHaveBeenCalledWith(
 			clientApp,
 			expect.objectContaining({mockConfig: true, package: 'test-app2', basepath: '/basepath/'}),
+			expect.any(Function)
 		);
 
 		expect(clientApp.use.mock.calls.length).toEqual(8);

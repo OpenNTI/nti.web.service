@@ -21,7 +21,7 @@ const self = Object.assign(exports, {
 
 
 
-function register (api, config) {
+function register (api, config, routeFactory) {
 	api.get(/^\/user-agreement/, self.getServeUserAgreement(config));
 }
 

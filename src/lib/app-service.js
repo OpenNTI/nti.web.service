@@ -53,11 +53,13 @@ function neverCacheManifestFiles (res, requsestPath) {
 
 
 function contextualize (root, app) {
-	const contextWapper = express();
-	contextWapper.set('views', app.get('views'));
-	contextWapper.set('etag', false);
-	app.use(root, contextWapper);
-	return contextWapper;
+	const contextWrapper = express();
+	contextWrapper.set('trust proxy', app.get('trust proxy'));
+	contextWrapper.set('views', app.get('views'));
+	contextWrapper.set('view engine', app.get('view engine'));
+	contextWrapper.set('etag', false);
+	app.use(root, contextWrapper);
+	return contextWrapper;
 }
 
 
@@ -180,7 +182,7 @@ async function setupClient (client, {config, server, restartRequest}) {
 
 		clientRoute.use(FORCE_ERROR_ROUTE, self.forceError);
 
-		registerEndPoints(clientRoute, flatConfig);
+		registerEndPoints(clientRoute, flatConfig, self.contextualize);
 
 		clientRoute.use(htmlAcceptsFilter);
 

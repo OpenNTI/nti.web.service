@@ -14,6 +14,12 @@ describe ('lib/api - index', () => {
 	let getObject;
 	let doc;
 
+	const factory = (base, parent) => {
+		const r = expressMock();
+		parent.use(base, r);
+		return r;
+	};
+
 	beforeEach(() => {
 		jest.resetModules();
 		logger = require('../../logger');
@@ -53,7 +59,7 @@ describe ('lib/api - index', () => {
 		const register = require('../index');
 		const config = {};
 
-		register(app, config);
+		register(app, config, factory);
 
 		expect(expressMock).toHaveBeenCalledTimes(1);
 		const api = expressApi;
@@ -63,7 +69,7 @@ describe ('lib/api - index', () => {
 		expect(app.use).toHaveBeenCalledWith(expect.any(RegExp), expect.objectContaining({use: expect.any(Function)}));
 
 		expect(endpoints).toHaveBeenCalledTimes(1);
-		expect(endpoints).toHaveBeenCalledWith(api, config);
+		expect(endpoints).toHaveBeenCalledWith(api, config, factory);
 
 		expect(api.param).toHaveBeenCalledTimes(1);
 		expect(api.param).toHaveBeenCalledWith('ntiid', expect.any(Function));
@@ -82,7 +88,7 @@ describe ('lib/api - index', () => {
 		const config = {};
 		const dataserver = {getServiceDocument};
 
-		register(app, config);
+		register(app, config, factory);
 
 		expect(expressMock).toHaveBeenCalledTimes(1);
 		const api = expressApi;
@@ -126,7 +132,7 @@ describe ('lib/api - index', () => {
 		const config = {};
 		const dataserver = {getServiceDocument};
 
-		register(app, config, dataserver);
+		register(app, config, factory, dataserver);
 
 		expect(expressMock).toHaveBeenCalledTimes(1);
 		const api = expressApi;
@@ -155,7 +161,7 @@ describe ('lib/api - index', () => {
 		const config = {};
 		const dataserver = {getServiceDocument};
 
-		register(app, config, dataserver);
+		register(app, config, factory, dataserver);
 
 		expect(expressMock).toHaveBeenCalledTimes(1);
 		const api = expressApi;

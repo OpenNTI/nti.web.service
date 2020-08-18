@@ -31,7 +31,7 @@ class GetContextData {
 	}
 }
 
-function register (api, config,) {
+function register (api, config, routeFactory) {
 	const handler = new GetContextData(config);
 	api.get('/ugd/context-data/:ntiid', (req, res, error) => handler.handle(req, res, error));
 }

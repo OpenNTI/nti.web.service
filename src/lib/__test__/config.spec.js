@@ -93,7 +93,7 @@ describe ('lib/config', () => {
 		await cfg.loadConfig();
 
 		expect(cfg.config).toHaveBeenCalledTimes(1);
-		expect(cfg.config).toHaveBeenCalledWith({mock: true});
+		expect(cfg.config).toHaveBeenCalledWith({mock: true}, yargs.argv);
 	});
 
 
@@ -110,7 +110,7 @@ describe ('lib/config', () => {
 		await cfg.loadConfig();
 
 		expect(cfg.config).toHaveBeenCalledTimes(1);
-		expect(cfg.config).toHaveBeenCalledWith({mock: true});
+		expect(cfg.config).toHaveBeenCalledWith({mock: true}, yargs.argv);
 
 	});
 
@@ -141,7 +141,7 @@ describe ('lib/config', () => {
 		await cfg.loadConfig();
 
 		expect(cfg.config).toHaveBeenCalledTimes(1);
-		expect(cfg.config).toHaveBeenCalledWith(expect.objectContaining({'my-config': true}));
+		expect(cfg.config).toHaveBeenCalledWith(expect.objectContaining({'my-config': true}), yargs.argv);
 	});
 
 
@@ -219,7 +219,7 @@ describe ('lib/config', () => {
 		jest.doMock('yargs', () => yargs);
 		const {config} = require('../config');
 
-		await expect(config({})).rejects.toEqual(expect.objectContaining({
+		await expect(config({}, yargs.argv)).rejects.toEqual(expect.objectContaining({
 			reason: 'Missing Environment key'
 		}));
 	});
@@ -235,7 +235,7 @@ describe ('lib/config', () => {
 			test: {}
 		};
 
-		await expect(config(env)).rejects.toEqual(expect.objectContaining({
+		await expect(config(env, yargs.argv)).rejects.toEqual(expect.objectContaining({
 			reason: 'No apps key in config.'
 		}));
 	});
@@ -250,7 +250,7 @@ describe ('lib/config', () => {
 			},
 		};
 
-		await expect(config(env)).rejects.toEqual(expect.objectContaining({
+		await expect(config(env, yargs.argv)).rejects.toEqual(expect.objectContaining({
 			reason: 'Bad Port'
 		}));
 	});
@@ -273,7 +273,7 @@ describe ('lib/config', () => {
 			}
 		};
 
-		const c = await Promise.resolve(config(env));
+		const c = await Promise.resolve(config(env, yargs.argv));
 		expect(c).toEqual(expect.any(Object));
 		for (let x = 0; x < c.apps.length; x++) {
 			expect(c.apps[x].appId).toBeTruthy();
@@ -311,7 +311,7 @@ describe ('lib/config', () => {
 			},
 		};
 
-		const c = await Promise.resolve(config(env));
+		const c = await Promise.resolve(config(env, yargs.argv));
 		expect(c).toEqual(expect.any(Object));
 		expect(c.server).toBe('http://lalaland:1234/');
 	});
@@ -329,10 +329,10 @@ describe ('lib/config', () => {
 			},
 		};
 
-		await Promise.resolve(config(env));
+		await Promise.resolve(config(env, yargs.argv));
 		expect(logger.warn).toHaveBeenCalledWith('In default "development" mode. Consider --env "production" or setting NODE_ENV="production"');
 		logger.warn.mockClear();
-		config(env);
+		config(env, yargs.argv);
 		expect(logger.warn).not.toHaveBeenCalled();
 	});
 

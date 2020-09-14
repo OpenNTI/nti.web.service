@@ -26,45 +26,6 @@ const promisify = fn => (...args) => new Promise((f,r) => fn(...args, (er, v) =>
 const stat = promisify(fs.stat);
 const read = promisify(fs.readFile);
 
-
-const opt = yargs
-	.options({
-		'l': {
-			alias: 'listen',
-			desc: 'Force server to liston on address'
-		},
-		'p': {
-			alias: 'port',
-			desc: 'Liston on port'
-		},
-		'protocol': {
-			demand: true,
-			default: 'proxy',
-			desc: 'Protocol to use (proxy or http)'
-		},
-		'dataserver': {
-			desc: 'Override DataServer uri'
-		},
-		'webpack': {
-			desc: 'Prefix with "no-" to force the dev-server off.',
-			type: 'boolean',
-			default: true
-		},
-		'config': {
-			demand: true,
-			default: '../config/env.json',
-			desc: 'URI/path to config file (http/https/file/path)'
-		},
-		'env': {
-			default: process.env.NODE_ENV,
-			desc: 'Specify env config key'
-		}
-	})
-	.help('help', 'Usage')
-	.alias('help', '?')
-	.usage('WebApp Instance')
-	.argv;
-
 async function readFile (uri, resolveOrderForRelativePaths = [process.cwd()]) {
 	if (uri.protocol === 'file:') {
 		uri = uri.toString().replace(/^file:\/\//i, '');
@@ -165,6 +126,44 @@ async function loadTemplateInjections (cfg, relativeAnchor) {
 
 
 async function loadConfig () {
+	const opt = yargs
+		.options({
+			'l': {
+				alias: 'listen',
+				desc: 'Force server to liston on address'
+			},
+			'p': {
+				alias: 'port',
+				desc: 'Liston on port'
+			},
+			'protocol': {
+				demand: true,
+				default: 'proxy',
+				desc: 'Protocol to use (proxy or http)'
+			},
+			'dataserver': {
+				desc: 'Override DataServer uri'
+			},
+			'webpack': {
+				desc: 'Prefix with "no-" to force the dev-server off.',
+				type: 'boolean',
+				default: true
+			},
+			'config': {
+				demand: true,
+				default: '../config/env.json',
+				desc: 'URI/path to config file (http/https/file/path)'
+			},
+			'env': {
+				default: process.env.NODE_ENV,
+				desc: 'Specify env config key'
+			}
+		})
+		.help('help', 'Usage')
+		.alias('help', '?')
+		.usage('WebApp Instance')
+		.argv;
+
 	if (!opt.config) {
 		return Promise.reject('No config file specified');
 	}
@@ -177,7 +176,7 @@ async function loadConfig () {
 			path.resolve(__dirname, '../../config/env.json.example')
 		]);
 
-		const out = self.config(JSON.parse(text));
+		const out = self.config(JSON.parse(text), opt);
 
 		await loadTemplateInjections(out, relativeAnchor);
 
@@ -213,7 +212,7 @@ function showFlags (config) {
 }
 
 
-function config (env) {
+function config (env, opt) {
 	const base = 'development';
 
 	const serverOverride = opt['dataserver'];

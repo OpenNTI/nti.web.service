@@ -85,14 +85,14 @@ async function getApp (config) {
 }
 
 
-function createServer (protocol, app) {
+async function createServer (protocol, app) {
 	const FACTORIES = {
 		proxy: () => createProxy(http).createServer(app),
 		http: () => http.createServer(app),
-		https: () => {
+		https: async () => {
 			try {
 				const { getHTTPS } = require('@nti/dev-ssl-config');
-				const options = getHTTPS();
+				const options = await getHTTPS();
 
 				return https.createServer(options, app);
 			} catch (e) {
@@ -115,7 +115,7 @@ async function init (config) {
 
 	const app = await getApp(config);
 
-	const server = createServer(config.protocol, app);
+	const server = await createServer(config.protocol, app);
 
 	//Go!
 	server.listen(port, address, () => {

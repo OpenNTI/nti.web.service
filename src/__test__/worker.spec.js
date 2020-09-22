@@ -173,17 +173,17 @@ describe('Worker', () => {
 
 		const setupApplication = jest.fn();
 		const setupErrorHandler = jest.fn();
+		const https = {};
 
 		jest.doMock('https', () => ({createServer}));
 		jest.doMock('express', () => express);
+		jest.doMock('@nti/dev-ssl-config', () => ({getHTTPS: () => https}));
 
 		jest.doMock('../lib/app-service', () => ({setupApplication}));
 		jest.doMock('../lib/error-handler', () => ({setupErrorHandler}));
 
 		stub(fs, 'readFileSync', (f) => f);
 		stub(fs, 'existsSync', () => true);
-
-		process.env.NTI_BUILDOUT_PATH = '/some/path';
 
 		const worker = require('../worker');
 
@@ -197,113 +197,12 @@ describe('Worker', () => {
 
 		expect(createServer).toHaveBeenCalledTimes(1);
 		expect(createServer).toHaveBeenCalledWith(
-			expect.objectContaining({
-				cert: expect.any(String),
-				key: expect.any(String),
-			}),
+			https,
 			app
 		);
 
 		expect(listen).toHaveBeenCalledTimes(1);
 		expect(listen).toHaveBeenCalledWith(port, '0.0.0.0', expect.any(Function));
-	});
-
-
-	test ('init() with https with no NTI_BUILDOUT_PATH', async () => {
-		const fs = require('fs');
-		const listen = jest.fn();
-		const server = {listen};
-		const createServer = jest.fn(() => server);
-		const app = {set () {}, engine () {}};
-		const express = jest.fn(() => app);
-		const port = 12345;
-		const config = {protocol: 'https', port};
-
-		const setupApplication = jest.fn();
-		const setupErrorHandler = jest.fn();
-
-		jest.doMock('https', () => ({createServer}));
-		jest.doMock('express', () => express);
-
-		jest.doMock('../lib/app-service', () => ({setupApplication}));
-		jest.doMock('../lib/error-handler', () => ({setupErrorHandler}));
-
-		stub(fs, 'readFileSync', (f) => f);
-		stub(fs, 'existsSync', (f) => false);
-		stub(process, 'exit', fail);
-		stub(console, 'error', () => {});
-
-
-		process.env.HOME = '/junk';
-		delete process.env.NTI_BUILDOUT_PATH;
-
-		const worker = require('../worker');
-
-		return expect(worker.init(config)).rejects.toThrow('Could not create secure server.');
-	});
-
-
-	test ('init() with https with bad NTI_BUILDOUT_PATH', async () => {
-		const fs = require('fs');
-		const listen = jest.fn();
-		const server = {listen};
-		const createServer = jest.fn(() => server);
-		const app = {set () {}, engine () {}};
-		const express = jest.fn(() => app);
-		const port = 12345;
-		const config = {protocol: 'https', port};
-
-		const setupApplication = jest.fn();
-		const setupErrorHandler = jest.fn();
-
-		jest.doMock('https', () => ({createServer}));
-		jest.doMock('express', () => express);
-
-		jest.doMock('../lib/app-service', () => ({setupApplication}));
-		jest.doMock('../lib/error-handler', () => ({setupErrorHandler}));
-
-		stub(console, 'error', () => {});
-		stub(fs, 'existsSync', (f) => false);
-		stub(process, 'exit', fail);
-
-		process.env.HOME = '/junk';
-		process.env.NTI_BUILDOUT_PATH = '/doesNotExist';
-
-		const worker = require('../worker');
-
-		return expect(worker.init(config)).rejects.toThrow('Could not create secure server.');
-	});
-
-	test ('init() with https with existing but bad NTI_BUILDOUT_PATH', async () => {
-		const fs = require('fs');
-		const listen = jest.fn();
-		const server = {listen};
-		const createServer = jest.fn(() => server);
-		const app = {set () {}, engine () {}};
-		const express = jest.fn(() => app);
-		const port = 12345;
-		const config = {protocol: 'https', port};
-
-		const setupApplication = jest.fn();
-		const setupErrorHandler = jest.fn();
-
-		jest.doMock('https', () => ({createServer}));
-		jest.doMock('express', () => express);
-
-		jest.doMock('../lib/app-service', () => ({setupApplication}));
-		jest.doMock('../lib/error-handler', () => ({setupErrorHandler}));
-
-		stub(console, 'error', () => {});
-		stub(fs, 'existsSync', fail);
-		stub(process, 'exit', fail);
-
-		process.env.HOME = '/junk';
-		process.env.NTI_BUILDOUT_PATH = '/exists';
-
-		const worker = require('../worker');
-
-		await expect(worker.init(config)).rejects.toThrow('Could not create secure server.');
-		expect(process.exit).not.toHaveBeenCalled();
 	});
 
 

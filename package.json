@@ -60,7 +60,6 @@
   "bundleDependencies": [
     "@nti/lib-commons",
     "@nti/lib-interfaces",
-    "@nti/dev-ssl-config",
     "@nti/util-logger",
     "abort-controller",
     "atob",

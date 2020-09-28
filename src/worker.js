@@ -47,7 +47,6 @@ const MESSAGE_HANDLERS = {
 			logger.error('No server, exiting...');
 			worker.disconnect();
 			process.exit();
-			return;
 		}
 
 		this.server.close(() => {
@@ -91,12 +90,13 @@ async function createServer (protocol, app) {
 		http: () => http.createServer(app),
 		https: async () => {
 			try {
+				// eslint-disable-next-line import/no-extraneous-dependencies
 				const { getHTTPS } = require('@nti/dev-ssl-config');
 				const options = await getHTTPS();
 
 				return https.createServer(options, app);
 			} catch (e) {
-				const newErr = new Error('Could not create secure server.');
+				const newErr = new Error('Could not create https server.');
 				newErr.stack += '\nCaused by: ' + e.stack;
 				throw newErr;
 			}

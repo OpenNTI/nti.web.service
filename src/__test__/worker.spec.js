@@ -7,8 +7,6 @@ const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 describe('Worker', () => {
 	let logger, restart;
 
-	const fail = () => { throw new Error(); };
-
 	beforeEach(() => {
 		jest.resetModules();
 		jest.dontMock('cluster');

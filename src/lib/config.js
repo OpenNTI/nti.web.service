@@ -134,11 +134,11 @@ async function loadConfig () {
 			},
 			'p': {
 				alias: 'port',
-				desc: 'Liston on port'
+				desc: 'Liston on port',
+				default: 8083
 			},
 			'protocol': {
-				demand: true,
-				default: 'proxy',
+				default: 'http',
 				desc: 'Protocol to use (proxy or http)'
 			},
 			'dataserver': {

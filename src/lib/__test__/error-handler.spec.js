@@ -150,7 +150,7 @@ describe('lib/error-handler (middleware)', () => {
 		expect(() => handler.middleware(null, {}, res, next)).not.toThrow(); //and .toEqual(undefined)
 
 		expect(res.status).toHaveBeenCalledWith(500);
-		expect(res.render).toHaveBeenCalledWith('error', { contact: '', err: 'Unknown Error', errorid: 'some-guid', message: ''});
+		expect(res.render).toHaveBeenCalledWith('error', { contact: ' ', err: 'Unknown Error', errorid: 'some-guid', message: 'There was an error processing your request'});
 		expect(res.end).not.toHaveBeenCalled();
 	});
 

@@ -62,8 +62,8 @@ Headers: ${JSON.stringify(req.headers, null, '\t')}
 	const data = {
 		err,
 		errorid: errorId,
-		contact: '',
-		message: ''
+		contact: ' ',
+		message: 'There was an error processing your request'
 	};
 
 	try {

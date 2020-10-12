@@ -50,13 +50,6 @@
     "uuid": "^8.3.0",
     "yargs": "^16.0.0"
   },
-  "babel": {},
-  "jest": {
-    "testEnvironment": "node",
-    "setupFiles": [
-      "<rootDir>/src/polyfills.js"
-    ]
-  },
   "bundleDependencies": [
     "@nti/lib-commons",
     "@nti/lib-interfaces",

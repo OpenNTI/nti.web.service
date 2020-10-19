@@ -96,7 +96,7 @@ describe('Test End-to-End', () => {
 		const config = {
 			...commonConfigs,
 			apps: [{
-				package: '../example',
+				package: '../../example',
 				basepath: '/test/',
 				public: true
 			}],
@@ -125,7 +125,7 @@ describe('Test End-to-End', () => {
 		const config = {
 			...commonConfigs,
 			apps: [{
-				package: '../example',
+				package: '../../example',
 				basepath: '/test/'
 			}],
 		};
@@ -141,7 +141,7 @@ describe('Test End-to-End', () => {
 	test ('Anonymous access redirects to login', async () => {
 		const {getApp} = require('../worker');
 		const config = { ...commonConfigs, apps: [{
-			package: '../example',
+			package: '../../example',
 			basepath: '/app/'
 		}],};
 
@@ -156,7 +156,7 @@ describe('Test End-to-End', () => {
 	test ('Authenticated access does not redirect', async () => {
 		const {getApp} = require('../worker');
 		const config = { ...commonConfigs, apps: [{
-			package: '../example',
+			package: '../../example',
 			basepath: '/app/'
 		}],};
 
@@ -176,7 +176,7 @@ describe('Test End-to-End', () => {
 		const {getApp} = require('../worker');
 		const config = { ...commonConfigs, apps: [{
 			public: true,
-			package: '../example',
+			package: '../../example',
 			basepath: '/test/'
 		}],};
 
@@ -194,7 +194,7 @@ describe('Test End-to-End', () => {
 		const {getApp} = require('../worker');
 		const config = { ...commonConfigs, apps: [{
 			public: true,
-			package: './__test__/mock-app',
+			package: './mock-app',
 			basepath: '/test/'
 		}],};
 
@@ -223,7 +223,7 @@ describe('Test End-to-End', () => {
 		const {getApp} = require('../worker');
 		const config = { ...commonConfigs, apps: [{
 			public: true,
-			package: './__test__/mock-app',
+			package: './mock-app',
 			basepath: '/test/'
 		}],};
 
@@ -243,7 +243,7 @@ describe('Test End-to-End', () => {
 		const {getApp} = require('../worker');
 		const config = { ...commonConfigs, apps: [{
 			public: true,
-			package: './__test__/mock-app',
+			package: './mock-app',
 			basepath: '/test/'
 		}],};
 
@@ -264,7 +264,7 @@ describe('Test End-to-End', () => {
 		const {getApp} = require('../worker');
 		const config = { ...commonConfigs, apps: [{
 			public: true,
-			package: './__test__/mock-app',
+			package: './mock-app',
 			basepath: '/test/'
 		}],};
 
@@ -278,7 +278,7 @@ describe('Test End-to-End', () => {
 		const {getApp} = require('../worker');
 		const config = { ...commonConfigs, apps: [{
 			public: true,
-			package: './__test__/mock-app',
+			package: './mock-app',
 			basepath: '/test/'
 		}],};
 
@@ -292,7 +292,7 @@ describe('Test End-to-End', () => {
 		const {getApp} = require('../worker');
 		const config = { ...commonConfigs, apps: [{
 			public: true,
-			package: './__test__/mock-app',
+			package: './mock-app',
 			basepath: '/test/'
 		}],};
 
@@ -306,7 +306,7 @@ describe('Test End-to-End', () => {
 		const {getApp} = require('../worker');
 		const config = { ...commonConfigs, apps: [{
 			public: true,
-			package: './__test__/mock-app',
+			package: './mock-app',
 			basepath: '/test/'
 		}],};
 
@@ -322,7 +322,7 @@ describe('Test End-to-End', () => {
 		const {getApp} = require('../worker');
 		const config = { ...commonConfigs, apps: [{
 			public: true,
-			package: './__test__/mock-app',
+			package: './mock-app',
 			basepath: '/test/'
 		}],};
 
@@ -339,7 +339,7 @@ describe('Test End-to-End', () => {
 	test ('Test Hooks: Session', async () => {
 		const {getApp} = require('../worker');
 		const config = { ...commonConfigs, apps: [{
-			package: './__test__/mock-app-with-hooks',
+			package: './mock-app-with-hooks',
 			basepath: '/test/'
 		}],};
 
@@ -367,7 +367,7 @@ describe('Test End-to-End', () => {
 
 		const {getApp} = require('../worker');
 		const config = { ...commonConfigs, apps: [{
-			package: './__test__/mock-app-with-hooks',
+			package: './mock-app-with-hooks',
 			basepath: '/test/'
 		}],};
 
@@ -393,7 +393,7 @@ describe('Test End-to-End', () => {
 		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
 			const {getApp} = require('../worker');
 			const config = { ...commonConfigs, apps: [{
-				package: './__test__/mock-app-with-hooks',
+				package: './mock-app-with-hooks',
 				basepath: '/test/'
 			}],};
 
@@ -409,7 +409,7 @@ describe('Test End-to-End', () => {
 		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
 			const {getApp} = require('../worker');
 			const config = { ...commonConfigs, apps: [{
-				package: './__test__/mock-app-with-hooks',
+				package: './mock-app-with-hooks',
 				basepath: '/test/'
 			}],};
 
@@ -425,7 +425,7 @@ describe('Test End-to-End', () => {
 		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
 			const {getApp} = require('../worker');
 			const config = { ...commonConfigs, apps: [{
-				package: './__test__/mock-app-with-hooks',
+				package: './mock-app-with-hooks',
 				basepath: '/test/'
 			}],};
 
@@ -441,7 +441,7 @@ describe('Test End-to-End', () => {
 		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
 			const {getApp} = require('../worker');
 			const config = { ...commonConfigs, apps: [{
-				package: './__test__/mock-app-with-hooks',
+				package: './mock-app-with-hooks',
 				basepath: '/test/'
 			}],};
 
@@ -457,7 +457,7 @@ describe('Test End-to-End', () => {
 		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
 			const {getApp} = require('../worker');
 			const config = { ...commonConfigs, apps: [{
-				package: './__test__/mock-app-with-hooks',
+				package: './mock-app-with-hooks',
 				basepath: '/test/'
 			}],};
 
@@ -473,7 +473,7 @@ describe('Test End-to-End', () => {
 		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
 			const {getApp} = require('../worker');
 			const config = { ...commonConfigs, apps: [{
-				package: './__test__/mock-app-with-hooks',
+				package: './mock-app-with-hooks',
 				basepath: '/test/'
 			}],};
 

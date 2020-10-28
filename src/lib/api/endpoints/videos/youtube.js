@@ -104,6 +104,6 @@ exports.default = function register (api, config) {
 			hash: '',
 			search: '',
 			pathname: '',
-		}).format();
+		}).toString();
 	}
 };

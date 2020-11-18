@@ -53,7 +53,7 @@ function inject (html, tagName, position, content) {
 		? (_, tag) => (tag + content)
 		: (_, tag) => (content + tag);
 
-	return html?.replace(re, fn);
+	return html && html.replace(re, fn);
 }
 
 function applyInjections (template, injections) {

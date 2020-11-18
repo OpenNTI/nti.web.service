@@ -4,16 +4,14 @@ on:
   schedule:
     # every monday morning at 7:00am (central)
     # https://crontab.guru/#0_13_*_*_1
-    - cron:  '0 13 * * 1'
+    - cron: "0 13 * * 1"
 
   push:
     branches:
       - master
-      - 'maint-*'
-    paths-ignore:
-      - '*.yml'
+      - "maint-*"
     tags:
-      - 'v[0-9]+*'
+      - "v[0-9]+*"
 
   pull_request:
     branches:
@@ -26,9 +24,13 @@ jobs:
   Verify:
     runs-on: ubuntu-latest
     steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.5.0
+        with:
+          access_token: ${{ github.token }}
 
       - name: install SSH key
-        uses: webfactory/ssh-agent@v0.4
+        uses: webfactory/ssh-agent@v0.4.1
         with:
           ssh-private-key: ${{ secrets.ACTIONS_REPO_ACCESS }}
 
@@ -49,9 +51,19 @@ jobs:
           npm config set progress false
           npm config set '@nti:registry' "$NPM_REGISTRY"
           npm config set "${NPM_REGISTRY/https:/}/:_authToken" "$NPM_TOKEN"
+          git config --global url."git@github.com:".insteadOf "https://github.com/"
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       - name: install dependencies
-        run: npm install
+        run: |
+          (test ! -f package-lock.json && npm i) || echo 'Lock found, skipping npm i'
+          (test -f package-lock.json && npm ci) || echo 'No lock, skipping npm ci'
 
       - name: test
         run: npm test
@@ -60,7 +72,7 @@ jobs:
         run: npm run check --if-present
 
       - name: notify of failure
-        if: failure()
+        if: ${{ failure() && github.event_name != 'pull_request' }}
         env:
           LINK: ${{ format('<https://github.com/{0}/actions|{0} failed>', github.repository) }}
         run: |

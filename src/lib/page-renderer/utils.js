@@ -18,7 +18,7 @@ async function read (file) {
 	const {mtime} = await stat(file);
 
 	logger.debug('template mtime: ', mtime);
-	if (cache.mtime === mtime.getTime()) {
+	if (cache.data && cache.mtime === mtime.getTime()) {
 		logger.debug('template not modified');
 		return cache;
 	}
@@ -53,7 +53,7 @@ function inject (html, tagName, position, content) {
 		? (_, tag) => (tag + content)
 		: (_, tag) => (content + tag);
 
-	return html.replace(re, fn);
+	return html?.replace(re, fn);
 }
 
 function applyInjections (template, injections) {

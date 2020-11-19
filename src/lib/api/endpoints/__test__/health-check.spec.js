@@ -51,7 +51,7 @@ describe ('lib/api/endpoints/heath-check', () => {
 		});
 
 		expect(res.status).toHaveBeenCalledTimes(1);
-		expect(res.status).toHaveBeenCalledWith(200);
+		expect(res.status).toHaveBeenCalledWith(204);
 	});
 
 
@@ -80,7 +80,7 @@ describe ('lib/api/endpoints/heath-check', () => {
 	});
 
 
-	test ('_ops/ping responds with 200.', async () => {
+	test ('_ops/ping responds with 204.', async () => {
 		const {default: register} = require('../health-check');
 		const api = {get: jest.fn()};
 		const server = {get: jest.fn(() => Promise.reject())};

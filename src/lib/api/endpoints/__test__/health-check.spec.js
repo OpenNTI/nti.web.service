@@ -102,6 +102,6 @@ describe ('lib/api/endpoints/heath-check', () => {
 		});
 
 		expect(res.status).toHaveBeenCalledTimes(1);
-		expect(res.status).toHaveBeenCalledWith(200);
+		expect(res.status).toHaveBeenCalledWith(204);
 	});
 });

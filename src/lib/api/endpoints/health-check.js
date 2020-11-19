@@ -4,7 +4,7 @@ const {SERVER_REF} = require('../../constants');
 exports.default = function register (api, config, routeFactory) {
 
 	api.get(/^\/_ops\/ping-through/, async (SERVER_CONTEXT, res) => {
-		let status = 200;
+		let status = 204;
 
 		try {
 			await SERVER_CONTEXT[SERVER_REF].get('/_ops/ping', SERVER_CONTEXT);
@@ -18,7 +18,7 @@ exports.default = function register (api, config, routeFactory) {
 	});
 
 	api.get(/^\/_ops\/ping/, (_, res) => {
-		res.status(200);
+		res.status(204);
 		res.end();
 	});
 };

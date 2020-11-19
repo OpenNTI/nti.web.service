@@ -9,21 +9,16 @@ const commonConfigs = {
 	server: 'mock:/dataserver2/',
 };
 
-const mockInterface = {
-	...DataserverInterFace,
-	default (cfg) {
-		return {
-			...DataserverInterFace.default(cfg),
-			interface: {
-				getServiceDocument (req) {
+const interfaceImplementation = {
+	async getServiceDocument (req) {
 
 					if(!req.headers.authentication) {
-						return Promise.reject();
+			throw Object.assign(new Error('Not Authenticated'), {statusCode: 401});
 					}
 
 					const username = req.headers.authentication;
 
-					return Promise.resolve({
+		return {
 						getUserWorkspace () {
 							return {
 								Title: username
@@ -34,27 +29,27 @@ const mockInterface = {
 
 						getAppUsername () { return username; },
 
-						getAppUser () {
+			async getAppUser () {
 							const user = {};
 
 							if (username === 'tos') {
 								user.acceptTermsOfService = true;
 							}
 
-							return Promise.resolve(user);
+				return user;
 						}
-					});
+		};
 				},
-				ping (name, req) {
+	async ping (name, req) {
 					req.pong = {Site: 'default'};
 
 					if(!req.headers.authentication) {
-						return Promise.reject({});
+			throw Object.assign(new Error('Not Authenticated'), {statusCode: 401});
 					}
 
-					return Promise.resolve({
+		return {
 						getLink () {}
-					});
+		};
 				},
 				async get (uri) {
 					if (uri === 'SiteBrand') {
@@ -63,7 +58,14 @@ const mockInterface = {
 						};
 					}
 				}
-			}
+};
+
+const mockInterface = {
+	...DataserverInterFace,
+	default (cfg) {
+		return {
+			...DataserverInterFace.default(cfg),
+			interface: interfaceImplementation,
 		};
 	}
 };

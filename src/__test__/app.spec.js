@@ -12,52 +12,52 @@ const commonConfigs = {
 const interfaceImplementation = {
 	async getServiceDocument (req) {
 
-					if(!req.headers.authentication) {
+		if(!req.headers.authentication) {
 			throw Object.assign(new Error('Not Authenticated'), {statusCode: 401});
-					}
+		}
 
-					const username = req.headers.authentication;
+		const username = req.headers.authentication;
 
 		return {
-						getUserWorkspace () {
-							return {
-								Title: username
-							};
-						},
+			getUserWorkspace () {
+				return {
+					Title: username
+				};
+			},
 
-						setLogoutURL () {},
+			setLogoutURL () {},
 
-						getAppUsername () { return username; },
+			getAppUsername () { return username; },
 
 			async getAppUser () {
-							const user = {};
+				const user = {};
 
-							if (username === 'tos') {
-								user.acceptTermsOfService = true;
-							}
+				if (username === 'tos') {
+					user.acceptTermsOfService = true;
+				}
 
 				return user;
-						}
+			}
 		};
-				},
+	},
 	async ping (name, req) {
-					req.pong = {Site: 'default'};
+		req.pong = {Site: 'default'};
 
-					if(!req.headers.authentication) {
+		if(!req.headers.authentication) {
 			throw Object.assign(new Error('Not Authenticated'), {statusCode: 401});
-					}
+		}
 
 		return {
-						getLink () {}
+			getLink () {}
 		};
-				},
-				async get (uri) {
-					if (uri === 'SiteBrand') {
-						return {
-							'brand_name': 'yo-brand'
-						};
-					}
-				}
+	},
+	async get (uri) {
+		if (uri === 'SiteBrand') {
+			return {
+				'brand_name': 'yo-brand'
+			};
+		}
+	}
 };
 
 const mockInterface = {
@@ -189,6 +189,34 @@ describe('Test End-to-End', () => {
 		expect(res.text).toEqual(expect.stringContaining('Page! at /test/'));
 		expect(res.text).toEqual(expect.stringContaining('branding":{"brand_name":"yo-brand"}'));
 
+	});
+
+
+	test ('ops ping does not hit backend', async () => {
+		jest.spyOn(interfaceImplementation, 'get');
+		jest.spyOn(interfaceImplementation, 'getServiceDocument');
+		jest.spyOn(interfaceImplementation, 'ping');
+
+		const Session = require('../lib/session');
+		jest.spyOn(Session.prototype, 'middleware');
+		jest.spyOn(Session.prototype, 'anonymousMiddleware');
+
+		const {getApp} = require('../worker');
+		const config = { ...commonConfigs, apps: [{
+			public: false,
+			package: '../../example',
+			basepath: '/app'
+		}]};
+
+		await request(await getApp(config))
+			.get('/app/api/_ops/ping')
+			.expect(204);
+
+		expect(Session.prototype.middleware).not.toHaveBeenCalled();
+		expect(Session.prototype.anonymousMiddleware).not.toHaveBeenCalled();
+		expect(interfaceImplementation.get).not.toHaveBeenCalled();
+		expect(interfaceImplementation.getServiceDocument).not.toHaveBeenCalled();
+		expect(interfaceImplementation.ping).not.toHaveBeenCalled();
 	});
 
 

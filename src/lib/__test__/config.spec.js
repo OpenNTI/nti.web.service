@@ -386,6 +386,38 @@ describe ('lib/config', () => {
 	});
 
 
+	test ('clientConfig(): reduces overrides to current site', async () => {
+		const {clientConfig} = require('../config');
+		const context = {
+			hostname: 'some.site.nextthought.com',
+			[ServiceStash]: {}, //fake service
+			[SERVER_REF]: {
+				get: (rel) => void 0
+			}
+		};
+		const config = {
+			server: '/dataserver2/',
+			apps: [
+				{appId: 'abc'}
+			],
+			overrides: {
+				global: {
+					foo: 'bar',
+				},
+				'some.site.nextthought.com': {
+					w00t: true
+				},
+				'another.site.nextthought.com': {
+					'no not include me': 42
+				}
+			}
+		};
+
+		const res = await clientConfig(config, 'foobar', 'abc', context);
+		expect(res.config.overrides).toEqual({foo: 'bar', w00t:true});
+	});
+
+
 	test ('clientConfig(): blows up if no service on context', async () => {
 		const {clientConfig} = require('../config');
 		const context = {};

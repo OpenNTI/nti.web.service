@@ -383,6 +383,13 @@ async function clientConfig (baseConfig, username, appId, context) {
 		cfg.siteTitle = cfg.branding['brand_name'];
 	}
 
+	if (cfg.overrides) {
+		cfg.overrides = {
+			...cfg.overrides.global,
+			...cfg.overrides[context.hostname]
+		};
+	}
+
 	return {
 		config: serviceRef(context[ServiceStash], cfg),
 		html:

@@ -386,7 +386,7 @@ async function clientConfig (baseConfig, username, appId, context) {
 	if (cfg.overrides) {
 		cfg.overrides = {
 			...cfg.overrides.global,
-			...cfg.overrides[context.hostname]
+			...cfg.overrides[pong.Site]
 		};
 	}
 

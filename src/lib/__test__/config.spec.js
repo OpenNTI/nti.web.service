@@ -389,7 +389,7 @@ describe ('lib/config', () => {
 	test ('clientConfig(): reduces overrides to current site', async () => {
 		const {clientConfig} = require('../config');
 		const context = {
-			hostname: 'some.site.nextthought.com',
+			pong: {Site: 'some.site.nextthought.com'},
 			[ServiceStash]: {}, //fake service
 			[SERVER_REF]: {
 				get: (rel) => void 0

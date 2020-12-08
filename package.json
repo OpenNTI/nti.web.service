@@ -46,7 +46,7 @@
     "regenerator-runtime": "^0.13.7",
     "response-time": "^2.2.0",
     "serve-static": "^1.11.2",
-    "supertest": "^4.0.2",
+    "supertest": "^6.0.1",
     "uuid": "^8.3.0",
     "yargs": "^16.0.0"
   },

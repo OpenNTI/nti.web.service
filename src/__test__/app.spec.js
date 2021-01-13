@@ -220,7 +220,7 @@ describe('Test End-to-End', () => {
 	});
 
 
-	test.only ('host does not end up in the client appConfig', async () => {
+	test ('host does not end up in the client appConfig', async () => {
 		const {getApp} = require('../worker');
 		const config = { ...commonConfigs, apps: [{
 			package: '../../example',

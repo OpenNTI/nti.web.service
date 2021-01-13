@@ -220,6 +220,25 @@ describe('Test End-to-End', () => {
 	});
 
 
+	test.only ('host does not end up in the client appConfig', async () => {
+		const {getApp} = require('../worker');
+		const config = { ...commonConfigs, apps: [{
+			package: '../../example',
+			basepath: '/app/'
+		}],};
+
+		const res = await request(await getApp(config))
+			.get('/app/')
+			//This isn't testing the authentication itself, just the behavior of "authenticated" or not...
+			.set('Authentication', 'foobar')
+			.set('X-Forwarded-Host', 'example.com:0')
+			.set('Host', 'example.com:0')
+			.expect(200);
+
+		expect(res.text).not.toEqual(expect.stringContaining('example.com'));
+	});
+
+
 	test ('Render A Page', async () => {
 		const {getApp} = require('../worker');
 		const config = { ...commonConfigs, apps: [{
@@ -249,7 +268,7 @@ describe('Test End-to-End', () => {
 	});
 
 
-	test ('Page Renders have cach-busting headers and no etag', async () => {
+	test ('Page Renders have cache-busting headers and no etag', async () => {
 		const {getApp} = require('../worker');
 		const config = { ...commonConfigs, apps: [{
 			public: true,

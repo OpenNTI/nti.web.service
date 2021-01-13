@@ -339,7 +339,7 @@ function serviceRef (service, cfg) {
 async function clientConfig (baseConfig, username, appId, context) {
 	//unsafe to send to client raw... lets reduce it to essentials
 	const app = (baseConfig.apps || []).reduce((r, o) => r || o.appId === appId && o, null) || {};
-	const {pong = {}, protocol = 'http', headers: {host: hostname = '-'} = {}} = context;
+	const {pong = {}, protocol = 'http', hostname = '-'} = context;
 	const userId = ({AuthenticatedUserId: x}) => x || null;
 
 	const publicHost = new URL(`${protocol}://${hostname}`);

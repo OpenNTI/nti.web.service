@@ -1,6 +1,6 @@
 {
   "name": "@nti/web-service",
-  "version": "1.43.0-alpha",
+  "version": "1.43.0",
   "description": "Service to serve and manage client UIs",
   "main": "src/index.js",
   "bin": {
@@ -48,7 +48,7 @@
     "uuid": "^8.3.0",
     "yargs": "^16.0.0"
   },
-  "bundledDependencies": [
+  "bundleDependencies": [
     "@nti/lib-commons",
     "@nti/lib-interfaces",
     "@nti/util-logger",

@@ -72,7 +72,7 @@ function getRenderer (assets, renderContent, devmode) {
 	 * @param  {Object} clientConfig        The clientConfig object.
 	 * @param  {Function} [markError=NOOP]  An optional content rendering function. May return a string or a Promise
 	 *                                      that fulfills with a string.
-	 * @return {Promise<string>}            Fulfills with the rendered page as a string
+	 * @returns {Promise<string>}            Fulfills with the rendered page as a string
 	 */
 	return async function render (basePath, { url, config: { templateInjections } = {} } = {}, { html, config } = {}, markError = NOOP) {
 		const template = (await getTemplate(assets, templateInjections, devmode)) || 'Bad Template';

@@ -36,12 +36,12 @@ async function read (file) {
 }
 
 function inject (html, tagName, position, content) {
-	const ALLOWED_TAGNAMES = {
+	const ALLOWED_TAG_NAMES = {
 		head: 1,
 		body: 1,
 	};
 
-	if (!ALLOWED_TAGNAMES[tagName]) {
+	if (!ALLOWED_TAG_NAMES[tagName]) {
 		throw new Error(`TagName (${tagName}) not allowed!`);
 	}
 

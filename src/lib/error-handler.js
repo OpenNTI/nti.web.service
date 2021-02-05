@@ -17,7 +17,6 @@ function setupErrorHandler (express/*, config*/) {
 
 // We need the signature to be 4 args long
 // for express to treat it as a error handler
-// eslint-disable-next-line no-unused-vars
 function middleware (err, req, res, next) {
 	if (err === 'aborted' || ((err || {}).error || {}).type === 'aborted') {
 		if (res.headersSent) {

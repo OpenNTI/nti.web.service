@@ -6,6 +6,7 @@ const path = require('path');
 
 const express = require('express');
 const Sentry = require('@sentry/node');
+const Tracing = require('@sentry/tracing');
 const { proxy: createProxy } = require('findhit-proxywrap');
 
 const pkg = require('../package.json');
@@ -72,8 +73,22 @@ async function getApp(config) {
 	app.engine('html', htmlTemplates);
 
 	if (config.sentry) {
-		Sentry.init(config.sentry);
-		app.use(Sentry.Handlers.requestHandler());
+		try {
+			Sentry.init({
+				integrations: [
+					// enable HTTP calls tracing
+					new Sentry.Integrations.Http({ tracing: true }),
+					// enable Express.js middleware tracing
+					new Tracing.Integrations.Express({ app }),
+				],
+				tracesSampleRate: 0.2,
+				...config.sentry,
+			});
+			app.use(Sentry.Handlers.requestHandler());
+		} catch (e) {
+			delete config.sentry;
+			logger.error(e.stack || e.message || e);
+		}
 	}
 
 	app.set('trust proxy', true);

@@ -71,8 +71,10 @@ async function getApp(config) {
 	const app = express();
 	app.engine('html', htmlTemplates);
 
-	Sentry.init({ dsn: config.sentry?.dsn || '__DSN__' });
-	app.use(Sentry.Handlers.requestHandler());
+	if (config.sentry) {
+		Sentry.init(config.sentry);
+		app.use(Sentry.Handlers.requestHandler());
+	}
 
 	app.set('trust proxy', true);
 	app.set('views', path.resolve(__dirname, 'templates'));
@@ -80,10 +82,11 @@ async function getApp(config) {
 
 	await setupApplication(app, config, restart);
 
-	app.use(ignoreAborted);
-
 	//Errors
-	app.use(Sentry.Handlers.errorHandler());
+	if (config.sentry) {
+		app.use(ignoreAborted);
+		app.use(Sentry.Handlers.errorHandler());
+	}
 	setupErrorHandler(app, config);
 	return app;
 }

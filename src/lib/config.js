@@ -353,11 +353,7 @@ function serviceRef(service, cfg) {
 
 async function clientConfig(baseConfig, username, appId, context) {
 	//unsafe to send to client raw... lets reduce it to essentials
-	const app =
-		(baseConfig.apps || []).reduce(
-			(r, o) => r || (o.appId === appId && o),
-			null
-		) || {};
+	const app = (baseConfig.apps || []).find(x => x.appId === appId) || {};
 	const { pong = {}, protocol = 'http', hostname = '-' } = context;
 	const userId = ({ AuthenticatedUserId: x }) => x || null;
 
@@ -367,7 +363,22 @@ async function clientConfig(baseConfig, username, appId, context) {
 	const cfg = {
 		branded: true, //defaults to true
 		...baseConfig,
-		...app,
+		...Object.keys(app).reduce((o, k) => {
+			if (
+				baseConfig[k] &&
+				typeof baseConfig[k] === 'object' &&
+				typeof app[k] === 'object'
+			) {
+				o[k] = {
+					...baseConfig[k],
+					...app[k],
+				};
+			} else {
+				o[k] = app[k];
+			}
+
+			return o;
+		}, {}),
 		//hide internal hostnames... If we ever host server & web-app on different domains this will have to be removed.
 		server: server.pathname,
 		userId: userId(pong),

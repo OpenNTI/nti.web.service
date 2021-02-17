@@ -454,6 +454,49 @@ describe('lib/config', () => {
 		expect(res.config.overrides).toEqual({ foo: 'bar', w00t: true });
 	});
 
+	test('clientConfig()/config(): merge objects from app to server', async () => {
+		jest.doMock('yargs', () => yargs);
+
+		const context = {
+			pong: { Site: 'some.site.nextthought.com' },
+			[ServiceStash]: {}, //fake service
+			[SERVER_REF]: {
+				get: rel => void 0,
+			},
+		};
+
+		const { config, clientConfig } = require('../config');
+
+		const env = {
+			development: {
+				server: 'http://dataserver2:8081/',
+				port: 8081,
+				sentry: {
+					dsn: 'server',
+					environment: 'alpha',
+				},
+				apps: [
+					{
+						appId: 'abc',
+						sentry: {
+							dsn: 'app',
+						},
+					},
+				],
+			},
+		};
+
+		const c = await Promise.resolve(config(env, yargs.argv));
+		expect(c.sentry.dsn).toBe('server');
+		expect(c.sentry.environment).toBe('alpha');
+		expect(c.apps[0].sentry.dsn).toBe('app');
+
+		const res = await clientConfig(c, 'foobar', 'abc', context);
+
+		expect(res.config.sentry.dsn).toBe('app');
+		expect(res.config.sentry.environment).toBe('alpha');
+	});
+
 	test('clientConfig(): blows up if no service on context', async () => {
 		const { clientConfig } = require('../config');
 		const context = {};

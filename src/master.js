@@ -5,15 +5,19 @@ const fs = require('fs');
 
 const pkg = require('../package.json');
 
-const {getStackOrMessage, getErrorMessage, callThresholdMet} = require('./lib/utils');
-const {loadConfig, showFlags} = require('./lib/config');
+const {
+	getStackOrMessage,
+	getErrorMessage,
+	callThresholdMet,
+} = require('./lib/utils');
+const { loadConfig, showFlags } = require('./lib/config');
 const logger = require('./lib/logger');
 const {
 	getConfig,
 	setConfig,
 	getConfiguredWorkerCount,
 	setConfiguredWorkerCount,
-	getActiveWorkers
+	getActiveWorkers,
 } = require('./lib/master-utils');
 
 const self = Object.assign(exports, {
@@ -26,31 +30,33 @@ const self = Object.assign(exports, {
 	maintainWorkerCount,
 	restartWorkers,
 	onWorkerExit,
-	handleMessage
+	handleMessage,
 });
 
 let devmode = false;
 
-
 const MESSAGE_HANDLERS = {
-	NOTIFY_DEVMODE () {
+	NOTIFY_DEVMODE() {
 		logger.warn('Restricting workers, because devmode.');
 		devmode = true;
 		setConfiguredWorkerCount(1);
 	},
 
-	WORKER_WANTS_TO_RESTART_THE_POOL () {
+	WORKER_WANTS_TO_RESTART_THE_POOL() {
 		self.restartWorkers();
 	},
 
-	FATAL_ERROR () {
+	FATAL_ERROR() {
 		logger.error('Recieved a FATAL_ERROR code from a worker.');
-	}
+	},
 };
 
-
-function start () {
-	logger.info('Starting up. (version: %s, process: %d)', pkg.version, process.pid);
+function start() {
+	logger.info(
+		'Starting up. (version: %s, process: %d)',
+		pkg.version,
+		process.pid
+	);
 	process.on('SIGHUP', self.load);
 	cluster.on('message', self.handleMessage);
 	cluster.on('exit', self.onWorkerExit);
@@ -58,26 +64,27 @@ function start () {
 	self.load();
 }
 
-
-function load () {
+function load() {
 	logger.info('Loading config.');
-	return loadConfig()//return for testing
+	return loadConfig() //return for testing
 		.then(self.init)
 		.catch(error => {
 			/* istanbul ignore next */
-			logger.error('Failed to start: %s', (error && (error.stack || error.message)) || JSON.stringify(error, void 0, 2));
+			logger.error(
+				'Failed to start: %s',
+				(error && (error.stack || error.message)) ||
+					JSON.stringify(error, void 0, 2)
+			);
 		});
 }
 
-
-function init (config) {
-
+function init(config) {
 	logger.info('Config loaded.');
 	showFlags(config);
 
 	config.versions = {
-		...config.versions || {},
-		service: pkg.version //tell apps what version we are
+		...(config.versions || {}),
+		service: pkg.version, //tell apps what version we are
 	};
 
 	setConfig(config);
@@ -89,8 +96,7 @@ function init (config) {
 	}
 }
 
-
-function startWorker () {
+function startWorker() {
 	try {
 		logger.info('Starting Worker...');
 
@@ -105,7 +111,7 @@ function startWorker () {
 
 		const config = getConfig();
 		const worker = cluster.fork();
-		worker.send({topic: 'default', cmd: 'init', config});
+		worker.send({ topic: 'default', cmd: 'init', config });
 		return worker;
 	} catch (e) {
 		logger.warn('MISSING CODE: Cannot start a worker.');
@@ -115,44 +121,52 @@ function startWorker () {
 	}
 }
 
-
-function maintainWorkerCount () {
+function maintainWorkerCount() {
 	// Prevent memory leaks...
 	// If a worker exists while we're already processing, drop the previous handlers and start over
 	const listeners = cluster.listeners('listening') || [];
 	if (listeners.length > 0) {
 		//free the previous handler and its closure stack references. (being careful, not to remove OTHER listeners)
-		listeners.forEach(x => x.name === startAnother.name && cluster.removeListener('listening', x));
+		listeners.forEach(
+			x =>
+				x.name === startAnother.name &&
+				cluster.removeListener('listening', x)
+		);
 	}
 
 	cluster.on('listening', startAnother);
-	const {port} = getConfig();
+	const { port } = getConfig();
 	const unsubscribe = () => {
 		cluster.removeListener('listening', startAnother);
 	};
 
-
 	let pendingWorker = null;
 	startAnother();
 
-	function startAnother (worker, address) {
-
+	function startAnother(worker, address) {
 		if (pendingWorker && worker !== pendingWorker) {
 			// ignore workers other than ours
-			logger.debug('Ignoring listening event, because its not the one we are waiting on.');
+			logger.debug(
+				'Ignoring listening event, because its not the one we are waiting on.'
+			);
 			return;
 		}
 
 		if (address && address.port !== port) {
 			// ignore other listener events
-			logger.debug('Ignoring listening event, because its for another port.');
+			logger.debug(
+				'Ignoring listening event, because its for another port.'
+			);
 			return;
 		}
 
-
 		const workers = getConfiguredWorkerCount();
 		const workersRunning = getActiveWorkers().length;
-		logger.info('Workers: active: %d, configured: %d', workersRunning, workers);
+		logger.info(
+			'Workers: active: %d, configured: %d',
+			workersRunning,
+			workers
+		);
 
 		if (workersRunning < workers) {
 			pendingWorker = self.startWorker();
@@ -162,32 +176,38 @@ function maintainWorkerCount () {
 	}
 }
 
-
-function restartWorkers () {
+function restartWorkers() {
 	if ((x => x && x.length > 0)(restartWorkers.queue)) {
-		logger.warn('\n\n\nIgnoring restartWorkers() request while in the middle of restarting workers.');
+		logger.warn(
+			'\n\n\nIgnoring restartWorkers() request while in the middle of restarting workers.'
+		);
 		return;
 	}
 
-	const queue = restartWorkers.queue = [...getActiveWorkers()];
+	const queue = (restartWorkers.queue = [...getActiveWorkers()]);
 	const targetWorkerCount = getConfiguredWorkerCount();
 
 	logger.info('Restarting %d workers...', queue.length);
 
-
-
-	function rollingRestart () {
+	function rollingRestart() {
 		const worker = queue.shift();
-		const triggerEvent = targetWorkerCount <= queue.length ? 'exit' : 'listening';
+		const triggerEvent =
+			targetWorkerCount <= queue.length ? 'exit' : 'listening';
 
 		if (worker) {
-			logger.info('using "%s" event as the restart-continuation', triggerEvent);
-			logger.info('Restarting (close & respawn) worker..., (%d remain)', queue.length);
+			logger.info(
+				'using "%s" event as the restart-continuation',
+				triggerEvent
+			);
+			logger.info(
+				'Restarting (close & respawn) worker..., (%d remain)',
+				queue.length
+			);
 			cluster.once(triggerEvent, rollingRestart);
 			// cluster.once('online', rollingRestart);
 			try {
 				if (worker.isConnected()) {
-					worker.send({topic: 'default', cmd: 'close'});
+					worker.send({ topic: 'default', cmd: 'close' });
 				}
 			} catch (e) {
 				logger.error(getStackOrMessage(e));
@@ -198,9 +218,13 @@ function restartWorkers () {
 	rollingRestart();
 }
 
-
-function onWorkerExit (worker, code, signal) {
-	logger.info('worker %d exited (code: %s%s)', worker.process.pid, code, signal ? `, signal: ${signal}` : '');
+function onWorkerExit(worker, code, signal) {
+	logger.info(
+		'worker %d exited (code: %s%s)',
+		worker.process.pid,
+		code,
+		signal ? `, signal: ${signal}` : ''
+	);
 
 	if (devmode && code !== 0) {
 		return process.exit(code);
@@ -209,8 +233,7 @@ function onWorkerExit (worker, code, signal) {
 	self.maintainWorkerCount();
 }
 
-
-function handleMessage (worker, msg) {
+function handleMessage(worker, msg) {
 	if ((msg || {}).topic !== 'default') {
 		return;
 	}

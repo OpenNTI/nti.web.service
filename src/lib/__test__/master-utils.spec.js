@@ -17,20 +17,18 @@ describe('lib/master-utils', () => {
 		stub(logger, 'info');
 		stub(logger, 'warn');
 
-		jest.doMock('cluster', () => ({workers: []}));
+		jest.doMock('cluster', () => ({ workers: [] }));
 	});
-
 
 	afterEach(() => {
 		jest.dontMock('cluster');
 		jest.resetModules();
 	});
 
-
-	test ('getConfig/setConfig work as expected', () => {
-		const cfg = {test:'abc'};
-		const copy = { ...cfg};
-		const {getConfig, setConfig} = require('../master-utils');
+	test('getConfig/setConfig work as expected', () => {
+		const cfg = { test: 'abc' };
+		const copy = { ...cfg };
+		const { getConfig, setConfig } = require('../master-utils');
 		//starts out unset
 		expect(getConfig()).toEqual(undefined);
 
@@ -48,9 +46,8 @@ describe('lib/master-utils', () => {
 		expect(getConfig()).toEqual(copy);
 	});
 
-
-	test ('isValidWorkerCount() only accepts finite positive integers', () => {
-		const {isValidWorkerCount} = require('../master-utils');
+	test('isValidWorkerCount() only accepts finite positive integers', () => {
+		const { isValidWorkerCount } = require('../master-utils');
 
 		expect(isValidWorkerCount()).toBe(false);
 		expect(isValidWorkerCount(null)).toBe(false);
@@ -68,14 +65,22 @@ describe('lib/master-utils', () => {
 		expect(isValidWorkerCount(1)).toBe(true);
 		expect(isValidWorkerCount(100)).toBe(true);
 		expect(isValidWorkerCount(1000)).toBe(true);
-
 	});
 
+	test('getConfiguredWorkerCount() returns the value of `workers` as an integer, if valid, otherwise 1, ignores argument', () => {
+		const {
+			setConfig,
+			getConfiguredWorkerCount,
+		} = require('../master-utils');
 
-	test ('getConfiguredWorkerCount() returns the value of `workers` as an integer, if valid, otherwise 1, ignores argument', () => {
-		const {setConfig, getConfiguredWorkerCount} = require('../master-utils');
-
-		const goodValues = [{workers: 2}, {workers: '2'}, {workers: '10'}, {workers: 10}, {workers: 1}, {workers: 300}];
+		const goodValues = [
+			{ workers: 2 },
+			{ workers: '2' },
+			{ workers: '10' },
+			{ workers: 10 },
+			{ workers: 1 },
+			{ workers: 300 },
+		];
 		for (let v of goodValues) {
 			const c = parseInt(v.workers, 10);
 			setConfig(v);
@@ -84,7 +89,15 @@ describe('lib/master-utils', () => {
 			expect(getConfiguredWorkerCount(54)).toEqual(c);
 		}
 
-		const badValues = [void 0, null, {}, {workers: ''}, {workers: 'abc'}, {workers: 0}, {workers: '-9'}];
+		const badValues = [
+			void 0,
+			null,
+			{},
+			{ workers: '' },
+			{ workers: 'abc' },
+			{ workers: 0 },
+			{ workers: '-9' },
+		];
 		for (let v of badValues) {
 			setConfig(v);
 			expect(getConfiguredWorkerCount()).toEqual(1);
@@ -93,9 +106,12 @@ describe('lib/master-utils', () => {
 		}
 	});
 
-
-	test ('setConfiguredWorkerCount()', () => {
-		const {getConfig, getConfiguredWorkerCount, setConfiguredWorkerCount} = require('../master-utils');
+	test('setConfiguredWorkerCount()', () => {
+		const {
+			getConfig,
+			getConfiguredWorkerCount,
+			setConfiguredWorkerCount,
+		} = require('../master-utils');
 		// starts out unset
 		expect(getConfig()).toEqual(undefined);
 		// base values
@@ -127,10 +143,9 @@ describe('lib/master-utils', () => {
 		expect(getConfiguredWorkerCount()).toEqual(1);
 	});
 
-
-	test ('getActiveWorkers() is safe', () => {
+	test('getActiveWorkers() is safe', () => {
 		jest.doMock('cluster', () => ({}));
-		const {getActiveWorkers} = require('../master-utils');
+		const { getActiveWorkers } = require('../master-utils');
 
 		//safe (the workers property is not defined)
 		expect(() => getActiveWorkers()).not.toThrow();
@@ -139,18 +154,18 @@ describe('lib/master-utils', () => {
 
 		//the return value should always be new
 		expect(getActiveWorkers()).not.toBe(getActiveWorkers());
-
 	});
 
-
-	test ('getActiveWorkers() returns active workers', () => {
-		jest.doMock('cluster', () => ({workers: [
-			{isDead: () => true},
-			{isDead: () => false},
-			{isDead: () => true},
-			{}, // <= unexpected value
-		]}));
-		const {getActiveWorkers} = require('../master-utils');
+	test('getActiveWorkers() returns active workers', () => {
+		jest.doMock('cluster', () => ({
+			workers: [
+				{ isDead: () => true },
+				{ isDead: () => false },
+				{ isDead: () => true },
+				{}, // <= unexpected value
+			],
+		}));
+		const { getActiveWorkers } = require('../master-utils');
 
 		//safe (note the empty object in the workers list)
 		expect(() => getActiveWorkers()).not.toThrow();
@@ -158,5 +173,4 @@ describe('lib/master-utils', () => {
 		const active = getActiveWorkers();
 		expect(active.length).toEqual(1);
 	});
-
 });

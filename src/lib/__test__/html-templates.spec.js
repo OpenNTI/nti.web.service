@@ -5,7 +5,6 @@ jest.mock('fs');
 const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 describe('lib/html-templates', () => {
-
 	beforeEach(() => {
 		jest.resetModules();
 		const logger = require('../logger');
@@ -17,13 +16,11 @@ describe('lib/html-templates', () => {
 		stub(logger, 'warn');
 	});
 
-
 	afterEach(() => {
 		jest.resetModules();
 	});
 
-
-	test ('Handles Error', () => {
+	test('Handles Error', () => {
 		const fs = require('fs');
 		const render = require('../html-templates');
 		const err = new Error();
@@ -31,18 +28,21 @@ describe('lib/html-templates', () => {
 
 		stub(fs, 'readFile', (file, cb) => cb(err));
 
-		render('file', {option: 'a'}, fn);
+		render('file', { option: 'a' }, fn);
 
 		expect(fn).toHaveBeenCalledTimes(1);
 		expect(fn).toHaveBeenCalledWith(err);
 	});
 
-	test ('Handles Template Options', () => {
+	test('Handles Template Options', () => {
 		const fs = require('fs');
 		const render = require('../html-templates');
 		const fn = jest.fn();
 
-		stub(fs, 'readFile', (file, cb) => cb(null, `
+		stub(fs, 'readFile', (file, cb) =>
+			cb(
+				null,
+				`
 		<title><![CDATA[cfg:siteTitle]]></title>
 		<meh><![CDATA[cfg:missingMeh]]></meh>
 		<meta http-equiv="foo" content="<[cfg:foo]>"/>
@@ -58,14 +58,22 @@ describe('lib/html-templates', () => {
 			console.log('UNSUPPORTED ERROR: ', (new URL(location.href)).searchParams.get('error'));
 		}
 		</script>
-		`));
+		`
+			)
+		);
 
-		render('file', {
-			siteTitle: 'foobar',
-			foo: 'baz'
-		}, fn);
+		render(
+			'file',
+			{
+				siteTitle: 'foobar',
+				foo: 'baz',
+			},
+			fn
+		);
 
-		expect(fn).toHaveBeenCalledWith(null, `
+		expect(fn).toHaveBeenCalledWith(
+			null,
+			`
 		<title>foobar</title>
 		<meh>MissingConfigValue[missingMeh]</meh>
 		<meta http-equiv="foo" content="baz"/>
@@ -81,9 +89,7 @@ describe('lib/html-templates', () => {
 			console.log('UNSUPPORTED ERROR: ', (new URL(location.href)).searchParams.get('error'));
 		}
 		</script>
-		`);
+		`
+		);
 	});
-
-
-
 });

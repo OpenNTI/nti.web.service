@@ -3,5 +3,4 @@
 
 const fs = jest.genMockFromModule('memored');
 
-
 module.exports = fs;

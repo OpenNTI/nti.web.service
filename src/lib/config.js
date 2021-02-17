@@ -4,12 +4,11 @@ const path = require('path');
 
 const yargs = require('yargs');
 const uuid = require('uuid');
-const {ServiceStash} = require('@nti/lib-interfaces');
+const { ServiceStash } = require('@nti/lib-interfaces');
 
-const {SERVER_REF} = require('./constants');
+const { SERVER_REF } = require('./constants');
 const getApplication = require('./app-loader');
 const logger = require('./logger');
-
 
 const self = Object.assign(exports, {
 	clientConfig,
@@ -19,14 +18,15 @@ const self = Object.assign(exports, {
 	nodeConfigAsClientConfig,
 	showFlags,
 	loadBranding,
-	getFaviconFromBranding
+	getFaviconFromBranding,
 });
 
-const promisify = fn => (...args) => new Promise((f,r) => fn(...args, (er, v) => er ? r(er) : f(v)));
+const promisify = fn => (...args) =>
+	new Promise((f, r) => fn(...args, (er, v) => (er ? r(er) : f(v))));
 const stat = promisify(fs.stat);
 const read = promisify(fs.readFile);
 
-async function readFile (uri, resolveOrderForRelativePaths = [process.cwd()]) {
+async function readFile(uri, resolveOrderForRelativePaths = [process.cwd()]) {
 	if (uri.protocol === 'file:') {
 		uri = uri.toString().replace(/^file:\/\//i, '');
 
@@ -40,7 +40,7 @@ async function readFile (uri, resolveOrderForRelativePaths = [process.cwd()]) {
 				logger.debug('Attempting file at: %s', p);
 				return {
 					text: (await read(p)).toString('utf8'),
-					path: new URL(p, 'file://').toString()
+					path: new URL(p, 'file://').toString(),
 				};
 			} catch (e) {
 				logger.debug('File not available at: %s\n\t%s', p, e.message);
@@ -58,23 +58,21 @@ async function readFile (uri, resolveOrderForRelativePaths = [process.cwd()]) {
 
 	return {
 		text: await response.text(),
-		path: uri.toString()
+		path: uri.toString(),
 	};
 }
 
-
-function parsePlacement (placement) {
+function parsePlacement(placement) {
 	const [tagName, ix] = placement.toLowerCase().split('|');
 	const sort = parseInt(ix, 10);
 	return {
 		tagName,
-		sort: ix == null || !isFinite(sort) ? null : sort
+		sort: ix == null || !isFinite(sort) ? null : sort,
 	};
 }
 
-
-async function loadTemplateInjections (cfg, relativeAnchor) {
-	const {templateInjections: injections} = cfg;
+async function loadTemplateInjections(cfg, relativeAnchor) {
+	const { templateInjections: injections } = cfg;
 	const m = (cfg.templateInjections = {});
 
 	if (!Array.isArray(injections)) {
@@ -84,25 +82,28 @@ async function loadTemplateInjections (cfg, relativeAnchor) {
 	const max = {};
 
 	for (let i of injections) {
-		const {tagName, sort} = parsePlacement(i.placement);
+		const { tagName, sort } = parsePlacement(i.placement);
 		i.content = (await readFile(new URL(i.source, relativeAnchor))).text;
 		i.sort = sort;
 
 		max[tagName] = Math.max(sort, max[tagName] || -Infinity);
 
-		const bin = m[tagName] = m[tagName] || [];
+		const bin = (m[tagName] = m[tagName] || []);
 		bin.push(i);
 	}
 
-	const combine = a => !a.length ? null : a.reduce((o, i) => (
-		o.sources.push(i.source),
-		o.content += i.content,
-		o
-	), {
-		sources: [],
-		content: ''
-	});
-
+	const combine = a =>
+		!a.length
+			? null
+			: a.reduce(
+					(o, i) => (
+						o.sources.push(i.source), (o.content += i.content), o
+					),
+					{
+						sources: [],
+						content: '',
+					}
+			  );
 
 	for (const [tagName, bin] of Object.entries(m)) {
 		for (const i of bin) {
@@ -110,59 +111,59 @@ async function loadTemplateInjections (cfg, relativeAnchor) {
 				i.sort = ++max[tagName];
 			}
 		}
-		bin.sort((a,b) => a.sort - b.sort);
-		const out = m[tagName] = {
+		bin.sort((a, b) => a.sort - b.sort);
+		const out = (m[tagName] = {
 			start: combine(bin.filter(x => x.sort >= 0)),
-			end: combine(bin.filter(x => x.sort < 0))
-		};
+			end: combine(bin.filter(x => x.sort < 0)),
+		});
 
-		for (const [k,v] of Object.entries(out)) {
-			if (!v) {delete out[k];}
+		for (const [k, v] of Object.entries(out)) {
+			if (!v) {
+				delete out[k];
+			}
 		}
 	}
 
 	return m;
 }
 
-
-async function loadConfig () {
+async function loadConfig() {
 	const opt = yargs
 		.options({
-			'l': {
+			l: {
 				alias: 'listen',
-				desc: 'Force server to liston on address'
+				desc: 'Force server to liston on address',
 			},
-			'p': {
+			p: {
 				alias: 'port',
 				desc: 'Liston on port',
-				default: 8083
+				default: 8083,
 			},
-			'protocol': {
+			protocol: {
 				default: 'http',
-				desc: 'Protocol to use (proxy or http)'
+				desc: 'Protocol to use (proxy or http)',
 			},
-			'dataserver': {
-				desc: 'Override DataServer uri'
+			dataserver: {
+				desc: 'Override DataServer uri',
 			},
-			'webpack': {
+			webpack: {
 				desc: 'Prefix with "no-" to force the dev-server off.',
 				type: 'boolean',
-				default: true
+				default: true,
 			},
-			'config': {
+			config: {
 				demand: true,
 				default: '../config/env.json',
-				desc: 'URI/path to config file (http/https/file/path)'
+				desc: 'URI/path to config file (http/https/file/path)',
 			},
-			'env': {
+			env: {
 				default: process.env.NODE_ENV,
-				desc: 'Specify env config key'
-			}
+				desc: 'Specify env config key',
+			},
 		})
 		.help('help', 'Usage')
 		.alias('help', '?')
-		.usage('WebApp Instance')
-		.argv;
+		.usage('WebApp Instance').argv;
 
 	if (!opt.config) {
 		return Promise.reject('No config file specified');
@@ -170,10 +171,10 @@ async function loadConfig () {
 
 	try {
 		const uri = new URL(opt.config, 'file://');
-		const {text, path: relativeAnchor} = await readFile(uri, [
+		const { text, path: relativeAnchor } = await readFile(uri, [
 			path.resolve(process.cwd()),
 			path.resolve(__dirname),
-			path.resolve(__dirname, '../../config/env.json.example')
+			path.resolve(__dirname, '../../config/env.json.example'),
 		]);
 
 		const out = self.config(JSON.parse(text), opt);
@@ -181,17 +182,13 @@ async function loadConfig () {
 		await loadTemplateInjections(out, relativeAnchor);
 
 		return out;
-	}
-	catch(e) {
+	} catch (e) {
 		logger.error(e);
 		throw e;
 	}
-
 }
 
-
-function showFlags (config) {
-
+function showFlags(config) {
 	if (!config.flags) {
 		logger.info('No flags configured.');
 		return;
@@ -202,7 +199,12 @@ function showFlags (config) {
 
 		if (typeof value === 'object') {
 			for (let siteFlag of Object.keys(value)) {
-				logger.info('Resolved Flag: (%s) %s = %s', flag, siteFlag, value[siteFlag]);
+				logger.info(
+					'Resolved Flag: (%s) %s = %s',
+					flag,
+					siteFlag,
+					value[siteFlag]
+				);
 			}
 			continue;
 		}
@@ -211,27 +213,31 @@ function showFlags (config) {
 	}
 }
 
-
-function config (env, opt) {
+function config(env, opt) {
 	const base = 'development';
 
 	const serverOverride = opt['dataserver'];
 
 	if (opt.env && env[opt.env] == null) {
-		logger.error('Environment specified does not exist in config: %s', opt.env);
+		logger.error(
+			'Environment specified does not exist in config: %s',
+			opt.env
+		);
 		return Promise.reject({
 			reason: 'Missing Environment key',
 			ENV: opt.env,
-			config: env
+			config: env,
 		});
 	}
 
-	const envFlat = { ...env[base], ...env[opt.env]};
+	const envFlat = { ...env[base], ...env[opt.env] };
 
 	const c = {
-		webpack: opt.webpack, ...envFlat, protocol: opt.protocol,
+		webpack: opt.webpack,
+		...envFlat,
+		protocol: opt.protocol,
 		address: opt.l || envFlat.address || '0.0.0.0',
-		port: parseInt(opt.p || envFlat.port, 10) //ensure port is 'number'
+		port: parseInt(opt.p || envFlat.port, 10), //ensure port is 'number'
 	};
 
 	if (!Array.isArray(c.apps) || c.apps.length === 0) {
@@ -239,7 +245,7 @@ function config (env, opt) {
 		return Promise.reject({
 			reason: 'No apps key in config.',
 			ENV: opt.env,
-			config: c
+			config: c,
 		});
 	}
 
@@ -247,35 +253,33 @@ function config (env, opt) {
 		logger.error('Invalid port number!', c.port);
 		return Promise.reject({
 			reason: 'Bad Port',
-			config: c
+			config: c,
 		});
 	}
 
-	c.apps = c.apps.sort((a, b) => (
-		b = b.basepath,
-		a = a.basepath,
-		//should it compare path segment count instead of pure length?
-		b.length - a.length
-		|| ( //fallback to normal string compare sort when lengths are equal...
-			(a < b)
-				? -1
-				: (b < a)
-					? 1
-					: 0
+	c.apps = c.apps.sort(
+		(a, b) => (
+			(b = b.basepath),
+			(a = a.basepath),
+			//should it compare path segment count instead of pure length?
+			b.length - a.length || //fallback to normal string compare sort when lengths are equal...
+				(a < b ? -1 : b < a ? 1 : 0)
 		)
-	));
+	);
 
-
-	for(let a of c.apps) {
+	for (let a of c.apps) {
 		try {
 			const pkg = getApplication(a.package + '/package.json');
 
 			a.appId = a.appId || pkg.name || a.basepath;
 			a.appName = a.appName || pkg.name;
 			a.appVersion = a.appVersion || pkg.version;
-
 		} catch (e) {
-			logger.warn('Could not fill in package values for app %s, because: %s', a.package, e.message);
+			logger.warn(
+				'Could not fill in package values for app %s, because: %s',
+				a.package,
+				e.message
+			);
 		}
 
 		if (!a.appId) {
@@ -288,59 +292,74 @@ function config (env, opt) {
 		if (env[opt.env] != null) {
 			logger.info(`In ${opt.env} mode`);
 		} else {
-			logger.warn('In default "development" mode. Consider --env "production" or setting NODE_ENV="production"');
+			logger.warn(
+				'In default "development" mode. Consider --env "production" or setting NODE_ENV="production"'
+			);
 		}
 	}
 
 	if (serverOverride) {
-		c.server = c.server ? new URL(serverOverride, c.server).toString() : serverOverride;
+		c.server = c.server
+			? new URL(serverOverride, c.server).toString()
+			: serverOverride;
 	}
 
 	return c;
 }
 
-async function loadBranding (context) {
+async function loadBranding(context) {
 	try {
 		const serverRef = context[SERVER_REF];
 		return serverRef && serverRef.get('SiteBrand', context);
 	} catch (e) {
-		logger.warn(`Could not load SiteBrand: ${JSON.stringify(e.error || e)}\n\t-> Request Headers: ${JSON.stringify({...context.headers, cookie: void 0})}`);
+		logger.warn(
+			`Could not load SiteBrand: ${JSON.stringify(
+				e.error || e
+			)}\n\t-> Request Headers: ${JSON.stringify({
+				...context.headers,
+				cookie: void 0,
+			})}`
+		);
 		return null;
 	}
 }
 
-function getFaviconFromBranding (branding) {
-	const {assets} = branding || {};
-	const {favicon} = assets || {};
+function getFaviconFromBranding(branding) {
+	const { assets } = branding || {};
+	const { favicon } = assets || {};
 
-	if (!favicon) { return '/favicon.ico'; }
+	if (!favicon) {
+		return '/favicon.ico';
+	}
 
-	const {'Last Modified': lastMod, href} = favicon;
+	const { 'Last Modified': lastMod, href } = favicon;
 
 	return lastMod ? `${href}?v=${lastMod}` : href;
 }
 
-
-function serviceRef (service, cfg) {
+function serviceRef(service, cfg) {
 	return Object.defineProperty(cfg, 'nodeService', {
 		configurable: true,
 		enumerable: false,
 		...(service
 			? { value: service }
 			: {
-				get () {
-					return Promise.reject(new Error('No Service.'));
-				}
-			})
+					get() {
+						return Promise.reject(new Error('No Service.'));
+					},
+			  }),
 	});
 }
 
-
-async function clientConfig (baseConfig, username, appId, context) {
+async function clientConfig(baseConfig, username, appId, context) {
 	//unsafe to send to client raw... lets reduce it to essentials
-	const app = (baseConfig.apps || []).reduce((r, o) => r || o.appId === appId && o, null) || {};
-	const {pong = {}, protocol = 'http', hostname = '-'} = context;
-	const userId = ({AuthenticatedUserId: x}) => x || null;
+	const app =
+		(baseConfig.apps || []).reduce(
+			(r, o) => r || (o.appId === appId && o),
+			null
+		) || {};
+	const { pong = {}, protocol = 'http', hostname = '-' } = context;
+	const userId = ({ AuthenticatedUserId: x }) => x || null;
 
 	const publicHost = new URL(`${protocol}://${hostname}`);
 	const server = new URL(baseConfig.server, publicHost);
@@ -355,18 +374,32 @@ async function clientConfig (baseConfig, username, appId, context) {
 		siteName: pong.Site || 'default',
 		siteTitle: 'nextthought',
 		username,
-		locale: getLocale(context)
+		locale: getLocale(context),
 	};
 
-	logger.info('Generating config for %s (SiteID: %s)', context.hostname, pong.Site);
+	logger.info(
+		'Generating config for %s (SiteID: %s)',
+		context.hostname,
+		pong.Site
+	);
 
-	const blacklist = [/webpack.*/i, 'templateInjections', 'port', 'protocol', 'address', 'apps', 'site-mappings', 'package', 'keys'];
+	const blacklist = [
+		/webpack.*/i,
+		'templateInjections',
+		'port',
+		'protocol',
+		'address',
+		'apps',
+		'site-mappings',
+		'package',
+		'keys',
+	];
 
 	for (let blocked of blacklist) {
 		if (typeof blocked === 'string') {
 			delete cfg[blocked];
 		} else {
-			for(let prop of Object.keys(cfg)) {
+			for (let prop of Object.keys(cfg)) {
 				if (blocked.test(prop)) {
 					delete cfg[prop];
 				}
@@ -386,7 +419,7 @@ async function clientConfig (baseConfig, username, appId, context) {
 	if (cfg.overrides) {
 		cfg.overrides = {
 			...cfg.overrides.global,
-			...cfg.overrides[pong.Site]
+			...cfg.overrides[pong.Site],
 		};
 	}
 
@@ -394,15 +427,19 @@ async function clientConfig (baseConfig, username, appId, context) {
 		config: serviceRef(context[ServiceStash], cfg),
 		html:
 			'\n<script type="text/javascript">\n' +
-			'window.$AppConfig = ' + JSON.stringify(cfg) +
-			'\n</script>\n'
+			'window.$AppConfig = ' +
+			JSON.stringify(cfg) +
+			'\n</script>\n',
 	};
 }
 
-
-function nodeConfigAsClientConfig (cfg, appId, context) {
-	const {pong = {}} = context;
-	const app = (cfg.apps || []).reduce((r, o) => r || o.appId === appId && o, null) || {};
+function nodeConfigAsClientConfig(cfg, appId, context) {
+	const { pong = {} } = context;
+	const app =
+		(cfg.apps || []).reduce(
+			(r, o) => r || (o.appId === appId && o),
+			null
+		) || {};
 	return {
 		html: '',
 		config: serviceRef(context[ServiceStash], {
@@ -412,11 +449,10 @@ function nodeConfigAsClientConfig (cfg, appId, context) {
 			username: context.username,
 			siteName: pong.Site || 'default',
 			siteTitle: '-',
-		})
+		}),
 	};
 }
 
-
-function getLocale (context) {
+function getLocale(context) {
 	return context.language || 'en';
 }

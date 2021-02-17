@@ -1,6 +1,6 @@
 /*eslint-env jest*/
 'use strict';
-const {DATACACHE} = require('../constants');
+const { DATACACHE } = require('../constants');
 const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 describe('lib/renderer', () => {
@@ -22,30 +22,30 @@ describe('lib/renderer', () => {
 		clientConfig = jest.fn(() => ({}));
 		nodeConfigAsClientConfig = jest.fn(() => ({}));
 
-		jest.doMock('../config', () => ({clientConfig, nodeConfigAsClientConfig}));
+		jest.doMock('../config', () => ({
+			clientConfig,
+			nodeConfigAsClientConfig,
+		}));
 	});
-
 
 	afterEach(() => {
 		jest.resetModules();
 	});
 
-
-	test ('exports a function to get/make the renderer', () => {
-		const {getPageRenderer} = require('../renderer');
+	test('exports a function to get/make the renderer', () => {
+		const { getPageRenderer } = require('../renderer');
 		expect(getPageRenderer).toEqual(expect.any(Function));
 
 		const renderer = getPageRenderer();
 		expect(renderer).toEqual(expect.any(Function));
 	});
 
-
-	test ('renderer: calls app.render twice to pre-flight network calls', async () => {
-		const {getPageRenderer} = require('../renderer');
+	test('renderer: calls app.render twice to pre-flight network calls', async () => {
+		const { getPageRenderer } = require('../renderer');
 		const config = {};
 		const serialize = jest.fn(() => 'testHTML');
 		const datacache = {
-			getForContext: jest.fn(() => ({serialize}))
+			getForContext: jest.fn(() => ({ serialize })),
 		};
 		const render = jest.fn(() => 'TestApp');
 		const appId = 'test';
@@ -54,17 +54,17 @@ describe('lib/renderer', () => {
 			url: '/test',
 			username: 'tester',
 			waitForPending: jest.fn(),
-			[DATACACHE]: datacache
+			[DATACACHE]: datacache,
 		};
 
 		const res = {
 			end: jest.fn(),
 			send: jest.fn(),
-			status: jest.fn()
+			status: jest.fn(),
 		};
 		const next = jest.fn();
 
-		const renderer = getPageRenderer({appId, basepath}, config, render);
+		const renderer = getPageRenderer({ appId, basepath }, config, render);
 		expect(renderer).toEqual(expect.any(Function));
 
 		await renderer(req, res, next);
@@ -77,39 +77,52 @@ describe('lib/renderer', () => {
 		expect(req.waitForPending).toHaveBeenCalledWith(5 * 60000);
 
 		expect(clientConfig).toHaveBeenCalledTimes(1);
-		expect(clientConfig).toHaveBeenCalledWith(config, req.username, appId, req);
+		expect(clientConfig).toHaveBeenCalledWith(
+			config,
+			req.username,
+			appId,
+			req
+		);
 
 		expect(nodeConfigAsClientConfig).toHaveBeenCalledTimes(1);
-		expect(nodeConfigAsClientConfig).toHaveBeenCalledWith(config, appId, req);
+		expect(nodeConfigAsClientConfig).toHaveBeenCalledWith(
+			config,
+			appId,
+			req
+		);
 
 		expect(render).toHaveBeenCalledTimes(2);
-		expect(render).toHaveBeenCalledWith(basepath, req, expect.any(Object), expect.any(Function));
+		expect(render).toHaveBeenCalledWith(
+			basepath,
+			req,
+			expect.any(Object),
+			expect.any(Function)
+		);
 		expect(render).toHaveBeenCalledWith(basepath, req, expect.any(Object));
 	});
 
-
-	test ('renderer: not-found', async () => {
-		const {getPageRenderer} = require('../renderer');
+	test('renderer: not-found', async () => {
+		const { getPageRenderer } = require('../renderer');
 		const config = {};
 		const serialize = jest.fn(() => 'testHTML');
 		const datacache = {
-			getForContext: jest.fn(() => ({serialize}))
+			getForContext: jest.fn(() => ({ serialize })),
 		};
 		const appId = 'test';
 		const basepath = '/mocks/';
 		const req = {
 			url: '/test',
 			username: 'tester',
-			[DATACACHE]: datacache
+			[DATACACHE]: datacache,
 		};
 
 		const o = {
-			render (a,b,c, markNotFound) {
+			render(a, b, c, markNotFound) {
 				if (markNotFound) {
 					markNotFound();
 				}
 				return 'Not Found HTML';
-			}
+			},
 		};
 
 		jest.spyOn(o, 'render');
@@ -117,11 +130,11 @@ describe('lib/renderer', () => {
 		const res = {
 			end: jest.fn(),
 			send: jest.fn(),
-			status: jest.fn()
+			status: jest.fn(),
 		};
 		const next = jest.fn();
 
-		const renderer = getPageRenderer({appId, basepath}, config, o.render);
+		const renderer = getPageRenderer({ appId, basepath }, config, o.render);
 		expect(renderer).toEqual(expect.any(Function));
 
 		await renderer(req, res, next);
@@ -132,16 +145,14 @@ describe('lib/renderer', () => {
 		expect(res.status).toHaveBeenCalledWith(404);
 
 		expect(o.render).toHaveBeenCalledTwice;
-
 	});
 
-
-	test ('renderer: Error Thrown', async () => {
-		const {getPageRenderer} = require('../renderer');
+	test('renderer: Error Thrown', async () => {
+		const { getPageRenderer } = require('../renderer');
 		const config = {};
 		const serialize = jest.fn(() => 'testHTML');
 		const datacache = {
-			getForContext: jest.fn(() => ({serialize}))
+			getForContext: jest.fn(() => ({ serialize })),
 		};
 		const next = jest.fn();
 		const appId = 'test';
@@ -149,21 +160,21 @@ describe('lib/renderer', () => {
 		const req = {
 			url: '/test',
 			username: 'tester',
-			[DATACACHE]: datacache
+			[DATACACHE]: datacache,
 		};
 		const err = new Error('Ooops');
 
-		const render = jest.fn(() => {throw err;});
-
-
+		const render = jest.fn(() => {
+			throw err;
+		});
 
 		const res = {
 			end: jest.fn(),
 			send: jest.fn(),
-			status: jest.fn()
+			status: jest.fn(),
 		};
 
-		const renderer = getPageRenderer({appId, basepath}, config, render);
+		const renderer = getPageRenderer({ appId, basepath }, config, render);
 		expect(renderer).toEqual(expect.any(Function));
 
 		await renderer(req, res, next);

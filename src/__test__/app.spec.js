@@ -10,26 +10,29 @@ const commonConfigs = {
 };
 
 const interfaceImplementation = {
-	async getServiceDocument (req) {
-
-		if(!req.headers.authentication) {
-			throw Object.assign(new Error('Not Authenticated'), {statusCode: 401});
+	async getServiceDocument(req) {
+		if (!req.headers.authentication) {
+			throw Object.assign(new Error('Not Authenticated'), {
+				statusCode: 401,
+			});
 		}
 
 		const username = req.headers.authentication;
 
 		return {
-			getUserWorkspace () {
+			getUserWorkspace() {
 				return {
-					Title: username
+					Title: username,
 				};
 			},
 
-			setLogoutURL () {},
+			setLogoutURL() {},
 
-			getAppUsername () { return username; },
+			getAppUsername() {
+				return username;
+			},
 
-			async getAppUser () {
+			async getAppUser() {
 				const user = {};
 
 				if (username === 'tos') {
@@ -37,37 +40,39 @@ const interfaceImplementation = {
 				}
 
 				return user;
-			}
+			},
 		};
 	},
-	async ping (name, req) {
-		req.pong = {Site: 'default'};
+	async ping(name, req) {
+		req.pong = { Site: 'default' };
 
-		if(!req.headers.authentication) {
-			throw Object.assign(new Error('Not Authenticated'), {statusCode: 401});
+		if (!req.headers.authentication) {
+			throw Object.assign(new Error('Not Authenticated'), {
+				statusCode: 401,
+			});
 		}
 
 		return {
-			getLink () {}
+			getLink() {},
 		};
 	},
-	async get (uri) {
+	async get(uri) {
 		if (uri === 'SiteBrand') {
 			return {
-				'brand_name': 'yo-brand'
+				brand_name: 'yo-brand',
 			};
 		}
-	}
+	},
 };
 
 const mockInterface = {
 	...DataserverInterFace,
-	default (cfg) {
+	default(cfg) {
 		return {
 			...DataserverInterFace.default(cfg),
 			interface: interfaceImplementation,
 		};
-	}
+	},
 };
 
 describe('Test End-to-End', () => {
@@ -87,49 +92,50 @@ describe('Test End-to-End', () => {
 		jest.doMock('@nti/lib-interfaces', () => mockInterface);
 	});
 
-
 	afterEach(() => {
 		jest.resetModules();
 	});
 
-
-	test ('Injections', async () => {
-		const {getApp} = require('../worker');
+	test('Injections', async () => {
+		const { getApp } = require('../worker');
 		const config = {
 			...commonConfigs,
-			apps: [{
-				package: '../../example',
-				basepath: '/test/',
-				public: true
-			}],
+			apps: [
+				{
+					package: '../../example',
+					basepath: '/test/',
+					public: true,
+				},
+			],
 
 			templateInjections: {
 				head: {
-					start: {content: 'A'},
-					end: {content: 'B'},
+					start: { content: 'A' },
+					end: { content: 'B' },
 				},
 				body: {
-					start: {content: 'C'}
-				}
-			}
+					start: { content: 'C' },
+				},
+			},
 		};
 
-		const res = await request(await getApp(config))
-			.get('/test/');
+		const res = await request(await getApp(config)).get('/test/');
 
 		expect(res.text).toMatch(/<head[^>]*>A/);
 		expect(res.text).toMatch(/B<\/head>/);
 		expect(res.text).toMatch(/<body[^>]*>C/);
 	});
 
-	test ('Route File redirects to Route Dir', async () => {
-		const {getApp} = require('../worker');
+	test('Route File redirects to Route Dir', async () => {
+		const { getApp } = require('../worker');
 		const config = {
 			...commonConfigs,
-			apps: [{
-				package: '../../example',
-				basepath: '/test/'
-			}],
+			apps: [
+				{
+					package: '../../example',
+					basepath: '/test/',
+				},
+			],
 		};
 
 		const res = await request(await getApp(config))
@@ -139,13 +145,17 @@ describe('Test End-to-End', () => {
 		expect(res.headers.location).toEqual('/test/');
 	});
 
-
-	test ('Anonymous access redirects to login', async () => {
-		const {getApp} = require('../worker');
-		const config = { ...commonConfigs, apps: [{
-			package: '../../example',
-			basepath: '/app/'
-		}],};
+	test('Anonymous access redirects to login', async () => {
+		const { getApp } = require('../worker');
+		const config = {
+			...commonConfigs,
+			apps: [
+				{
+					package: '../../example',
+					basepath: '/app/',
+				},
+			],
+		};
 
 		const res = await request(await getApp(config))
 			.get('/app/')
@@ -154,13 +164,17 @@ describe('Test End-to-End', () => {
 		expect(res.headers.location).toEqual('/app/login/');
 	});
 
-
-	test ('Authenticated access does not redirect', async () => {
-		const {getApp} = require('../worker');
-		const config = { ...commonConfigs, apps: [{
-			package: '../../example',
-			basepath: '/app/'
-		}],};
+	test('Authenticated access does not redirect', async () => {
+		const { getApp } = require('../worker');
+		const config = {
+			...commonConfigs,
+			apps: [
+				{
+					package: '../../example',
+					basepath: '/app/',
+				},
+			],
+		};
 
 		const res = await request(await getApp(config))
 			.get('/app/')
@@ -169,30 +183,35 @@ describe('Test End-to-End', () => {
 			.expect(200);
 
 		expect(res.text).toEqual(expect.stringContaining('Page! at /app/'));
-		expect(res.text).toEqual(expect.stringContaining('branding":{"brand_name":"yo-brand"}'));
-
+		expect(res.text).toEqual(
+			expect.stringContaining('branding":{"brand_name":"yo-brand"}')
+		);
 	});
 
-
-	test ('Public access does not redirect', async () => {
-		const {getApp} = require('../worker');
-		const config = { ...commonConfigs, apps: [{
-			public: true,
-			package: '../../example',
-			basepath: '/test/'
-		}],};
+	test('Public access does not redirect', async () => {
+		const { getApp } = require('../worker');
+		const config = {
+			...commonConfigs,
+			apps: [
+				{
+					public: true,
+					package: '../../example',
+					basepath: '/test/',
+				},
+			],
+		};
 
 		const res = await request(await getApp(config))
 			.get('/test/')
 			.expect(200);
 
 		expect(res.text).toEqual(expect.stringContaining('Page! at /test/'));
-		expect(res.text).toEqual(expect.stringContaining('branding":{"brand_name":"yo-brand"}'));
-
+		expect(res.text).toEqual(
+			expect.stringContaining('branding":{"brand_name":"yo-brand"}')
+		);
 	});
 
-
-	test ('ops ping does not hit backend', async () => {
+	test('ops ping does not hit backend', async () => {
 		jest.spyOn(interfaceImplementation, 'get');
 		jest.spyOn(interfaceImplementation, 'getServiceDocument');
 		jest.spyOn(interfaceImplementation, 'ping');
@@ -201,12 +220,17 @@ describe('Test End-to-End', () => {
 		jest.spyOn(Session.prototype, 'middleware');
 		jest.spyOn(Session.prototype, 'anonymousMiddleware');
 
-		const {getApp} = require('../worker');
-		const config = { ...commonConfigs, apps: [{
-			public: false,
-			package: '../../example',
-			basepath: '/app'
-		}]};
+		const { getApp } = require('../worker');
+		const config = {
+			...commonConfigs,
+			apps: [
+				{
+					public: false,
+					package: '../../example',
+					basepath: '/app',
+				},
+			],
+		};
 
 		await request(await getApp(config))
 			.get('/app/api/_ops/ping')
@@ -215,17 +239,23 @@ describe('Test End-to-End', () => {
 		expect(Session.prototype.middleware).not.toHaveBeenCalled();
 		expect(Session.prototype.anonymousMiddleware).not.toHaveBeenCalled();
 		expect(interfaceImplementation.get).not.toHaveBeenCalled();
-		expect(interfaceImplementation.getServiceDocument).not.toHaveBeenCalled();
+		expect(
+			interfaceImplementation.getServiceDocument
+		).not.toHaveBeenCalled();
 		expect(interfaceImplementation.ping).not.toHaveBeenCalled();
 	});
 
-
-	test ('host does not end up in the client appConfig', async () => {
-		const {getApp} = require('../worker');
-		const config = { ...commonConfigs, apps: [{
-			package: '../../example',
-			basepath: '/app/'
-		}],};
+	test('host does not end up in the client appConfig', async () => {
+		const { getApp } = require('../worker');
+		const config = {
+			...commonConfigs,
+			apps: [
+				{
+					package: '../../example',
+					basepath: '/app/',
+				},
+			],
+		};
 
 		const res = await request(await getApp(config))
 			.get('/app/')
@@ -238,14 +268,18 @@ describe('Test End-to-End', () => {
 		expect(res.text).not.toEqual(expect.stringContaining('example.com'));
 	});
 
-
-	test ('Render A Page', async () => {
-		const {getApp} = require('../worker');
-		const config = { ...commonConfigs, apps: [{
-			public: true,
-			package: './mock-app',
-			basepath: '/test/'
-		}],};
+	test('Render A Page', async () => {
+		const { getApp } = require('../worker');
+		const config = {
+			...commonConfigs,
+			apps: [
+				{
+					public: true,
+					package: './mock-app',
+					basepath: '/test/',
+				},
+			],
+		};
 
 		const res = await request(await getApp(config))
 			.get('/test/')
@@ -253,48 +287,74 @@ describe('Test End-to-End', () => {
 
 		expect(res.text).toEqual(expect.stringContaining('Page! at /test/'));
 		//Variables injected:
-		expect(res.text).toEqual(expect.stringContaining('<title>yo-brand</title>'));
-		expect(res.text).not.toEqual(expect.stringContaining('"<[cfg:missing]>"'));
-		expect(res.text).toEqual(expect.stringContaining('"MissingConfigValue[missing]"'));
+		expect(res.text).toEqual(
+			expect.stringContaining('<title>yo-brand</title>')
+		);
+		expect(res.text).not.toEqual(
+			expect.stringContaining('"<[cfg:missing]>"')
+		);
+		expect(res.text).toEqual(
+			expect.stringContaining('"MissingConfigValue[missing]"')
+		);
 		//Rerooting should not effect absolute urls:
-		expect(res.text).toEqual(expect.stringContaining('<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react.js"></script>'));
+		expect(res.text).toEqual(
+			expect.stringContaining(
+				'<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react.js"></script>'
+			)
+		);
 		//Rerooted Urls:
-		expect(res.text).not.toEqual(expect.stringContaining('"/resources/images/favicon.ico"'));
-		expect(res.text).toEqual(expect.stringContaining('"/test/resources/images/favicon.ico"'));
+		expect(res.text).not.toEqual(
+			expect.stringContaining('"/resources/images/favicon.ico"')
+		);
+		expect(res.text).toEqual(
+			expect.stringContaining('"/test/resources/images/favicon.ico"')
+		);
 
 		//Check against double printing
 		expect(res.text.match(/\$AppConfig/g).length).toEqual(1);
-
 	});
 
-
-	test ('Page Renders have cache-busting headers and no etag', async () => {
-		const {getApp} = require('../worker');
-		const config = { ...commonConfigs, apps: [{
-			public: true,
-			package: './mock-app',
-			basepath: '/test/'
-		}],};
+	test('Page Renders have cache-busting headers and no etag', async () => {
+		const { getApp } = require('../worker');
+		const config = {
+			...commonConfigs,
+			apps: [
+				{
+					public: true,
+					package: './mock-app',
+					basepath: '/test/',
+				},
+			],
+		};
 
 		const res = await request(await getApp(config))
 			.get('/test/')
 			.expect(200);
 
 		expect(res.headers).not.toHaveProperty('etag');
-		expect(res.headers).toHaveProperty('cache-control', 'no-cache, no-store, must-revalidate, max-age=0');
-		expect(res.headers).toHaveProperty('expires', 'Thu, 01 Jan 1970 00:00:00 GMT');
+		expect(res.headers).toHaveProperty(
+			'cache-control',
+			'no-cache, no-store, must-revalidate, max-age=0'
+		);
+		expect(res.headers).toHaveProperty(
+			'expires',
+			'Thu, 01 Jan 1970 00:00:00 GMT'
+		);
 		expect(res.headers).toHaveProperty('pragma', 'no-cache');
-
 	});
 
-
-	test ('Statics have cacheable headers', async () => {
-		const {getApp} = require('../worker');
-		const config = { ...commonConfigs, apps: [{
-			public: true,
-			package: './mock-app',
-			basepath: '/test/'
-		}],};
+	test('Statics have cacheable headers', async () => {
+		const { getApp } = require('../worker');
+		const config = {
+			...commonConfigs,
+			apps: [
+				{
+					public: true,
+					package: './mock-app',
+					basepath: '/test/',
+				},
+			],
+		};
 
 		const res = await request(await getApp(config))
 			.get('/test/existing.asset')
@@ -305,59 +365,78 @@ describe('Test End-to-End', () => {
 
 		expect(res.headers).toHaveProperty('etag');
 		expect(res.headers).toHaveProperty('last-modified');
-		expect(res.headers).toHaveProperty('cache-control', 'public, max-age=3600');
+		expect(res.headers).toHaveProperty(
+			'cache-control',
+			'public, max-age=3600'
+		);
 	});
 
-
-	test ('Proper 404 for statics', async () => {
-		const {getApp} = require('../worker');
-		const config = { ...commonConfigs, apps: [{
-			public: true,
-			package: './mock-app',
-			basepath: '/test/'
-		}],};
+	test('Proper 404 for statics', async () => {
+		const { getApp } = require('../worker');
+		const config = {
+			...commonConfigs,
+			apps: [
+				{
+					public: true,
+					package: './mock-app',
+					basepath: '/test/',
+				},
+			],
+		};
 
 		return request(await getApp(config))
 			.get('/test/resources/foo.missing')
 			.expect(404);
 	});
 
-
-	test ('Proper 404 for non-app routes (controlled by app)', async () => {
-		const {getApp} = require('../worker');
-		const config = { ...commonConfigs, apps: [{
-			public: true,
-			package: './mock-app',
-			basepath: '/test/'
-		}],};
+	test('Proper 404 for non-app routes (controlled by app)', async () => {
+		const { getApp } = require('../worker');
+		const config = {
+			...commonConfigs,
+			apps: [
+				{
+					public: true,
+					package: './mock-app',
+					basepath: '/test/',
+				},
+			],
+		};
 
 		return request(await getApp(config))
 			.get('/test/foo.missing')
 			.expect(404);
 	});
 
-
-	test ('Proper 404 for non-app routes (controlled by app) v2', async () => {
-		const {getApp} = require('../worker');
-		const config = { ...commonConfigs, apps: [{
-			public: true,
-			package: './mock-app',
-			basepath: '/test/'
-		}],};
+	test('Proper 404 for non-app routes (controlled by app) v2', async () => {
+		const { getApp } = require('../worker');
+		const config = {
+			...commonConfigs,
+			apps: [
+				{
+					public: true,
+					package: './mock-app',
+					basepath: '/test/',
+				},
+			],
+		};
 
 		return request(await getApp(config))
 			.get('/test/foo.explicit404')
 			.expect(404);
 	});
 
-
-	test ('Proper 500 for app errors', async () => {
-		const {getApp} = require('../worker');
-		const config = { ...commonConfigs, apps: [{
-			public: true,
-			package: './mock-app',
-			basepath: '/test/'
-		}],};
+	test('Proper 500 for app errors', async () => {
+		const { getApp } = require('../worker');
+		const config = {
+			...commonConfigs,
+			apps: [
+				{
+					public: true,
+					package: './mock-app',
+					basepath: '/test/',
+				},
+			],
+		};
 
 		const res = await request(await getApp(config))
 			.get('/test/foo.500')
@@ -366,31 +445,43 @@ describe('Test End-to-End', () => {
 		expect(res.text).toEqual(expect.stringContaining('App Error Page'));
 	});
 
-
-	test ('Service 500 for errors in app', async () => {
-		const {getApp} = require('../worker');
-		const config = { ...commonConfigs, apps: [{
-			public: true,
-			package: './mock-app',
-			basepath: '/test/'
-		}],};
+	test('Service 500 for errors in app', async () => {
+		const { getApp } = require('../worker');
+		const config = {
+			...commonConfigs,
+			apps: [
+				{
+					public: true,
+					package: './mock-app',
+					basepath: '/test/',
+				},
+			],
+		};
 
 		const res = await request(await getApp(config))
 			.get('/test/foo.throw')
 			.expect(500);
 
 		expect(logger.error).toHaveBeenCalled();
-		expect(res.text).toEqual(expect.stringContaining('<title>Error</title>'));
-		expect(res.text).toEqual(expect.stringContaining('<div id="error">An error occurred.</div>'));
+		expect(res.text).toEqual(
+			expect.stringContaining('<title>Error</title>')
+		);
+		expect(res.text).toEqual(
+			expect.stringContaining('<div id="error">An error occurred.</div>')
+		);
 	});
 
-
-	test ('Test Hooks: Session', async () => {
-		const {getApp} = require('../worker');
-		const config = { ...commonConfigs, apps: [{
-			package: './mock-app-with-hooks',
-			basepath: '/test/'
-		}],};
+	test('Test Hooks: Session', async () => {
+		const { getApp } = require('../worker');
+		const config = {
+			...commonConfigs,
+			apps: [
+				{
+					package: './mock-app-with-hooks',
+					basepath: '/test/',
+				},
+			],
+		};
 
 		const res = await request(await getApp(config))
 			.get('/test/')
@@ -400,30 +491,32 @@ describe('Test End-to-End', () => {
 		expect(res.headers.location).toEqual('/test/onboarding/tos');
 	});
 
-
 	defineRedirectTests('');
 	defineRedirectTests('foo');
 	defineRedirectTests('tos');
 
-
-	test ('Test Hooks: Invalid Hook', async (done) => {
+	test('Test Hooks: Invalid Hook', async done => {
 		const Logger = logger.get('SessionManager');
 		const Session = require('../lib/session');
 
 		stub(Logger, 'error');
 		jest.spyOn(Session.prototype, 'middleware');
 
-
-		const {getApp} = require('../worker');
-		const config = { ...commonConfigs, apps: [{
-			package: './mock-app-with-hooks',
-			basepath: '/test/'
-		}],};
+		const { getApp } = require('../worker');
+		const config = {
+			...commonConfigs,
+			apps: [
+				{
+					package: './mock-app-with-hooks',
+					basepath: '/test/',
+				},
+			],
+		};
 
 		request(await getApp(config))
 			.get('/test/?breakme=now')
 			.set('Cookie', 'language=en')
-			.end((e) => {
+			.end(e => {
 				setTimeout(() => {
 					expect(Session.prototype.middleware).toHaveBeenCalled();
 					expect(Logger.error).toHaveBeenCalledWith(
@@ -436,15 +529,20 @@ describe('Test End-to-End', () => {
 			});
 	});
 
-
-	function defineRedirectTests (user) {
-
-		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
-			const {getApp} = require('../worker');
-			const config = { ...commonConfigs, apps: [{
-				package: './mock-app-with-hooks',
-				basepath: '/test/'
-			}],};
+	function defineRedirectTests(user) {
+		test(`Test Hooks: Redirects (${
+			user ? 'Authenticated' : 'Anonymous'
+		})`, async () => {
+			const { getApp } = require('../worker');
+			const config = {
+				...commonConfigs,
+				apps: [
+					{
+						package: './mock-app-with-hooks',
+						basepath: '/test/',
+					},
+				],
+			};
 
 			const res = await request(await getApp(config))
 				.get('/test/?q=aa')
@@ -454,85 +552,132 @@ describe('Test End-to-End', () => {
 			expect(res.headers.location).toEqual('/test/');
 		});
 
-
-		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
-			const {getApp} = require('../worker');
-			const config = { ...commonConfigs, apps: [{
-				package: './mock-app-with-hooks',
-				basepath: '/test/'
-			}],};
+		test(`Test Hooks: Redirects (${
+			user ? 'Authenticated' : 'Anonymous'
+		})`, async () => {
+			const { getApp } = require('../worker');
+			const config = {
+				...commonConfigs,
+				apps: [
+					{
+						package: './mock-app-with-hooks',
+						basepath: '/test/',
+					},
+				],
+			};
 
 			const res = await request(await getApp(config))
-				.get('/test/?q=library/courses/available/invitations/accept/token')
+				.get(
+					'/test/?q=library/courses/available/invitations/accept/token'
+				)
 				.set('Authentication', user)
 				.expect(302);
 
 			expect(res.headers.location).toEqual('/test/catalog/code/token');
 		});
 
-
-		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
-			const {getApp} = require('../worker');
-			const config = { ...commonConfigs, apps: [{
-				package: './mock-app-with-hooks',
-				basepath: '/test/'
-			}],};
+		test(`Test Hooks: Redirects (${
+			user ? 'Authenticated' : 'Anonymous'
+		})`, async () => {
+			const { getApp } = require('../worker');
+			const config = {
+				...commonConfigs,
+				apps: [
+					{
+						package: './mock-app-with-hooks',
+						basepath: '/test/',
+					},
+				],
+			};
 
 			const res = await request(await getApp(config))
-				.get('/test/?q=/app/library/courses/available/NTI-CourseInfo-iLed_iLed_001/...')
+				.get(
+					'/test/?q=/app/library/courses/available/NTI-CourseInfo-iLed_iLed_001/...'
+				)
 				.set('Authentication', user)
 				.expect(302);
 
-			expect(res.headers.location).toEqual('/test/catalog/item/NTI-CourseInfo-iLed_iLed_001/...');
+			expect(res.headers.location).toEqual(
+				'/test/catalog/item/NTI-CourseInfo-iLed_iLed_001/...'
+			);
 		});
 
-
-		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
-			const {getApp} = require('../worker');
-			const config = { ...commonConfigs, apps: [{
-				package: './mock-app-with-hooks',
-				basepath: '/test/'
-			}],};
+		test(`Test Hooks: Redirects (${
+			user ? 'Authenticated' : 'Anonymous'
+		})`, async () => {
+			const { getApp } = require('../worker');
+			const config = {
+				...commonConfigs,
+				apps: [
+					{
+						package: './mock-app-with-hooks',
+						basepath: '/test/',
+					},
+				],
+			};
 
 			const res = await request(await getApp(config))
-				.get('/test/?q=library/availablecourses/IUB0YWc6bmV4dHRob3VnaHQuY29tLDIwMTEtMTA6TlRJLUNvdXJzZUluZm8tU3ByaW5nMjAxNV9MU1REXzExNTM/redeem/code')
+				.get(
+					'/test/?q=library/availablecourses/IUB0YWc6bmV4dHRob3VnaHQuY29tLDIwMTEtMTA6TlRJLUNvdXJzZUluZm8tU3ByaW5nMjAxNV9MU1REXzExNTM/redeem/code'
+				)
 				.set('Authentication', user)
 				.expect(302);
 
-			expect(res.headers.location).toEqual('/test/catalog/redeem/NTI-CourseInfo-Spring2015_LSTD_1153/code');
+			expect(res.headers.location).toEqual(
+				'/test/catalog/redeem/NTI-CourseInfo-Spring2015_LSTD_1153/code'
+			);
 		});
 
-
-		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
-			const {getApp} = require('../worker');
-			const config = { ...commonConfigs, apps: [{
-				package: './mock-app-with-hooks',
-				basepath: '/test/'
-			}],};
+		test(`Test Hooks: Redirects (${
+			user ? 'Authenticated' : 'Anonymous'
+		})`, async () => {
+			const { getApp } = require('../worker');
+			const config = {
+				...commonConfigs,
+				apps: [
+					{
+						package: './mock-app-with-hooks',
+						basepath: '/test/',
+					},
+				],
+			};
 
 			const res = await request(await getApp(config))
-				.get('/test/?q=/app/id/unknown-OID-0x021cae18:5573657273:V0wWNR9EBJd')
+				.get(
+					'/test/?q=/app/id/unknown-OID-0x021cae18:5573657273:V0wWNR9EBJd'
+				)
 				.set('Authentication', user)
 				.expect(302);
 
-			expect(res.headers.location).toEqual('/test/object/unknown-OID-0x021cae18%3A5573657273%3AV0wWNR9EBJd');
+			expect(res.headers.location).toEqual(
+				'/test/object/unknown-OID-0x021cae18%3A5573657273%3AV0wWNR9EBJd'
+			);
 		});
 
-
-		test (`Test Hooks: Redirects (${user ? 'Authenticated' : 'Anonymous'})`, async () => {
-			const {getApp} = require('../worker');
-			const config = { ...commonConfigs, apps: [{
-				package: './mock-app-with-hooks',
-				basepath: '/test/'
-			}],};
+		test(`Test Hooks: Redirects (${
+			user ? 'Authenticated' : 'Anonymous'
+		})`, async () => {
+			const { getApp } = require('../worker');
+			const config = {
+				...commonConfigs,
+				apps: [
+					{
+						package: './mock-app-with-hooks',
+						basepath: '/test/',
+					},
+				],
+			};
 
 			const res = await request(await getApp(config))
-				.get('/test/?q=object/ntiid/tag:nextthought.com,2011-10:unknown-OID-0x021cae18:5573657273:V0wWNR9EBJd')
+				.get(
+					'/test/?q=object/ntiid/tag:nextthought.com,2011-10:unknown-OID-0x021cae18:5573657273:V0wWNR9EBJd'
+				)
 				.set('Authentication', user)
 				.expect(302);
 
-			expect(res.headers.location).toEqual('/test/object/unknown-OID-0x021cae18%3A5573657273%3AV0wWNR9EBJd');
+			expect(res.headers.location).toEqual(
+				'/test/object/unknown-OID-0x021cae18%3A5573657273%3AV0wWNR9EBJd'
+			);
 		});
 	}
-
 });

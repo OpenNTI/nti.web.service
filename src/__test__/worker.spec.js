@@ -19,16 +19,14 @@ describe('Worker', () => {
 		stub(logger, 'warn');
 	});
 
-
 	afterEach(() => {
 		jest.restoreAllMocks();
 		jest.resetModules();
 		jest.dontMock('cluster');
 	});
 
-
-	test ('getApp() No Configuration', async () => {
-		const {getApp} = require('../worker');
+	test('getApp() No Configuration', async () => {
+		const { getApp } = require('../worker');
 
 		let threw = false;
 
@@ -42,62 +40,64 @@ describe('Worker', () => {
 		expect(threw).toBe(true);
 	});
 
-
-	test ('getApp() Missing app package', async () => {
-		const {getApp} = require('../worker');
+	test('getApp() Missing app package', async () => {
+		const { getApp } = require('../worker');
 
 		let threw = false;
 
 		try {
 			await getApp({
 				server: 'foo',
-				apps: [{
-					package: 'does not exist',
-					basepath: '/test/'
-				}],
+				apps: [
+					{
+						package: 'does not exist',
+						basepath: '/test/',
+					},
+				],
 			});
 		} catch (e) {
 			threw = true;
-			expect(e.toString()).toMatch(/Could not resolve package \(does not exist\) for app. Relative modules are relative to:/);
+			expect(e.toString()).toMatch(
+				/Could not resolve package \(does not exist\) for app. Relative modules are relative to:/
+			);
 		}
 
 		expect(threw).toBe(true);
 	});
 
-
-	test ('start() registers process message handler, ties SIGHUP to restart()', () => {
+	test('start() registers process message handler, ties SIGHUP to restart()', () => {
 		stub(process, 'on');
 		const worker = require('../worker');
 
 		worker.start();
 
-
 		expect(process.on).toHaveBeenCalledTimes(2);
-		expect(process.on).toHaveBeenCalledWith('message', worker.messageHandler);
+		expect(process.on).toHaveBeenCalledWith(
+			'message',
+			worker.messageHandler
+		);
 		expect(process.on).toHaveBeenCalledWith('SIGHUP', restart);
-
 	});
 
-
-	test ('init() sets up: express, service, and error handlers; starts a server listening', async () => {
+	test('init() sets up: express, service, and error handlers; starts a server listening', async () => {
 		const listen = jest.fn();
-		const server = {listen};
+		const server = { listen };
 		const createServer = jest.fn(() => server);
-		const proxy = jest.fn(() => ({createServer}));
-		const app = {set () {}, engine () {}};
+		const proxy = jest.fn(() => ({ createServer }));
+		const app = { set() {}, engine() {} };
 		const express = jest.fn(() => app);
 		const port = 12345;
-		const config = {port};
+		const config = { port };
 
 		const setupApplication = jest.fn();
 		const setupErrorHandler = jest.fn();
 
-		jest.doMock('findhit-proxywrap', () => ({proxy}));
-		jest.doMock('http', () => ({createServer}));
+		jest.doMock('findhit-proxywrap', () => ({ proxy }));
+		jest.doMock('http', () => ({ createServer }));
 		jest.doMock('express', () => express);
 
-		jest.doMock('../lib/app-service', () => ({setupApplication}));
-		jest.doMock('../lib/error-handler', () => ({setupErrorHandler}));
+		jest.doMock('../lib/app-service', () => ({ setupApplication }));
+		jest.doMock('../lib/error-handler', () => ({ setupErrorHandler }));
 
 		const worker = require('../worker');
 
@@ -114,31 +114,34 @@ describe('Worker', () => {
 		expect(createServer).toHaveBeenCalledWith(app);
 
 		expect(listen).toHaveBeenCalledTimes(1);
-		expect(listen).toHaveBeenCalledWith(port, '0.0.0.0', expect.any(Function));
+		expect(listen).toHaveBeenCalledWith(
+			port,
+			'0.0.0.0',
+			expect.any(Function)
+		);
 		expect(listen.mock.calls[0][2]).toEqual(expect.any(Function));
 		expect(listen.mock.calls[0][2]).not.toThrow();
 	});
 
-
-	test ('init() will use proxy-protocol if configured', async () => {
+	test('init() will use proxy-protocol if configured', async () => {
 		const listen = jest.fn();
-		const server = {listen};
+		const server = { listen };
 		const createServer = jest.fn(() => server);
-		const proxy = jest.fn(() => ({createServer}));
-		const app = {set () {}, engine () {}};
+		const proxy = jest.fn(() => ({ createServer }));
+		const app = { set() {}, engine() {} };
 		const express = jest.fn(() => app);
 		const port = 12345;
-		const config = {protocol: 'proxy', port};
+		const config = { protocol: 'proxy', port };
 
 		const setupApplication = jest.fn();
 		const setupErrorHandler = jest.fn();
 
-		jest.doMock('findhit-proxywrap', () => ({proxy}));
-		jest.doMock('http', () => ({createServer}));
+		jest.doMock('findhit-proxywrap', () => ({ proxy }));
+		jest.doMock('http', () => ({ createServer }));
 		jest.doMock('express', () => express);
 
-		jest.doMock('../lib/app-service', () => ({setupApplication}));
-		jest.doMock('../lib/error-handler', () => ({setupErrorHandler}));
+		jest.doMock('../lib/app-service', () => ({ setupApplication }));
+		jest.doMock('../lib/error-handler', () => ({ setupErrorHandler }));
 
 		const worker = require('../worker');
 
@@ -155,32 +158,35 @@ describe('Worker', () => {
 		expect(createServer).toHaveBeenCalledWith(app);
 
 		expect(listen).toHaveBeenCalledTimes(1);
-		expect(listen).toHaveBeenCalledWith(port, '0.0.0.0', expect.any(Function));
+		expect(listen).toHaveBeenCalledWith(
+			port,
+			'0.0.0.0',
+			expect.any(Function)
+		);
 	});
 
-
-	test ('init() will use https if configured', async () => {
+	test('init() will use https if configured', async () => {
 		const fs = require('fs');
 		const listen = jest.fn();
-		const server = {listen};
+		const server = { listen };
 		const createServer = jest.fn(() => server);
-		const app = {set () {}, engine () {}};
+		const app = { set() {}, engine() {} };
 		const express = jest.fn(() => app);
 		const port = 12345;
-		const config = {protocol: 'https', port};
+		const config = { protocol: 'https', port };
 
 		const setupApplication = jest.fn();
 		const setupErrorHandler = jest.fn();
 		const https = {};
 
-		jest.doMock('https', () => ({createServer}));
+		jest.doMock('https', () => ({ createServer }));
 		jest.doMock('express', () => express);
-		jest.doMock('@nti/dev-ssl-config', () => ({getHTTPS: () => https}));
+		jest.doMock('@nti/dev-ssl-config', () => ({ getHTTPS: () => https }));
 
-		jest.doMock('../lib/app-service', () => ({setupApplication}));
-		jest.doMock('../lib/error-handler', () => ({setupErrorHandler}));
+		jest.doMock('../lib/app-service', () => ({ setupApplication }));
+		jest.doMock('../lib/error-handler', () => ({ setupErrorHandler }));
 
-		stub(fs, 'readFileSync', (f) => f);
+		stub(fs, 'readFileSync', f => f);
 		stub(fs, 'existsSync', () => true);
 
 		const worker = require('../worker');
@@ -194,35 +200,35 @@ describe('Worker', () => {
 		expect(setupErrorHandler).toHaveBeenCalledTimes(1);
 
 		expect(createServer).toHaveBeenCalledTimes(1);
-		expect(createServer).toHaveBeenCalledWith(
-			https,
-			app
-		);
+		expect(createServer).toHaveBeenCalledWith(https, app);
 
 		expect(listen).toHaveBeenCalledTimes(1);
-		expect(listen).toHaveBeenCalledWith(port, '0.0.0.0', expect.any(Function));
+		expect(listen).toHaveBeenCalledWith(
+			port,
+			'0.0.0.0',
+			expect.any(Function)
+		);
 	});
 
-
-	test ('init() will use address if configured', async () => {
+	test('init() will use address if configured', async () => {
 		const listen = jest.fn();
-		const server = {listen};
+		const server = { listen };
 		const createServer = jest.fn(() => server);
 		const proxy = jest.fn();
-		const app = {set () {}, engine () {}};
+		const app = { set() {}, engine() {} };
 		const express = jest.fn(() => app);
 		const port = 12345;
-		const config = {port, address: 'abc'};
+		const config = { port, address: 'abc' };
 
 		const setupApplication = jest.fn();
 		const setupErrorHandler = jest.fn();
 
-		jest.doMock('findhit-proxywrap', () => ({proxy}));
-		jest.doMock('http', () => ({createServer}));
+		jest.doMock('findhit-proxywrap', () => ({ proxy }));
+		jest.doMock('http', () => ({ createServer }));
 		jest.doMock('express', () => express);
 
-		jest.doMock('../lib/app-service', () => ({setupApplication}));
-		jest.doMock('../lib/error-handler', () => ({setupErrorHandler}));
+		jest.doMock('../lib/app-service', () => ({ setupApplication }));
+		jest.doMock('../lib/error-handler', () => ({ setupErrorHandler }));
 
 		const worker = require('../worker');
 
@@ -231,20 +237,23 @@ describe('Worker', () => {
 		expect(server).toEqual(svr);
 
 		expect(listen).toHaveBeenCalledTimes(1);
-		expect(listen).toHaveBeenCalledWith(port, config.address, expect.any(Function));
+		expect(listen).toHaveBeenCalledWith(
+			port,
+			config.address,
+			expect.any(Function)
+		);
 	});
 
-
-	test ('message handler: handles "init"', async () => {
+	test('message handler: handles "init"', async () => {
 		const exitCode = process.exitCode;
 		const disconnect = jest.fn();
-		jest.doMock('cluster', () => ({worker: {disconnect}}));
+		jest.doMock('cluster', () => ({ worker: { disconnect } }));
 
 		const worker = require('../worker');
 
 		stub(worker, 'init');
 
-		await worker.messageHandler({topic: 'default', cmd: 'init'});
+		await worker.messageHandler({ topic: 'default', cmd: 'init' });
 
 		expect(worker.init).toHaveBeenCalled();
 
@@ -252,8 +261,7 @@ describe('Worker', () => {
 		expect(disconnect).not.toHaveBeenCalled();
 	});
 
-
-	test ('message handler: handles "init" error', async () => {
+	test('message handler: handles "init" error', async () => {
 		const disconnect = jest.fn();
 		const exitCode = 1;
 		const stubby = jest.fn();
@@ -263,13 +271,15 @@ describe('Worker', () => {
 
 		stub(process, 'exit');
 
-		jest.doMock('cluster', () => ({worker: {disconnect}}));
+		jest.doMock('cluster', () => ({ worker: { disconnect } }));
 
 		const worker = require('../worker');
 
-		stub(worker, 'init', () => {throw new Error('Test');});
+		stub(worker, 'init', () => {
+			throw new Error('Test');
+		});
 
-		await worker.messageHandler({topic: 'default', cmd: 'init'});
+		await worker.messageHandler({ topic: 'default', cmd: 'init' });
 
 		if (send === stubby) {
 			delete process.send;
@@ -282,23 +292,26 @@ describe('Worker', () => {
 		expect(disconnect).toHaveBeenCalled();
 	});
 
-
-	test ('message handler: handles "close" before init', async () => {
+	test('message handler: handles "close" before init', async () => {
 		const disconnect = jest.fn();
 		const exitCode = process.exitCode;
 
-		const server = {close (fn) {fn();}};
+		const server = {
+			close(fn) {
+				fn();
+			},
+		};
 		jest.spyOn(server, 'close');
 
 		stub(process, 'exit');
 
-		jest.doMock('cluster', () => ({worker: {disconnect}}));
+		jest.doMock('cluster', () => ({ worker: { disconnect } }));
 
 		const worker = require('../worker');
 
 		stub(worker, 'init', () => server);
 
-		await worker.messageHandler({topic: 'default', cmd: 'close'});
+		await worker.messageHandler({ topic: 'default', cmd: 'close' });
 
 		expect(exitCode).toEqual(process.exitCode);
 
@@ -308,25 +321,27 @@ describe('Worker', () => {
 		expect(disconnect).toHaveBeenCalled();
 	});
 
-
-	test ('message handler: handles "close" after init', async () => {
+	test('message handler: handles "close" after init', async () => {
 		const disconnect = jest.fn();
 		const exitCode = process.exitCode;
 
-		const server = {close (fn) {fn();}};
+		const server = {
+			close(fn) {
+				fn();
+			},
+		};
 		jest.spyOn(server, 'close');
 
 		stub(process, 'exit');
 
-		jest.doMock('cluster', () => ({worker: {disconnect}}));
+		jest.doMock('cluster', () => ({ worker: { disconnect } }));
 
 		const worker = require('../worker');
 
 		stub(worker, 'init', () => server);
 
-		await worker.messageHandler({topic: 'default', cmd: 'init'});
-		await worker.messageHandler({topic: 'default', cmd: 'close'});
-
+		await worker.messageHandler({ topic: 'default', cmd: 'init' });
+		await worker.messageHandler({ topic: 'default', cmd: 'close' });
 
 		expect(exitCode).toEqual(process.exitCode);
 
@@ -336,11 +351,10 @@ describe('Worker', () => {
 		expect(process.exit).toHaveBeenCalled();
 	});
 
-
-	test ('message handler: unknown messages do not crash.', async () => {
+	test('message handler: unknown messages do not crash.', async () => {
 		const exitCode = process.exitCode;
 		const disconnect = jest.fn();
-		jest.doMock('cluster', () => ({worker: {disconnect}}));
+		jest.doMock('cluster', () => ({ worker: { disconnect } }));
 
 		const worker = require('../worker');
 
@@ -348,13 +362,14 @@ describe('Worker', () => {
 
 		await worker.messageHandler();
 		await worker.messageHandler({});
-		await worker.messageHandler({topic: 'default', cmd: 'this-does-not-exist'});
-
+		await worker.messageHandler({
+			topic: 'default',
+			cmd: 'this-does-not-exist',
+		});
 
 		expect(exitCode).toEqual(process.exitCode);
 
 		expect(worker.init).not.toHaveBeenCalled();
 		expect(disconnect.called).not.toBeTruthy();
 	});
-
 });

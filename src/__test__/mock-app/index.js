@@ -2,15 +2,13 @@
 const path = require('path');
 
 exports = module.exports = {
-
-	register (/*expressApp , config, requestRestart*/) {
-
+	register(/*expressApp , config, requestRestart*/) {
 		return {
 			devmode: null,
 
 			assets: path.join(__dirname, 'assets'),
 
-			renderContent (config, markError) {
+			renderContent(config, markError) {
 				if (/missing$/.test(config.url)) {
 					markError();
 					return;
@@ -27,10 +25,12 @@ exports = module.exports = {
 					throw new Error('Oops');
 				}
 
-				return `Page! at ${config.basepath}\n${JSON.stringify(config, void 0, 4)}`;
-			}
+				return `Page! at ${config.basepath}\n${JSON.stringify(
+					config,
+					void 0,
+					4
+				)}`;
+			},
 		};
-
-	}
-
+	},
 };

@@ -18,25 +18,24 @@ describe('lib/utils', () => {
 		stub(logger, 'warn');
 	});
 
-
 	afterEach(() => {
 		jest.resetModules();
 	});
 
+	test('getStackOrMessage()', () => {
+		const { getStackOrMessage } = require('../utils');
 
-	test ('getStackOrMessage()', () => {
-		const {getStackOrMessage} = require('../utils');
-
-		expect(getStackOrMessage({stack: 'stack', message: 'message'})).toEqual('stack');
-		expect(getStackOrMessage({message: 'message'})).toEqual('message');
+		expect(
+			getStackOrMessage({ stack: 'stack', message: 'message' })
+		).toEqual('stack');
+		expect(getStackOrMessage({ message: 'message' })).toEqual('message');
 		expect(getStackOrMessage('foo')).toEqual('foo');
 	});
 
+	test('callThresholdMet()', async () => {
+		function foo() {}
 
-	test ('callThresholdMet()', async () => {
-		function foo () {}
-
-		const {callThresholdMet} = require('../utils');
+		const { callThresholdMet } = require('../utils');
 
 		expect(callThresholdMet(foo, 3)).toBe(false);
 		expect(callThresholdMet(foo, 3)).toBe(false);
@@ -50,7 +49,5 @@ describe('lib/utils', () => {
 		expect(callThresholdMet(foo, 3)).toBe(false);
 		jest.runAllTimers();
 		expect(callThresholdMet(foo, 3)).toBe(false);
-
 	});
-
 });

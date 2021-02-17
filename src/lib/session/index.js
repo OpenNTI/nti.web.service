@@ -1,65 +1,79 @@
 'use strict';
-const {ServiceStash} = require('@nti/lib-interfaces');
+const { ServiceStash } = require('@nti/lib-interfaces');
 
-const {SERVER_REF} = require('../constants');
+const { SERVER_REF } = require('../constants');
 const Logger = require('../logger');
 
 const logger = Logger.get('SessionManager');
 
 module.exports = exports = class SessionManager {
-	constructor (sessionSetup) {
+	constructor(sessionSetup) {
 		this.sessionSetup = sessionSetup;
 	}
 
-
-	getUser (context) {
-
-		return this.getServiceDocument(context)
-			.then(doc => {
-				let w = doc.getUserWorkspace();
-				if (w) {
-					return w.Title;
-				}
-				return Promise.reject('No user workspace');
-			});
-
+	getUser(context) {
+		return this.getServiceDocument(context).then(doc => {
+			let w = doc.getUserWorkspace();
+			if (w) {
+				return w.Title;
+			}
+			return Promise.reject('No user workspace');
+		});
 	}
 
-
-	getServiceDocument (context) {
-		const {[SERVER_REF]: server} = context;
-		return server.ping(void 0, context)	// server.getServiceDocument() pings as well...
-		// if we didn't need the logon.logout url, we could omit this step here.
-			.then(pong => server.getServiceDocument(context)
-				//This seems dirty and out of place...
-				.then(service => (
-					service.setLogoutURL(pong.getLink('logon.logout')),
-					service
-				)));
+	getServiceDocument(context) {
+		const { [SERVER_REF]: server } = context;
+		return (
+			server
+				.ping(void 0, context) // server.getServiceDocument() pings as well...
+				// if we didn't need the logon.logout url, we could omit this step here.
+				.then(pong =>
+					server
+						.getServiceDocument(context)
+						//This seems dirty and out of place...
+						.then(
+							service => (
+								service.setLogoutURL(
+									pong.getLink('logon.logout')
+								),
+								service
+							)
+						)
+				)
+		);
 	}
 
-
-	setupIntitalData (context) {
-		const {[SERVER_REF]: server} = context;
+	setupIntitalData(context) {
+		const { [SERVER_REF]: server } = context;
 		const url = context.originalUrl || context.url;
-		logger.debug('SESSION [PRE-FETCHING DATA] %s %s (User: %s)', context.method, url, context.username);
-		return server.getServiceDocument(context)
-			.then(service => (
-				context[ServiceStash] = service,
-				this.sessionSetup && this.sessionSetup(service)
-			));
+		logger.debug(
+			'SESSION [PRE-FETCHING DATA] %s %s (User: %s)',
+			context.method,
+			url,
+			context.username
+		);
+		return server
+			.getServiceDocument(context)
+			.then(
+				service => (
+					(context[ServiceStash] = service),
+					this.sessionSetup && this.sessionSetup(service)
+				)
+			);
 	}
 
-
-	middleware (basepath, req, res, next) {
+	middleware(basepath, req, res, next) {
 		const start = Date.now();
 		const url = req.originalUrl;
-		const scope = url.substr(0, basepath.length) === basepath ? url.substr(basepath.length) : url;
+		const scope =
+			url.substr(0, basepath.length) === basepath
+				? url.substr(basepath.length)
+				: url;
 		req.responseHeaders = req.responseHeaders || {};
 
 		const skip = () => next('aborted');
 
-		const reaper = ()=> {
+		const reaper = () => {
 			req.dead = true;
 			req.emit('aborted');
 			skip();
@@ -68,7 +82,11 @@ module.exports = exports = class SessionManager {
 		const cleanReaper = () => void req.removeListener('close', reaper);
 
 		if (res.headersSent) {
-			logger.error('Headers have already been sent. did next() get called after a redirect()/send()/end()? %s %s', req.method, url);
+			logger.error(
+				'Headers have already been sent. did next() get called after a redirect()/send()/end()? %s %s',
+				req.method,
+				url
+			);
 			next('aborted');
 			return;
 		}
@@ -79,7 +97,7 @@ module.exports = exports = class SessionManager {
 
 		logger.debug('SESSION [BEGIN] %s %s', req.method, url);
 
-		function finish () {
+		function finish() {
 			if (req.dead) {
 				return;
 			}
@@ -87,24 +105,39 @@ module.exports = exports = class SessionManager {
 			try {
 				res.set(req.responseHeaders);
 			} catch (e) {
-				logger.warn('Could not set headers because: %s (headers: %o)', e.message, req.responseHeaders);
+				logger.warn(
+					'Could not set headers because: %s (headers: %o)',
+					e.message,
+					req.responseHeaders
+				);
 			}
 
-			logger.debug('SESSION [END] %s %s (User: %s, %dms)',
-				req.method, url, req.username, Date.now() - start);
+			logger.debug(
+				'SESSION [END] %s %s (User: %s, %dms)',
+				req.method,
+				url,
+				req.username,
+				Date.now() - start
+			);
 
 			next();
 		}
 
 		req.username = '[anonymous user]';
 		return this.getUser(req)
-			.then(user => req.username = user)
-			.then(()=> logger.debug('SESSION [VALID] %s %s', req.method, url))
-			.then(()=> !req.dead && this.setupIntitalData(req))
+			.then(user => (req.username = user))
+			.then(() => logger.debug('SESSION [VALID] %s %s', req.method, url))
+			.then(() => !req.dead && this.setupIntitalData(req))
 			.then(finish)
 			.catch(this.maybeRedirect(basepath, scope, start, req, res, next))
 			.catch(er => {
-				logger.error('SESSION [ERROR] %s %s (%s, %dms)', req.method, url, er, Date.now() - start);
+				logger.error(
+					'SESSION [ERROR] %s %s (%s, %dms)',
+					req.method,
+					url,
+					er,
+					Date.now() - start
+				);
 				try {
 					next(er);
 				} catch (e) {
@@ -114,11 +147,10 @@ module.exports = exports = class SessionManager {
 			.then(cleanReaper);
 	}
 
-
-	maybeRedirect (basepath, scope, start, req, res, next) {
+	maybeRedirect(basepath, scope, start, req, res, next) {
 		const url = req.originalUrl;
 
-		function redirect (uri) {
+		function redirect(uri) {
 			try {
 				return res.redirect(uri);
 			} catch (e) {
@@ -127,53 +159,71 @@ module.exports = exports = class SessionManager {
 		}
 
 		return reason => {
-			if (req.dead) {return;}
+			if (req.dead) {
+				return;
+			}
 
 			logger.debug('Session Failure: %o', reason);
 
-			if (Object.prototype.hasOwnProperty.call(reason || {}, 'statusCode')) {
+			if (
+				Object.prototype.hasOwnProperty.call(reason || {}, 'statusCode')
+			) {
 				reason = reason.statusCode;
 			}
 
-			if (reason instanceof Error && (!reason.NoContineLink && !/No continue link/i.test(reason.message))) {
+			if (
+				reason instanceof Error &&
+				!reason.NoContineLink &&
+				!/No continue link/i.test(reason.message)
+			) {
 				return next(reason);
 			}
 
-			const returnTo = (
+			const returnTo =
 				//Only set the return url if the url is NOT the basepath
-				(req.originalUrl !== basepath) ? '?return=' + encodeURIComponent(req.originalUrl) : ''
-			);
+				req.originalUrl !== basepath
+					? '?return=' + encodeURIComponent(req.originalUrl)
+					: '';
 
 			if (reason && reason.isLoginAction) {
-				if(scope.startsWith(reason.route)) {
+				if (scope.startsWith(reason.route)) {
 					return next();
 				}
 
-				logger.debug('SESSION [LOGIN ACTION REQUIRED] %s %s REDIRECT %s%s (User: %s, %dms)',
-					req.method, url, basepath, reason.route, req.username, Date.now() - start);
+				logger.debug(
+					'SESSION [LOGIN ACTION REQUIRED] %s %s REDIRECT %s%s (User: %s, %dms)',
+					req.method,
+					url,
+					basepath,
+					reason.route,
+					req.username,
+					Date.now() - start
+				);
 
 				return redirect(`${basepath}${reason.route}${returnTo}`);
 			}
 
 			if (!/^(api|login)/.test(scope)) {
-				logger.debug('SESSION [INVALID] %s %s REDIRECT %slogin/ (User: anonymous, %dms)',
-					req.method, url, basepath, Date.now() - start);
+				logger.debug(
+					'SESSION [INVALID] %s %s REDIRECT %slogin/ (User: anonymous, %dms)',
+					req.method,
+					url,
+					basepath,
+					Date.now() - start
+				);
 
 				return redirect(`${basepath}login/${returnTo}`);
 			}
-
 
 			return Promise.reject(reason);
 		};
 	}
 
-
-	async anonymousMiddleware (basepath, context, res, next) {
-		const {[SERVER_REF]: server} = context;
+	async anonymousMiddleware(basepath, context, res, next) {
+		const { [SERVER_REF]: server } = context;
 		if (server) {
 			await server.ping(void 0, context).catch(() => {});
 		}
 		next();
 	}
-
 };

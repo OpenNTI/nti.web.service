@@ -9,15 +9,13 @@ const self = Object.assign(exports, {
 	middleware,
 });
 
-
-function setupErrorHandler (express/*, config*/) {
+function setupErrorHandler(express /*, config*/) {
 	express.use(self.middleware);
 }
 
-
 // We need the signature to be 4 args long
 // for express to treat it as a error handler
-function middleware (err, req, res, next) {
+function middleware(err, req, res, next) {
 	if (err === 'aborted' || ((err || {}).error || {}).type === 'aborted') {
 		if (res.headersSent) {
 			return;
@@ -43,8 +41,7 @@ function middleware (err, req, res, next) {
 
 	if (!err.stack && typeof err !== 'string') {
 		err = JSON.stringify(err, null, '\t');
-	}
-	else if (err.stack) {
+	} else if (err.stack) {
 		err = err.stack;
 	}
 
@@ -62,13 +59,16 @@ Headers: ${JSON.stringify(req.headers, null, '\t')}
 		err,
 		errorid: errorId,
 		contact: ' ',
-		message: 'There was an error processing your request'
+		message: 'There was an error processing your request',
 	};
 
 	try {
 		res.status(err.statusCode || 500).render('error', data);
 	} catch (e) {
-		logger.error(`Could not report error ${errorId} to client.`, e.stack || e.message || e);
+		logger.error(
+			`Could not report error ${errorId} to client.`,
+			e.stack || e.message || e
+		);
 		//socket closed... oh well.
 	}
 }

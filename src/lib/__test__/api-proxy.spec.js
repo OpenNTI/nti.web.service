@@ -4,11 +4,10 @@
 const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 describe('lib/api-proxy (middleware)', () => {
-
 	let logger;
 
 	const config = Object.freeze({
-		'proxy': 'http://test'
+		proxy: 'http://test',
 	});
 
 	beforeEach(() => {
@@ -24,19 +23,18 @@ describe('lib/api-proxy (middleware)', () => {
 		stub(logger, 'warn');
 	});
 
-
 	afterEach(() => {
 		jest.resetModules();
 	});
 
-	test ('exports a middleware function factory', () => {
+	test('exports a middleware function factory', () => {
 		const fn = require('../api-proxy');
 
 		expect(fn).toEqual(expect.any(Function));
 		expect(fn.length).toEqual(1);
 	});
 
-	test ('the middleware function throws if proxy middleware is not available', () => {
+	test('the middleware function throws if proxy middleware is not available', () => {
 		jest.doMock('http-proxy-middleware', () => {
 			throw new Error('Cannot find module. (mock)');
 		});
@@ -47,7 +45,7 @@ describe('lib/api-proxy (middleware)', () => {
 		expect(logger.error).toHaveBeenCalled();
 	});
 
-	test ('the middleware function sets proxy', () => {
+	test('the middleware function sets proxy', () => {
 		const httpProxyMiddleware = jest.fn(() => 'http-proxy-middleware');
 
 		jest.doMock('http-proxy-middleware', () => httpProxyMiddleware);
@@ -61,7 +59,7 @@ describe('lib/api-proxy (middleware)', () => {
 		expect(httpProxyMiddleware).toHaveBeenCalledWith(
 			expect.objectContaining({
 				changeOrigin: false,
-				target: config.proxy
+				target: config.proxy,
 			})
 		);
 	});

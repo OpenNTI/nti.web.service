@@ -4,23 +4,18 @@ const path = require('path');
 const redirects = require('./lib/redirects');
 const sessionSetup = require('./lib/session-setup');
 
-
 exports = module.exports = {
-
-	register (expressApp, config) {
-
+	register(expressApp, config) {
 		redirects.register(expressApp, config);
 
 		expressApp.use((req, res, next) => {
-			const {breakme} = req.query || {};
+			const { breakme } = req.query || {};
 
-			if(breakme === 'softly') {
+			if (breakme === 'softly') {
 				res.write('Hi, you broke.');
-			}
-			else if(breakme === 'now') {
+			} else if (breakme === 'now') {
 				res.send('Hi, you broke.');
-			}
-			else if (breakme) {
+			} else if (breakme) {
 				return next(new Error('well...shoot'));
 			}
 
@@ -32,9 +27,7 @@ exports = module.exports = {
 
 			assets: path.join(__dirname, 'assets'),
 
-			sessionSetup
+			sessionSetup,
 		};
-
-	}
-
+	},
 };

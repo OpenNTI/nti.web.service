@@ -1,22 +1,22 @@
 'use strict';
-const {worker} = require('cluster');
+const { worker } = require('cluster');
 const http = require('http');
 const https = require('https');
 const path = require('path');
 
 const express = require('express');
-const {proxy: createProxy} = require('findhit-proxywrap');
+const { proxy: createProxy } = require('findhit-proxywrap');
 
 const pkg = require('../package.json');
 
 const logger = require('./lib/logger');
 const htmlTemplates = require('./lib/html-templates');
-const {restart} = require('./lib/restart');
-const {setupApplication} = require('./lib/app-service');
-const {setupErrorHandler} = require('./lib/error-handler');
-const {getStackOrMessage, getErrorMessage, send} = require('./lib/utils');
+const { restart } = require('./lib/restart');
+const { setupApplication } = require('./lib/app-service');
+const { setupErrorHandler } = require('./lib/error-handler');
+const { getStackOrMessage, getErrorMessage, send } = require('./lib/utils');
 
-const sendErrorMessage = e => send({cmd: 'FATAL_ERROR', error: e});
+const sendErrorMessage = e => send({ cmd: 'FATAL_ERROR', error: e });
 
 const self = Object.assign(exports, {
 	start,
@@ -24,12 +24,11 @@ const self = Object.assign(exports, {
 	//for tests
 	init,
 	messageHandler,
-	getApp
+	getApp,
 });
 
 const MESSAGE_HANDLERS = {
-
-	async init (msg) {
+	async init(msg) {
 		try {
 			this.server = await self.init(msg.config);
 		} catch (e) {
@@ -40,8 +39,7 @@ const MESSAGE_HANDLERS = {
 		}
 	},
 
-
-	close () {
+	close() {
 		logger.info('Asked to close...');
 		if (!this.server) {
 			logger.error('No server, exiting...');
@@ -54,20 +52,20 @@ const MESSAGE_HANDLERS = {
 			worker.disconnect();
 			process.exit();
 		});
-	}
-
+	},
 };
 
-
-
-function start ()  {
-	logger.info('Starting up. (version: %s, process: %d)', pkg.version, process.pid);
+function start() {
+	logger.info(
+		'Starting up. (version: %s, process: %d)',
+		pkg.version,
+		process.pid
+	);
 	process.on('message', self.messageHandler);
 	process.on('SIGHUP', restart);
 }
 
-
-async function getApp (config) {
+async function getApp(config) {
 	//WWW Server
 	const app = express();
 	app.engine('html', htmlTemplates);
@@ -83,8 +81,7 @@ async function getApp (config) {
 	return app;
 }
 
-
-async function createServer (protocol, app) {
+async function createServer(protocol, app) {
 	const FACTORIES = {
 		proxy: () => createProxy(http).createServer(app),
 		http: () => http.createServer(app),
@@ -100,7 +97,7 @@ async function createServer (protocol, app) {
 				newErr.stack += '\nCaused by: ' + e.stack;
 				throw newErr;
 			}
-		}
+		},
 	};
 
 	const factory = FACTORIES[protocol] || FACTORIES.http;
@@ -108,8 +105,7 @@ async function createServer (protocol, app) {
 	return factory();
 }
 
-
-async function init (config) {
+async function init(config) {
 	const address = config.address || '0.0.0.0';
 	const port = config.port;
 
@@ -125,9 +121,7 @@ async function init (config) {
 	return server;
 }
 
-
-
-async function messageHandler (msg) {
+async function messageHandler(msg) {
 	if ((msg || {}).topic !== 'default') {
 		return;
 	}

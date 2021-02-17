@@ -1,11 +1,11 @@
 /*eslint-env jest*/
 'use strict';
 
-const {SERVER_REF} = require('../../../constants');
+const { SERVER_REF } = require('../../../constants');
 
 const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
-describe ('lib/api/endpoints/user-agreement', () => {
+describe('lib/api/endpoints/user-agreement', () => {
 	let TOS_NOT_ACCEPTED;
 
 	beforeEach(() => {
@@ -15,24 +15,25 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		TOS_NOT_ACCEPTED = require('@nti/lib-interfaces').TOS_NOT_ACCEPTED;
 	});
 
-
 	afterEach(() => {
 		delete global.fetch;
 		jest.resetModules();
 	});
 
-
-	test ('registers user-agreement', () => {
+	test('registers user-agreement', () => {
 		const UA = require('../user-agreement');
 		const handler = jest.fn();
 		stub(UA, 'getServeUserAgreement', () => handler);
-		const {default: register} = UA;
-		const api = {get: jest.fn()};
+		const { default: register } = UA;
+		const api = { get: jest.fn() };
 
-		const config = {config: 1};
+		const config = { config: 1 };
 		expect(() => register(api, config)).not.toThrow();
 		expect(api.get).toHaveBeenCalledTimes(1);
-		expect(api.get).toHaveBeenCalledWith(expect.any(RegExp), expect.any(Function));
+		expect(api.get).toHaveBeenCalledWith(
+			expect.any(RegExp),
+			expect.any(Function)
+		);
 		const [, callback] = api.get.mock.calls[0];
 
 		expect(UA.getServeUserAgreement).toHaveBeenCalledTimes(1);
@@ -44,30 +45,32 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		expect(handler).toHaveBeenCalledWith(1, 2);
 	});
 
-
-	test ('getServeUserAgreement(): returns a handler function', () => {
+	test('getServeUserAgreement(): returns a handler function', () => {
 		const UA = require('../user-agreement');
 
 		const handler = UA.getServeUserAgreement();
 		expect(handler).toEqual(expect.any(Function));
 	});
 
-
-	test ('getServeUserAgreement(): handler behavior', async () => {
-		const context = {context: 1};
+	test('getServeUserAgreement(): handler behavior', async () => {
+		const context = { context: 1 };
 		const UA = require('../user-agreement');
-		stub(UA, 'resolveUrl', () => Promise.resolve({url: '...', context}));
-		stub(UA, 'handleFetch', () => () => Promise.resolve({fetch: 1}));
-		stub(UA, 'handleFetchResponse', () => Promise.resolve({fetchResponse: 1}));
-		stub(UA, 'processAndRespond', () => () => Promise.resolve({processed: 1}));
+		stub(UA, 'resolveUrl', () => Promise.resolve({ url: '...', context }));
+		stub(UA, 'handleFetch', () => () => Promise.resolve({ fetch: 1 }));
+		stub(UA, 'handleFetchResponse', () =>
+			Promise.resolve({ fetchResponse: 1 })
+		);
+		stub(UA, 'processAndRespond', () => () =>
+			Promise.resolve({ processed: 1 })
+		);
 
-		const config = {config: 1};
-		const server = {server: 1};
+		const config = { config: 1 };
+		const server = { server: 1 };
 
 		const handler = UA.getServeUserAgreement(config);
 
-		const req = {req: 1, [SERVER_REF]: server};
-		const res = {res: 1};
+		const req = { req: 1, [SERVER_REF]: server };
+		const res = { res: 1 };
 		const next = jest.fn();
 
 		await handler(req, res, next);
@@ -79,7 +82,11 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		expect(UA.handleFetch).toHaveBeenCalledWith(req, res);
 
 		expect(UA.handleFetchResponse).toHaveBeenCalledTimes(1);
-		expect(UA.handleFetchResponse).toHaveBeenCalledWith({ fetch: 1 }, {context: 1}, undefined);
+		expect(UA.handleFetchResponse).toHaveBeenCalledWith(
+			{ fetch: 1 },
+			{ context: 1 },
+			undefined
+		);
 
 		expect(UA.processAndRespond).toHaveBeenCalledTimes(1);
 		expect(UA.processAndRespond).toHaveBeenCalledWith(res);
@@ -87,14 +94,29 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		expect(next).toHaveBeenCalledTimes(0);
 	});
 
-
 	test('getServeUserAgreement(): handler behavior with redirect', async () => {
-		const redirect1 = { fetch: 1, ok: false, status: 303, headers: { get: () => 'internal1' } };
-		const redirect2 = { fetch: 2, ok: false, status: 303, headers: { get: () => 'internal2' } };
-		const redirect3 = { fetch: 3, ok: false, status: 303, headers: { get: () => 'external' } };
+		const redirect1 = {
+			fetch: 1,
+			ok: false,
+			status: 303,
+			headers: { get: () => 'internal1' },
+		};
+		const redirect2 = {
+			fetch: 2,
+			ok: false,
+			status: 303,
+			headers: { get: () => 'internal2' },
+		};
+		const redirect3 = {
+			fetch: 3,
+			ok: false,
+			status: 303,
+			headers: { get: () => 'external' },
+		};
 		const result = { ok: true, status: 200, text: () => 'hello' };
 
-		global.fetch = jest.fn()
+		global.fetch = jest
+			.fn()
 			.mockReturnValueOnce(Promise.resolve(redirect2))
 			.mockReturnValueOnce(Promise.resolve(redirect3))
 			.mockReturnValue(Promise.resolve(result));
@@ -102,18 +124,22 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		const context = { context: 1 };
 		const isInternal = x => /^internal/.test(x);
 		const UA = require('../user-agreement');
-		stub(UA, 'resolveUrl', () => Promise.resolve({url: '...', isInternal, context}));
+		stub(UA, 'resolveUrl', () =>
+			Promise.resolve({ url: '...', isInternal, context })
+		);
 		stub(UA, 'handleFetch', () => () => Promise.resolve(redirect1));
-		stub(UA, 'processAndRespond', () => () => Promise.resolve({processed: 1}));
+		stub(UA, 'processAndRespond', () => () =>
+			Promise.resolve({ processed: 1 })
+		);
 		jest.spyOn(UA, 'handleFetchResponse');
 
-		const config = {config: 1};
-		const server = {server: 1};
+		const config = { config: 1 };
+		const server = { server: 1 };
 
 		const handler = UA.getServeUserAgreement(config);
 
-		const req = {req: 1, [SERVER_REF]: server};
-		const res = {res: 1};
+		const req = { req: 1, [SERVER_REF]: server };
+		const res = { res: 1 };
 		const next = jest.fn();
 
 		await handler(req, res, next);
@@ -125,10 +151,26 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		expect(UA.handleFetch).toHaveBeenCalledWith(req, res);
 
 		expect(UA.handleFetchResponse).toHaveBeenCalledTimes(4);
-		expect(UA.handleFetchResponse).toHaveBeenCalledWith(redirect1, context, isInternal);
-		expect(UA.handleFetchResponse).toHaveBeenCalledWith(redirect2, context, isInternal);
-		expect(UA.handleFetchResponse).toHaveBeenCalledWith(redirect3, context, isInternal);
-		expect(UA.handleFetchResponse).toHaveBeenCalledWith(result, context, isInternal);
+		expect(UA.handleFetchResponse).toHaveBeenCalledWith(
+			redirect1,
+			context,
+			isInternal
+		);
+		expect(UA.handleFetchResponse).toHaveBeenCalledWith(
+			redirect2,
+			context,
+			isInternal
+		);
+		expect(UA.handleFetchResponse).toHaveBeenCalledWith(
+			redirect3,
+			context,
+			isInternal
+		);
+		expect(UA.handleFetchResponse).toHaveBeenCalledWith(
+			result,
+			context,
+			isInternal
+		);
 
 		expect(fetch).toHaveBeenCalledTimes(3);
 		expect(fetch).toHaveBeenCalledWith('internal1', context);
@@ -141,21 +183,24 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		expect(next).toHaveBeenCalledTimes(0);
 	});
 
-
-	test ('getServeUserAgreement(): handler rejects if no url', async () => {
+	test('getServeUserAgreement(): handler rejects if no url', async () => {
 		const UA = require('../user-agreement');
 		stub(UA, 'resolveUrl', () => Promise.resolve());
-		stub(UA, 'handleFetch', () => () => Promise.resolve({fetch: 1}));
-		stub(UA, 'handleFetchResponse', () => Promise.resolve({fetchResponse: 1}));
-		stub(UA, 'processAndRespond', () => () => Promise.resolve({processed: 1}));
+		stub(UA, 'handleFetch', () => () => Promise.resolve({ fetch: 1 }));
+		stub(UA, 'handleFetchResponse', () =>
+			Promise.resolve({ fetchResponse: 1 })
+		);
+		stub(UA, 'processAndRespond', () => () =>
+			Promise.resolve({ processed: 1 })
+		);
 
-		const config = {config: 1};
-		const server = {server: 1};
+		const config = { config: 1 };
+		const server = { server: 1 };
 
 		const handler = UA.getServeUserAgreement(config, server);
 
-		const req = {req: 1};
-		const res = {res: 1};
+		const req = { req: 1 };
+		const res = { res: 1 };
 		const next = jest.fn();
 
 		await handler(req, res, next);
@@ -164,88 +209,114 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		expect(next).toHaveBeenCalledWith(expect.any(Error));
 	});
 
-
-	test ('resolveUrl(): dataserver defines url', async () => {
-		const {resolveUrl} = require('../user-agreement');
+	test('resolveUrl(): dataserver defines url', async () => {
+		const { resolveUrl } = require('../user-agreement');
 
 		const pong = {
 			Links: [
 				{
 					href: '/dataserver2/@@some-url',
-					rel: TOS_NOT_ACCEPTED
-				}
-			]
+					rel: TOS_NOT_ACCEPTED,
+				},
+			],
 		};
 
 		const server = {
-			get: jest.fn(x => x === 'logon.ping' ? Promise.resolve(pong) : void 0)
+			get: jest.fn(x =>
+				x === 'logon.ping' ? Promise.resolve(pong) : void 0
+			),
 		};
 
 		const config = {
-			'server': 'http://localhost:8082/dataserver2/',
-			'user-agreement': 'https://some-fallback-url'
+			server: 'http://localhost:8082/dataserver2/',
+			'user-agreement': 'https://some-fallback-url',
 		};
 
-		const request = {request: 1, protocol: 'http', headers: {host: 'app.localhost'}};
+		const request = {
+			request: 1,
+			protocol: 'http',
+			headers: { host: 'app.localhost' },
+		};
 
 		const o = await resolveUrl(request, config, server);
 
-		expect(o.url).toEqual(new URL(pong.Links[0].href, `${request.protocol}://${request.headers.host}`).toString());
+		expect(o.url).toEqual(
+			new URL(
+				pong.Links[0].href,
+				`${request.protocol}://${request.headers.host}`
+			).toString()
+		);
 
 		expect(o.context).toBeTruthy();
 		expect(o.context).toHaveProperty('headers');
 		expect(o.context).toHaveProperty('redirect');
 	});
 
-	test ('resolveUrl(): dataserver defines url (request relative ds)', async () => {
-		const {resolveUrl} = require('../user-agreement');
+	test('resolveUrl(): dataserver defines url (request relative ds)', async () => {
+		const { resolveUrl } = require('../user-agreement');
 
 		const pong = {
 			Links: [
 				{
 					href: '/dataserver2/@@some-url',
-					rel: TOS_NOT_ACCEPTED
-				}
-			]
+					rel: TOS_NOT_ACCEPTED,
+				},
+			],
 		};
 
 		const server = {
-			get: jest.fn(x => x === 'logon.ping' ? Promise.resolve(pong) : void 0)
+			get: jest.fn(x =>
+				x === 'logon.ping' ? Promise.resolve(pong) : void 0
+			),
 		};
 
 		const config = {
-			'server': '/dataserver2/',
-			'user-agreement': 'https://some-fallback-url'
+			server: '/dataserver2/',
+			'user-agreement': 'https://some-fallback-url',
 		};
 
-		const request = {request: 1, protocol: 'https', headers: {host: 'app.localhost:8443'}};
+		const request = {
+			request: 1,
+			protocol: 'https',
+			headers: { host: 'app.localhost:8443' },
+		};
 
 		const o = await resolveUrl(request, config, server);
 
 		expect(o.url).toEqual(expect.any(String));
-		expect(o.url).toEqual(new URL(pong.Links[0].href, `${request.protocol}://${request.headers.host}`).toString());
+		expect(o.url).toEqual(
+			new URL(
+				pong.Links[0].href,
+				`${request.protocol}://${request.headers.host}`
+			).toString()
+		);
 
 		expect(o.context).toBeTruthy();
 		expect(o.context).toHaveProperty('headers');
 		expect(o.context).toHaveProperty('redirect');
 	});
 
-
-	test ('resolveUrl(): config fallback url', async () => {
-		const {resolveUrl} = require('../user-agreement');
+	test('resolveUrl(): config fallback url', async () => {
+		const { resolveUrl } = require('../user-agreement');
 
 		const pong = {};
 
 		const server = {
-			get: jest.fn(x => x === 'logon.ping' ? Promise.resolve(pong) : void 0)
+			get: jest.fn(x =>
+				x === 'logon.ping' ? Promise.resolve(pong) : void 0
+			),
 		};
 
 		const config = {
-			'server': 'http://localhost:8082/dataserver2/',
-			'user-agreement': 'https://some-fallback-url'
+			server: 'http://localhost:8082/dataserver2/',
+			'user-agreement': 'https://some-fallback-url',
 		};
 
-		const request = {request: 1, protocol: 'http', headers: {host: 'localhost:8082'}};
+		const request = {
+			request: 1,
+			protocol: 'http',
+			headers: { host: 'localhost:8082' },
+		};
 
 		const o = await resolveUrl(request, config, server);
 
@@ -256,33 +327,36 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		expect(o.context).toEqual(undefined);
 	});
 
-
-	test ('resolveUrl(): error case', async () => {
-		const {resolveUrl} = require('../user-agreement');
-		const request = {request: 1, protocol: 'http', headers: {host: 'localhost:8082'}};
-		const server = {
-			get: jest.fn(x => x === 'logon.ping' ? Promise.resolve() : void x)
+	test('resolveUrl(): error case', async () => {
+		const { resolveUrl } = require('../user-agreement');
+		const request = {
+			request: 1,
+			protocol: 'http',
+			headers: { host: 'localhost:8082' },
 		};
-
+		const server = {
+			get: jest.fn(x =>
+				x === 'logon.ping' ? Promise.resolve() : void x
+			),
+		};
 
 		const o = await resolveUrl(request, null, server);
 
 		expect(o).toEqual(undefined);
 	});
 
-
-	test ('copyRequestHeaders(): copies all headers except the blacklisted', () => {
-		const {copyRequestHeaders} = require('../user-agreement');
+	test('copyRequestHeaders(): copies all headers except the blacklisted', () => {
+		const { copyRequestHeaders } = require('../user-agreement');
 
 		const req = {
 			headers: {
 				'accept-encoding': 'some-value',
 				'content-length': 'some-value',
 				'content-type': 'some-value',
-				'referer': 'some-value',
+				referer: 'some-value',
 				'x-test-header': 'abc',
-				'cookies': 'xyz'
-			}
+				cookies: 'xyz',
+			},
 		};
 
 		expect(() => copyRequestHeaders()).not.toThrow();
@@ -292,41 +366,40 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		expect(newHeaders).not.toBe(req.headers);
 
 		//has less properties than the original
-		expect(Object.keys(newHeaders).length).toBeLessThan(Object.keys(req.headers).length);
+		expect(Object.keys(newHeaders).length).toBeLessThan(
+			Object.keys(req.headers).length
+		);
 
 		//no new headers
 		for (let header of Object.keys(newHeaders)) {
 			expect(req.headers).toHaveProperty(header);
 		}
-
 	});
 
-
-	test ('handleFetch(): normal', () => {
-		const {handleFetch} = require('../user-agreement');
+	test('handleFetch(): normal', () => {
+		const { handleFetch } = require('../user-agreement');
 		stub(global, 'fetch');
 
 		const url = 'test';
-		const context = {context: 1};
-		const req = {url: 'some-url'};
+		const context = { context: 1 };
+		const req = { url: 'some-url' };
 		const resp = {};
 
 		const handler = handleFetch(req, resp);
-		handler({url, context});
+		handler({ url, context });
 
 		expect(fetch).toHaveBeenCalledTimes(1);
 		expect(fetch).toHaveBeenCalledWith(url, context);
 	});
 
-
-	test ('handleFetch(): redirect', () => {
-		const {handleFetch} = require('../user-agreement');
+	test('handleFetch(): redirect', () => {
+		const { handleFetch } = require('../user-agreement');
 
 		const url = 'test';
-		const context = {context: 1};
-		const req = {url: 'some-url/view'};
+		const context = { context: 1 };
+		const req = { url: 'some-url/view' };
 		const resp = {
-			redirect: jest.fn()
+			redirect: jest.fn(),
 		};
 
 		const handler = handleFetch(req, resp);
@@ -341,71 +414,77 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		expect(resp.redirect).toHaveBeenCalledWith(url);
 	});
 
-
-	test ('handleFetchResponse(): normal', async () => {
-		const {handleFetchResponse} = require('../user-agreement');
+	test('handleFetchResponse(): normal', async () => {
+		const { handleFetchResponse } = require('../user-agreement');
 
 		const responseMock = {
 			ok: true,
-			text: jest.fn(() => 'response-text')
+			text: jest.fn(() => 'response-text'),
 		};
 
 		const text = await Promise.resolve(handleFetchResponse(responseMock));
 		expect(text).toEqual('response-text');
 	});
 
+	test('handleFetchResponse(): redirect', async () => {
+		const { handleFetchResponse } = require('../user-agreement');
 
-	test ('handleFetchResponse(): redirect', async () => {
-		const {handleFetchResponse} = require('../user-agreement');
+		const get = jest.fn(x => (x === 'location' ? 'new-place' : void x));
 
-		const get = jest.fn(x => x === 'location' ? 'new-place' : void x);
-
-		stub(global, 'fetch', (x) => {
+		stub(global, 'fetch', x => {
 			if (x === 'new-place') {
 				return Promise.resolve({
 					ok: true,
-					text: jest.fn(() => 'response-text')
+					text: jest.fn(() => 'response-text'),
 				});
 			}
 
-			return Promise.resolve({ok: false, status: 404, statusText: 'Not Found'});
+			return Promise.resolve({
+				ok: false,
+				status: 404,
+				statusText: 'Not Found',
+			});
 		});
 
-
-		const text = await Promise.resolve(handleFetchResponse({ ok: false, status: 302, headers: { get } }));
+		const text = await Promise.resolve(
+			handleFetchResponse({ ok: false, status: 302, headers: { get } })
+		);
 		expect(text).toEqual('response-text');
 	});
 
-
-	test ('handleFetchResponse(): error', async () => {
-		const {handleFetchResponse} = require('../user-agreement');
+	test('handleFetchResponse(): error', async () => {
+		const { handleFetchResponse } = require('../user-agreement');
 
 		try {
-			await Promise.resolve(handleFetchResponse({ ok: false, status: 404, statusText: 'Not Found' }));
-			return await Promise.reject('Unexpected Promise fulfillment. It should have failed.');
-		}
-		catch (er) {
+			await Promise.resolve(
+				handleFetchResponse({
+					ok: false,
+					status: 404,
+					statusText: 'Not Found',
+				})
+			);
+			return await Promise.reject(
+				'Unexpected Promise fulfillment. It should have failed.'
+			);
+		} catch (er) {
 			expect(er).toEqual(expect.any(Error));
 			expect(er.message).toEqual('Not Found');
 		}
-
 	});
 
-
-	test ('processAndRespond(): returns a handler', () => {
-		const {processAndRespond} = require('../user-agreement');
+	test('processAndRespond(): returns a handler', () => {
+		const { processAndRespond } = require('../user-agreement');
 
 		const handler = processAndRespond();
 		expect(handler).toEqual(expect.any(Function));
 	});
 
-
-	test ('processAndRespond(): encodes a {body, styles} data structure, body string is stripped of script and style tags, style string is the sum of all style tags contents.', () => {
-		const {processAndRespond} = require('../user-agreement');
+	test('processAndRespond(): encodes a {body, styles} data structure, body string is stripped of script and style tags, style string is the sum of all style tags contents.', () => {
+		const { processAndRespond } = require('../user-agreement');
 		const responseMock = {
 			status: jest.fn(),
 			json: jest.fn(),
-			end: jest.fn()
+			end: jest.fn(),
 		};
 
 		const handler = processAndRespond(responseMock);
@@ -433,9 +512,11 @@ describe ('lib/api/endpoints/user-agreement', () => {
 		expect(responseMock.status).toHaveBeenCalledTimes(1);
 		expect(responseMock.status).toHaveBeenCalledWith(200);
 
-
 		expect(responseMock.json).toHaveBeenCalledTimes(1);
-		expect(responseMock.json).toHaveBeenCalledWith({body: expect.any(String), styles: expect.any(String)});
+		expect(responseMock.json).toHaveBeenCalledWith({
+			body: expect.any(String),
+			styles: expect.any(String),
+		});
 		const [data] = responseMock.json.mock.calls[0];
 
 		expect(data.body).not.toEqual(expect.stringContaining('<script'));
@@ -448,7 +529,5 @@ describe ('lib/api/endpoints/user-agreement', () => {
 
 		expect(responseMock.end).toHaveBeenCalledTimes(1);
 		expect(responseMock.end).toHaveBeenCalledWith();
-
-
 	});
 });

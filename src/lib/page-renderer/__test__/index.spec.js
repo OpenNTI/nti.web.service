@@ -3,12 +3,12 @@
 jest.mock('fs');
 
 describe('lib/page-renderer (index)', () => {
-
 	beforeEach(() => {
 		jest.resetModules();
 		jest.clearAllMocks();
 		const logger = require('../../logger');
-		const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => { }));
+		const stub = (a, b, c) =>
+			jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 		stub(logger, 'get', () => logger);
 		stub(logger, 'attachToExpress');
@@ -17,7 +17,6 @@ describe('lib/page-renderer (index)', () => {
 		stub(logger, 'info');
 		stub(logger, 'warn');
 	});
-
 
 	afterEach(() => {
 		jest.resetModules();
@@ -32,17 +31,17 @@ describe('lib/page-renderer (index)', () => {
 		expect(render).toEqual(expect.any(Function));
 	});
 
-
 	test('render (Bad Template)', async () => {
 		const fs = require('fs').promises;
 		const fn = require('../index').getRenderer;
 
-		jest.spyOn(fs, 'stat').mockImplementation(async (f) => ({ mtime: new Date('2018-04-02T16:35:42.000Z') }));
-		jest.spyOn(fs, 'readFile').mockImplementation(async (f) => '');
+		jest.spyOn(fs, 'stat').mockImplementation(async f => ({
+			mtime: new Date('2018-04-02T16:35:42.000Z'),
+		}));
+		jest.spyOn(fs, 'readFile').mockImplementation(async f => '');
 
 		expect(fn).toEqual(expect.any(Function));
 		expect(fn.length).toEqual(3);
-
 
 		const render = fn('/test/');
 		const result = await render('/');
@@ -50,61 +49,75 @@ describe('lib/page-renderer (index)', () => {
 	});
 
 	describe('Variables', () => {
-		let fn,fs;
+		let fn, fs;
 
 		beforeEach(() => {
 			jest.clearAllMocks();
 			fs = require('fs').promises;
-			jest.spyOn(fs, 'stat').mockImplementation(async (f) => ({ mtime: new Date('2018-04-02T16:35:42.000Z') }));
+			jest.spyOn(fs, 'stat').mockImplementation(async f => ({
+				mtime: new Date('2018-04-02T16:35:42.000Z'),
+			}));
 			fn = require('../index').getRenderer;
 		});
 
 		test('CDATA style', async () => {
-			jest.spyOn(fs, 'readFile').mockImplementation(async (f) => `
+			jest.spyOn(fs, 'readFile').mockImplementation(async f =>
+				`
 				<![CDATA[cfg:title]]>
 				<![CDATA[cfg:title|html]]>
 				<![CDATA[cfg:title|string]]>
 				<![CDATA[cfg:title|raw]]>
 				<![CDATA[cfg:title|unknown]]>
-			`.trim());
-
+			`.trim()
+			);
 
 			const render = fn('/test/');
-			const result = await render('/', {}, { config: { title: 'Kibbles \'n Bits' } });
-			expect(result).toEqual(`
+			const result = await render(
+				'/',
+				{},
+				{ config: { title: "Kibbles 'n Bits" } }
+			);
+			expect(result).toEqual(
+				`
 				Kibbles &apos;n Bits
 				Kibbles &apos;n Bits
 				Kibbles \\'n Bits
 				Kibbles 'n Bits
 				Kibbles 'n Bits
-			`.trim());
+			`.trim()
+			);
 		});
 
 		test('inline style', async () => {
-			jest.spyOn(fs, 'readFile').mockImplementation(async (f) => `
+			jest.spyOn(fs, 'readFile').mockImplementation(async f =>
+				`
 				<[cfg:title]>
 				<[cfg:title|html]>
 				<[cfg:title|string]>
 				<[cfg:title|raw]>
 				<[cfg:title|unknown]>
-			`.trim());
-
+			`.trim()
+			);
 
 			const render = fn('/test/');
-			const result = await render('/', {}, { config: { title: 'Kibbles \'n Bits' } });
-			expect(result).toEqual(`
+			const result = await render(
+				'/',
+				{},
+				{ config: { title: "Kibbles 'n Bits" } }
+			);
+			expect(result).toEqual(
+				`
 				Kibbles &apos;n Bits
 				Kibbles &apos;n Bits
 				Kibbles \\'n Bits
 				Kibbles 'n Bits
 				Kibbles 'n Bits
-			`.trim());
+			`.trim()
+			);
 		});
 	});
-
 
 	// test ('render (root path rewrite)');
 	// test ('render (config value injection)');
 	// test ('render (custom content renderer)');
-
 });

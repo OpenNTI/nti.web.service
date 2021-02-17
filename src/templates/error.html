@@ -1,53 +1,60 @@
 <!DOCTYPE html>
 <html>
-<head>
-	<title>Error</title>
-	<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css">
-	<style type="text/css">
-		body {
-			font-family: 'Open Sans', helvetica, sans-serif;
-		}
+	<head>
+		<title>Error</title>
+		<link
+			href="https://fonts.googleapis.com/css?family=Open+Sans"
+			rel="stylesheet"
+			type="text/css"
+		/>
+		<style type="text/css">
+			body {
+				font-family: 'Open Sans', helvetica, sans-serif;
+			}
 
-		body .error-alert {
-			padding: 2rem;
-			border: 2px solid lightblue;
-			border-radius: 4px;
-			font-size: 16px;
-			line-height: 1.4rem;
-		}
+			body .error-alert {
+				padding: 2rem;
+				border: 2px solid lightblue;
+				border-radius: 4px;
+				font-size: 16px;
+				line-height: 1.4rem;
+			}
 
-		body .error-alert #contacts {
-			margin-bottom: 1em;
-		}
+			body .error-alert #contacts {
+				margin-bottom: 1em;
+			}
 
-		body .error-alert #contacts .contact-detail {
-			margin-left: 0.5em;
-		}
+			body .error-alert #contacts .contact-detail {
+				margin-left: 0.5em;
+			}
 
-		body .error-alert-controls .button {
-			color: white;
-			text-decoration: none;
-			background: cornflowerblue;
-			display: inline-block;
-			padding: 0.5em 1em;
-			border-radius: 3px;
-			margin-top: 1em;
-		}
-	</style>
-</head>
-<body>
-	<div class="error-alert">
-		<div class="error-alert-content">
-			<div id="error">An error occurred.</div>
-			<div id="message"><![CDATA[cfg:message]]></div>
-			<div id="info">
-				<div id="contacts"><![CDATA[cfg:contact]]></div>
-				<div id="errorid"><span class="label">Error reference number</span>: <![CDATA[cfg:errorid]]></div>
+			body .error-alert-controls .button {
+				color: white;
+				text-decoration: none;
+				background: cornflowerblue;
+				display: inline-block;
+				padding: 0.5em 1em;
+				border-radius: 3px;
+				margin-top: 1em;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="error-alert">
+			<div class="error-alert-content">
+				<div id="error">An error occurred.</div>
+				<div id="message"><![CDATA[cfg:message]]></div>
+				<div id="info">
+					<div id="contacts"><![CDATA[cfg:contact]]></div>
+					<div id="errorid">
+						<span class="label">Error reference number</span>:
+						<![CDATA[cfg:errorid]]>
+					</div>
+				</div>
+			</div>
+			<div class="error-alert-controls">
+				<a href="/" class="button">Drat</a>
 			</div>
 		</div>
-		<div class="error-alert-controls">
-			<a href="/" class="button">Drat</a>
-		</div>
-	</div>
-</body>
+	</body>
 </html>

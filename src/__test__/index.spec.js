@@ -4,7 +4,6 @@
 const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 describe('Bootstraps', () => {
-
 	beforeEach(() => {
 		jest.resetModules();
 		jest.dontMock('cluster');
@@ -23,14 +22,14 @@ describe('Bootstraps', () => {
 		jest.dontMock('cluster');
 	});
 
-	test ('isMaster: true, master bootstraps. not worker.', () => {
+	test('isMaster: true, master bootstraps. not worker.', () => {
 		const master = jest.fn();
 		const worker = jest.fn();
-		jest.doMock('cluster', () => ({isMaster: true}));
-		jest.doMock('../master', () => ({start: master}));
-		jest.doMock('../worker', () => ({start: worker}));
+		jest.doMock('cluster', () => ({ isMaster: true }));
+		jest.doMock('../master', () => ({ start: master }));
+		jest.doMock('../worker', () => ({ start: worker }));
 
-		const {run} = require('../index');
+		const { run } = require('../index');
 		run();
 
 		expect(master).toHaveBeenCalledTimes(1);
@@ -38,19 +37,18 @@ describe('Bootstraps', () => {
 		expect(worker).not.toHaveBeenCalled();
 	});
 
-	test ('isMaster: false, worker bootstraps. not master.', () => {
+	test('isMaster: false, worker bootstraps. not master.', () => {
 		const master = jest.fn();
 		const worker = jest.fn();
-		jest.doMock('cluster', () => ({isMaster: false}));
-		jest.doMock('../master', () => ({start: master}));
-		jest.doMock('../worker', () => ({start: worker}));
+		jest.doMock('cluster', () => ({ isMaster: false }));
+		jest.doMock('../master', () => ({ start: master }));
+		jest.doMock('../worker', () => ({ start: worker }));
 
-		const {run} = require('../index');
+		const { run } = require('../index');
 		run();
 
 		expect(worker).toHaveBeenCalledTimes(1);
 		expect(worker).toHaveBeenCalledWith();
 		expect(master).not.toHaveBeenCalled();
 	});
-
 });

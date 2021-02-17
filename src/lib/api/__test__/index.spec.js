@@ -1,11 +1,11 @@
 /*eslint-env jest*/
 'use strict';
 
-const {SERVER_REF} = require('../../constants');
+const { SERVER_REF } = require('../../constants');
 
 const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
-describe ('lib/api - index', () => {
+describe('lib/api - index', () => {
 	let logger;
 	let expressApi;
 	let expressMock;
@@ -31,31 +31,31 @@ describe ('lib/api - index', () => {
 		stub(logger, 'info');
 		stub(logger, 'warn');
 
-		getObject = jest.fn(id => ({NTIID: id}));
-		doc = {getObject};
+		getObject = jest.fn(id => ({ NTIID: id }));
+		doc = { getObject };
 		endpoints = jest.fn();
 		getServiceDocument = jest.fn(() => Promise.resolve(doc));
 
-		expressApi = Object.create({}, {
-			param: {value: jest.fn()},
-			use: {value: jest.fn()},
-			get: {value: jest.fn()}
-		});
+		expressApi = Object.create(
+			{},
+			{
+				param: { value: jest.fn() },
+				use: { value: jest.fn() },
+				get: { value: jest.fn() },
+			}
+		);
 		expressMock = jest.fn(() => expressApi);
-
 
 		jest.doMock('../endpoints', () => endpoints);
 		jest.doMock('express', () => expressMock);
 	});
 
-
 	afterEach(() => {
 		jest.resetModules();
 	});
 
-
-	test ('registerEndPoints(): attaches endpoints to api/*', () => {
-		const app = {use: jest.fn()};
+	test('registerEndPoints(): attaches endpoints to api/*', () => {
+		const app = { use: jest.fn() };
 		const register = require('../index');
 		const config = {};
 
@@ -66,7 +66,10 @@ describe ('lib/api - index', () => {
 		expect(api).toBeTruthy();
 
 		expect(app.use).toHaveBeenCalledTimes(1);
-		expect(app.use).toHaveBeenCalledWith(expect.any(RegExp), expect.objectContaining({use: expect.any(Function)}));
+		expect(app.use).toHaveBeenCalledWith(
+			expect.any(RegExp),
+			expect.objectContaining({ use: expect.any(Function) })
+		);
 
 		expect(endpoints).toHaveBeenCalledTimes(1);
 		expect(endpoints).toHaveBeenCalledWith(api, config, factory);
@@ -81,12 +84,11 @@ describe ('lib/api - index', () => {
 		expect(api.ServiceMiddleWare.length).toEqual(3);
 	});
 
-
-	test ('registerEndPoints(): ServiceMiddleWare', async () => {
-		const app = {use: jest.fn()};
+	test('registerEndPoints(): ServiceMiddleWare', async () => {
+		const app = { use: jest.fn() };
 		const register = require('../index');
 		const config = {};
-		const dataserver = {getServiceDocument};
+		const dataserver = { getServiceDocument };
 
 		register(app, config, factory);
 
@@ -95,7 +97,7 @@ describe ('lib/api - index', () => {
 		expect(api.ServiceMiddleWare).toEqual(expect.any(Function));
 		expect(api.ServiceMiddleWare.length).toEqual(3);
 
-		const req = {[SERVER_REF]: dataserver};
+		const req = { [SERVER_REF]: dataserver };
 		const res = {};
 		const next = jest.fn();
 
@@ -125,41 +127,39 @@ describe ('lib/api - index', () => {
 			});
 	});
 
-
-	test ('registerEndPoints(): param filter should fetch object', () => {
-		const app = {use: jest.fn()};
+	test('registerEndPoints(): param filter should fetch object', () => {
+		const app = { use: jest.fn() };
 		const register = require('../index');
 		const config = {};
-		const dataserver = {getServiceDocument};
+		const dataserver = { getServiceDocument };
 
 		register(app, config, factory, dataserver);
 
 		expect(expressMock).toHaveBeenCalledTimes(1);
 		const api = expressApi;
 
-		const req = {ntiService: doc};
+		const req = { ntiService: doc };
 		const res = {};
 		const id = 'some-object-id';
-
 
 		expect(api.param).toHaveBeenCalledTimes(1);
 		expect(api.param).toHaveBeenCalledWith('ntiid', expect.any(Function));
 		const callback = api.param.mock.calls[0][1];
 		expect(callback.length).toEqual(4);
 
-		return new Promise((finish, err) => callback(req, res, (e) => e ? err(e) : finish(), id))
-			.then(() => {
-				expect(req.ntiidObject).toBeTruthy();
-				expect(req.ntiidObject.NTIID).toEqual(id);
-			});
+		return new Promise((finish, err) =>
+			callback(req, res, e => (e ? err(e) : finish()), id)
+		).then(() => {
+			expect(req.ntiidObject).toBeTruthy();
+			expect(req.ntiidObject.NTIID).toEqual(id);
+		});
 	});
 
-
-	test ('registerEndPoints(): error handler', () => {
-		const app = {use: jest.fn()};
+	test('registerEndPoints(): error handler', () => {
+		const app = { use: jest.fn() };
 		const register = require('../index');
 		const config = {};
-		const dataserver = {getServiceDocument};
+		const dataserver = { getServiceDocument };
 
 		register(app, config, factory, dataserver);
 
@@ -167,11 +167,11 @@ describe ('lib/api - index', () => {
 		const api = expressApi;
 
 		const next = jest.fn();
-		const req = {ntiService: doc};
+		const req = { ntiService: doc };
 		const res = {
 			end: jest.fn(() => res),
 			json: jest.fn(() => res),
-			status: jest.fn(() => res)
+			status: jest.fn(() => res),
 		};
 
 		expect(api.use).toHaveBeenCalledTimes(1);
@@ -181,7 +181,7 @@ describe ('lib/api - index', () => {
 
 		const err = {
 			stack: '',
-			message: 'error-message'
+			message: 'error-message',
 		};
 
 		callback(err, req, res, next);
@@ -192,7 +192,9 @@ describe ('lib/api - index', () => {
 		expect(res.status).toHaveBeenCalledWith(500);
 
 		expect(res.json).toHaveBeenCalledTimes(1);
-		expect(res.json).toHaveBeenCalledWith(expect.objectContaining({stack: err.stack, message: err.message}));
+		expect(res.json).toHaveBeenCalledWith(
+			expect.objectContaining({ stack: err.stack, message: err.message })
+		);
 
 		expect(res.end).toHaveBeenCalledTimes(1);
 		expect(res.end).toHaveBeenCalledWith();

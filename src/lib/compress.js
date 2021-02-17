@@ -7,25 +7,21 @@ const fs = require('fs');
 const mimes = require('mime-types');
 const compression = require('compression');
 
-
 const self = Object.assign(exports, {
 	attachToExpress,
 	precompressed,
-	compressionFilter
+	compressionFilter,
 });
 
-
-function attachToExpress (expressApp, assetPath) {
-
+function attachToExpress(expressApp, assetPath) {
 	expressApp.use(self.precompressed(assetPath));
 
-	expressApp.use(compression({filter: self.compressionFilter}));
+	expressApp.use(compression({ filter: self.compressionFilter }));
 }
 
-const getExt = (req) => path.extname(new URL(req.url, 'file://').pathname);
+const getExt = req => path.extname(new URL(req.url, 'file://').pathname);
 
-
-function compressionFilter (req, res) {
+function compressionFilter(req, res) {
 	const isGz = getExt(req) === '.gz';
 	const blocked = !!req.get('x-no-compression');
 
@@ -36,8 +32,7 @@ function compressionFilter (req, res) {
 	return compression.filter(req, res);
 }
 
-
-function precompressed (assetPath) {
+function precompressed(assetPath) {
 	return function (req, res, next) {
 		const gz = req.url + '.gz';
 		const blocked = !!req.get('x-no-compression');
@@ -47,7 +42,7 @@ function precompressed (assetPath) {
 			return next();
 		}
 
-		fs.access(path.join(assetPath, gz), fs.R_OK, (err) => {
+		fs.access(path.join(assetPath, gz), fs.R_OK, err => {
 			if (err) {
 				return next();
 			}

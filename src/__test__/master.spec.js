@@ -17,18 +17,16 @@ describe('Master', () => {
 		stub(logger, 'warn');
 	});
 
-
 	afterEach(() => {
 		// jest.restoreAllMocks();
 		jest.resetModules();
 		jest.dontMock('cluster');
 	});
 
-
-	test ('start() adds listeners and calls load()', () => {
+	test('start() adds listeners and calls load()', () => {
 		stub(process, 'on');
 		const cluster = {
-			on: jest.fn()
+			on: jest.fn(),
 		};
 		jest.doMock('cluster', () => cluster);
 		const master = require('../master');
@@ -42,51 +40,49 @@ describe('Master', () => {
 		expect(process.on).toHaveBeenCalled();
 		expect(process.on).toHaveBeenCalledWith('SIGHUP', master.load);
 
-		expect(cluster.on).toHaveBeenCalledWith('message', master.handleMessage);
+		expect(cluster.on).toHaveBeenCalledWith(
+			'message',
+			master.handleMessage
+		);
 		expect(cluster.on).toHaveBeenCalledWith('exit', master.onWorkerExit);
 	});
 
-
-	test ('load() calls loadConfig() and init(config)', () => {
+	test('load() calls loadConfig() and init(config)', () => {
 		const p = Promise.resolve({});
 		const config = {
-			loadConfig: jest.fn(() => p)
+			loadConfig: jest.fn(() => p),
 		};
 		jest.doMock('../lib/config', () => config);
 		const master = require('../master');
 		stub(master, 'init');
 
-		return master.load()
-			.then(() => {
-				expect(config.loadConfig).toHaveBeenCalledTimes(1);
-				expect(master.init).toHaveBeenCalledTimes(1);
-			});
+		return master.load().then(() => {
+			expect(config.loadConfig).toHaveBeenCalledTimes(1);
+			expect(master.init).toHaveBeenCalledTimes(1);
+		});
 	});
 
-
-	test ('if fails loadConfig() does not call init()', () => {
+	test('if fails loadConfig() does not call init()', () => {
 		const config = {
-			loadConfig: jest.fn(() => Promise.reject())
+			loadConfig: jest.fn(() => Promise.reject()),
 		};
 		jest.doMock('../lib/config', () => config);
 		const master = require('../master');
 		stub(master, 'init');
 
-		return master.load()
-			.then(() => {
-				expect(config.loadConfig).toHaveBeenCalledTimes(1);
-				expect(master.init).not.toHaveBeenCalled();
-			});
+		return master.load().then(() => {
+			expect(config.loadConfig).toHaveBeenCalledTimes(1);
+			expect(master.init).not.toHaveBeenCalled();
+		});
 	});
 
-
-	test ('init() prints config flags, and applys config with setConfig()', () => {
+	test('init() prints config flags, and applys config with setConfig()', () => {
 		const config = {
-			showFlags: jest.fn()
+			showFlags: jest.fn(),
 		};
 		const utils = {
 			setConfig: jest.fn(),
-			getActiveWorkers: () => []
+			getActiveWorkers: () => [],
 		};
 
 		const mockConfig = {};
@@ -105,15 +101,14 @@ describe('Master', () => {
 		expect(utils.setConfig).toHaveBeenCalledWith(mockConfig);
 	});
 
-
-	test ('init() adds our version to the config', () => {
-		const config = { showFlags () {} };
+	test('init() adds our version to the config', () => {
+		const config = { showFlags() {} };
 		const utils = {
-			setConfig () {},
-			getActiveWorkers: () => []
+			setConfig() {},
+			getActiveWorkers: () => [],
 		};
 
-		const mockConfig = {versions: {}};
+		const mockConfig = { versions: {} };
 
 		jest.doMock('../lib/config', () => config);
 		jest.doMock('../lib/master-utils', () => utils);
@@ -130,12 +125,11 @@ describe('Master', () => {
 		expect(mockConfig).toHaveProperty('versions.service');
 	});
 
-
-	test ('init() if the config does not have "versions" defined, it adds it', () => {
-		const config = { showFlags () {} };
+	test('init() if the config does not have "versions" defined, it adds it', () => {
+		const config = { showFlags() {} };
 		const utils = {
-			setConfig () {},
-			getActiveWorkers: () => []
+			setConfig() {},
+			getActiveWorkers: () => [],
 		};
 
 		const mockConfig = {};
@@ -155,12 +149,11 @@ describe('Master', () => {
 		expect(mockConfig).toHaveProperty('versions.service');
 	});
 
-
-	test ('init() starts workers, if non are running', () => {
-		const config = { showFlags () {} };
+	test('init() starts workers, if non are running', () => {
+		const config = { showFlags() {} };
 		const utils = {
-			setConfig () {},
-			getActiveWorkers: () => []
+			setConfig() {},
+			getActiveWorkers: () => [],
 		};
 
 		const mockConfig = {};
@@ -179,12 +172,11 @@ describe('Master', () => {
 		expect(master.restartWorkers).not.toHaveBeenCalled();
 	});
 
-
-	test ('init() restarts workers, if some are running', () => {
-		const config = { showFlags () {} };
+	test('init() restarts workers, if some are running', () => {
+		const config = { showFlags() {} };
 		const utils = {
-			setConfig () {},
-			getActiveWorkers: () => [{},{}]
+			setConfig() {},
+			getActiveWorkers: () => [{}, {}],
 		};
 
 		const mockConfig = {};
@@ -203,20 +195,19 @@ describe('Master', () => {
 		expect(master.restartWorkers).toHaveBeenCalledTimes(1);
 	});
 
-
-	test ('startWorker() forks a new process and sends it the config', () => {
+	test('startWorker() forks a new process and sends it the config', () => {
 		const cfg = {};
 		const utils = {
 			getConfig: jest.fn(() => cfg),
-			getConfiguredWorkerCount: jest.fn(() => 12)
+			getConfiguredWorkerCount: jest.fn(() => 12),
 		};
 		const w = {
-			send: jest.fn()
+			send: jest.fn(),
 		};
 		const cluster = {
 			fork: jest.fn(() => w),
 			listeners: jest.fn(() => []),
-			on: jest.fn(() => {})
+			on: jest.fn(() => {}),
 		};
 
 		jest.doMock('cluster', () => cluster);
@@ -230,33 +221,36 @@ describe('Master', () => {
 
 		expect(cluster.fork).toHaveBeenCalledTimes(1);
 		expect(w.send).toHaveBeenCalledTimes(1);
-		expect(w.send).toHaveBeenCalledWith({cmd: 'init', config: cfg, topic: 'default'});
+		expect(w.send).toHaveBeenCalledWith({
+			cmd: 'init',
+			config: cfg,
+			topic: 'default',
+		});
 
 		expect(res).toBe(w);
 		jest.useRealTimers();
 	});
 
-
-	test ('maintainWorkerCount() starts workers and stops', () => {
+	test('maintainWorkerCount() starts workers and stops', () => {
 		let continueEventCallback;
 
 		const newWorker = {};
 		const port = 1234;
-		const address = {port};
-		const active = [{},{}];
+		const address = { port };
+		const active = [{}, {}];
 		const cluster = {
 			on: (evt, cb) => {
 				if (evt === 'listening') {
 					continueEventCallback = cb;
 				}
 			},
-			listeners () {}, //just getby, we'll test that next
-			removeListener: jest.fn()
+			listeners() {}, //just getby, we'll test that next
+			removeListener: jest.fn(),
 		};
 		jest.spyOn(cluster, 'on');
 
 		const utils = {
-			getConfig: () => ({port}),
+			getConfig: () => ({ port }),
 			getConfiguredWorkerCount: () => 3,
 			getActiveWorkers: () => active,
 		};
@@ -272,7 +266,10 @@ describe('Master', () => {
 		master.maintainWorkerCount();
 
 		expect(cluster.on).toHaveBeenCalled;
-		expect(cluster.on).toHaveBeenCalledWith('listening', continueEventCallback);
+		expect(cluster.on).toHaveBeenCalledWith(
+			'listening',
+			continueEventCallback
+		);
 		expect(continueEventCallback).toEqual(expect.any(Function));
 
 		expect(cluster.removeListener).not.toHaveBeenCalled();
@@ -283,11 +280,13 @@ describe('Master', () => {
 		continueEventCallback(newWorker, address);
 
 		expect(cluster.removeListener).toHaveBeenCalled();
-		expect(cluster.removeListener).toHaveBeenCalledWith('listening', continueEventCallback);
+		expect(cluster.removeListener).toHaveBeenCalledWith(
+			'listening',
+			continueEventCallback
+		);
 	});
 
-
-	test ('maintainWorkerCount() may do nothing', () => {
+	test('maintainWorkerCount() may do nothing', () => {
 		let continueEventCallback;
 
 		const newWorker = {};
@@ -299,13 +298,13 @@ describe('Master', () => {
 					continueEventCallback = cb;
 				}
 			},
-			listeners () {}, //just getby, we'll test that next
-			removeListener: jest.fn()
+			listeners() {}, //just getby, we'll test that next
+			removeListener: jest.fn(),
 		};
 		jest.spyOn(cluster, 'on');
 
 		const utils = {
-			getConfig: () => ({port}),
+			getConfig: () => ({ port }),
 			getConfiguredWorkerCount: () => 1,
 			getActiveWorkers: () => active,
 		};
@@ -321,32 +320,37 @@ describe('Master', () => {
 		master.maintainWorkerCount();
 
 		expect(cluster.on).toHaveBeenCalled;
-		expect(cluster.on).toHaveBeenCalledWith('listening', continueEventCallback);
+		expect(cluster.on).toHaveBeenCalledWith(
+			'listening',
+			continueEventCallback
+		);
 		expect(continueEventCallback).toEqual(expect.any(Function));
 
 		expect(cluster.removeListener).toHaveBeenCalled;
-		expect(cluster.removeListener).toHaveBeenCalledWith('listening', continueEventCallback);
+		expect(cluster.removeListener).toHaveBeenCalledWith(
+			'listening',
+			continueEventCallback
+		);
 
 		expect(master.startWorker).not.toHaveBeenCalled;
 	});
 
-
-	test ('maintainWorkerCount() interrupts previous invocation by removing the old listeners', () => {
+	test('maintainWorkerCount() interrupts previous invocation by removing the old listeners', () => {
 		const port = 1234;
 		const active = [{}];
 
-		const listening = Array.from({length: 2}).map(() => ({
-			name: 'startAnother'
+		const listening = Array.from({ length: 2 }).map(() => ({
+			name: 'startAnother',
 		}));
 
 		const cluster = {
 			listeners: () => listening,
 			on: jest.fn(),
-			removeListener: jest.fn()
+			removeListener: jest.fn(),
 		};
 
 		const utils = {
-			getConfig: () => ({port}),
+			getConfig: () => ({ port }),
 			getConfiguredWorkerCount: () => 1,
 			getActiveWorkers: () => active,
 		};
@@ -361,11 +365,12 @@ describe('Master', () => {
 		//kick off
 		master.maintainWorkerCount();
 
-		expect(cluster.removeListener).toHaveBeenCalledTimes(listening.length + 1); //the plus 1 is the finish
+		expect(cluster.removeListener).toHaveBeenCalledTimes(
+			listening.length + 1
+		); //the plus 1 is the finish
 	});
 
-
-	test ('maintainWorkerCount() :: startAnother ignores other workers and ports', () => {
+	test('maintainWorkerCount() :: startAnother ignores other workers and ports', () => {
 		let continueEventCallback;
 
 		const newWorker = {};
@@ -377,13 +382,13 @@ describe('Master', () => {
 					continueEventCallback = cb;
 				}
 			},
-			listeners () {}, //just getby, we'll test that next
-			removeListener: jest.fn()
+			listeners() {}, //just getby, we'll test that next
+			removeListener: jest.fn(),
 		};
 		jest.spyOn(cluster, 'on');
 
 		const utils = {
-			getConfig: () => ({port}),
+			getConfig: () => ({ port }),
 			getConfiguredWorkerCount: () => 2,
 			getActiveWorkers: () => active,
 		};
@@ -403,7 +408,10 @@ describe('Master', () => {
 		active.push(newWorker);
 
 		expect(cluster.on).toHaveBeenCalled();
-		expect(cluster.on).toHaveBeenCalledWith('listening', continueEventCallback);
+		expect(cluster.on).toHaveBeenCalledWith(
+			'listening',
+			continueEventCallback
+		);
 		expect(continueEventCallback).toEqual(expect.any(Function));
 
 		utils.getConfiguredWorkerCount.mockClear();
@@ -413,100 +421,103 @@ describe('Master', () => {
 		expect(utils.getConfiguredWorkerCount).not.toHaveBeenCalled();
 		expect(utils.getActiveWorkers).not.toHaveBeenCalled();
 
-		continueEventCallback({}, {port});
+		continueEventCallback({}, { port });
 		expect(utils.getConfiguredWorkerCount).not.toHaveBeenCalled();
 		expect(utils.getActiveWorkers).not.toHaveBeenCalled();
 
-		continueEventCallback(newWorker, {port: 21312});
+		continueEventCallback(newWorker, { port: 21312 });
 		expect(utils.getConfiguredWorkerCount).not.toHaveBeenCalled();
 		expect(utils.getActiveWorkers).not.toHaveBeenCalled();
 
 		expect(cluster.removeListener).not.toHaveBeenCalled();
 
-		continueEventCallback(newWorker, {port});
+		continueEventCallback(newWorker, { port });
 		expect(utils.getConfiguredWorkerCount).toHaveBeenCalled();
 		expect(utils.getActiveWorkers).toHaveBeenCalled();
 
 		expect(cluster.removeListener).toHaveBeenCalled();
 	});
 
-
-	test ('Handles "unknown" message', () => {
+	test('Handles "unknown" message', () => {
 		const master = require('../master');
-		master.handleMessage({id: 'mock'}, {topic: 'default'});
+		master.handleMessage({ id: 'mock' }, { topic: 'default' });
 
 		expect(logger.error).toHaveBeenCalledTimes(1);
 	});
 
-
-	test ('Handles "NOTIFY_DEVMODE" message', () => {
+	test('Handles "NOTIFY_DEVMODE" message', () => {
 		const utils = {
-			setConfiguredWorkerCount: jest.fn(() => 1)
+			setConfiguredWorkerCount: jest.fn(() => 1),
 		};
 		jest.doMock('../lib/master-utils', () => utils);
 		const master = require('../master');
-		master.handleMessage({id: 'mock'}, {topic: 'default', cmd: 'NOTIFY_DEVMODE'});
+		master.handleMessage(
+			{ id: 'mock' },
+			{ topic: 'default', cmd: 'NOTIFY_DEVMODE' }
+		);
 
 		expect(utils.setConfiguredWorkerCount).toHaveBeenCalledTimes(1);
 		expect(utils.setConfiguredWorkerCount).toHaveBeenCalledWith(1);
 		expect(logger.error).not.toHaveBeenCalled();
 	});
 
-
-	test ('Handles unknown "WORKER_WANTS_TO_RESTART_THE_POOL"', () => {
+	test('Handles unknown "WORKER_WANTS_TO_RESTART_THE_POOL"', () => {
 		const master = require('../master');
 		stub(master, 'restartWorkers');
-		master.handleMessage({id: 'mock'}, {topic: 'default', cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL'});
+		master.handleMessage(
+			{ id: 'mock' },
+			{ topic: 'default', cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL' }
+		);
 
 		expect(master.restartWorkers).toHaveBeenCalled();
 		expect(logger.error).not.toHaveBeenCalled();
 	});
 
-
-	test ('Handles unknown "FATAL_ERROR"', () => {
+	test('Handles unknown "FATAL_ERROR"', () => {
 		const master = require('../master');
-		master.handleMessage({id: 'mock'}, {topic: 'default', cmd: 'FATAL_ERROR'});
+		master.handleMessage(
+			{ id: 'mock' },
+			{ topic: 'default', cmd: 'FATAL_ERROR' }
+		);
 
 		expect(logger.error).toHaveBeenCalled();
 	});
 
-
-	test ('onWorkerExit() logs, and queues up new workers', () => {
+	test('onWorkerExit() logs, and queues up new workers', () => {
 		const master = require('../master');
 		stub(master, 'maintainWorkerCount');
 
-		master.onWorkerExit({process: {pid: 'mock'}}, 1, 'ERROR'); //error code, maintainWorkerCount should be called.
+		master.onWorkerExit({ process: { pid: 'mock' } }, 1, 'ERROR'); //error code, maintainWorkerCount should be called.
 		expect(logger.info).toHaveBeenCalled();
 		expect(master.maintainWorkerCount).toHaveBeenCalled();
 
 		logger.info.mockClear();
 		master.maintainWorkerCount.mockClear();
 
-		master.onWorkerExit({process: {pid: 'mock'}}, 1); //error code, maintainWorkerCount should be called.
+		master.onWorkerExit({ process: { pid: 'mock' } }, 1); //error code, maintainWorkerCount should be called.
 		expect(logger.info).toHaveBeenCalled();
 		expect(master.maintainWorkerCount).toHaveBeenCalled();
 
 		logger.info.mockClear();
 		master.maintainWorkerCount.mockClear();
 
-		master.onWorkerExit({process: {pid: 'mock'}}, 0); //no error code (clean exit), maintainWorkerCount should be called.
+		master.onWorkerExit({ process: { pid: 'mock' } }, 0); //no error code (clean exit), maintainWorkerCount should be called.
 		expect(logger.info).toHaveBeenCalled();
 		expect(master.maintainWorkerCount).toHaveBeenCalled();
 	});
 
-
-	test ('restartWorkers() should send all curent workers the close message, but only one at a time', () => {
+	test('restartWorkers() should send all curent workers the close message, but only one at a time', () => {
 		const once = jest.fn();
-		const fakeWorkers = Array.from({length: 2}).map(() => ({
+		const fakeWorkers = Array.from({ length: 2 }).map(() => ({
 			isConnected: () => true,
-			send: jest.fn()
+			send: jest.fn(),
 		}));
 		const utils = {
 			getConfiguredWorkerCount: jest.fn(() => 1),
 			getActiveWorkers: jest.fn(() => fakeWorkers.slice()),
 		};
 
-		jest.doMock('cluster', () => ({once}));
+		jest.doMock('cluster', () => ({ once }));
 		jest.doMock('../lib/master-utils', () => utils);
 		const master = require('../master');
 
@@ -515,7 +526,7 @@ describe('Master', () => {
 
 		const verify = x => {
 			expect(x).toHaveBeenCalledTimes(1);
-			expect(x).toHaveBeenCalledWith({topic: 'default', cmd: 'close'});
+			expect(x).toHaveBeenCalledWith({ topic: 'default', cmd: 'close' });
 		};
 
 		verify(fakeWorkers[0].send);
@@ -535,8 +546,5 @@ describe('Master', () => {
 
 		expect(once).toHaveBeenCalledTimes(2);
 		expect(once).toHaveBeenCalledWith('listening', expect.any(Function));
-
 	});
-
-
 });

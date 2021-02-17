@@ -1,14 +1,14 @@
 'use strict';
 const fs = require('fs');
 
-const {applyInjections} = require('./page-renderer/utils');
+const { applyInjections } = require('./page-renderer/utils');
 
-const configValues = /<(!\[CDATA)?\[cfg:([^\]]*)\]\]?>/igm;
-const fillInValues = (cfg, orginal, _, prop) => cfg[prop] === null ? '' : (cfg[prop] || `MissingConfigValue[${prop}]`);
+const configValues = /<(!\[CDATA)?\[cfg:([^\]]*)\]\]?>/gim;
+const fillInValues = (cfg, orginal, _, prop) =>
+	cfg[prop] === null ? '' : cfg[prop] || `MissingConfigValue[${prop}]`;
 
 module.exports = exports = function (filePath, options, callback) {
-
-	function readFileCallback (err, content) {
+	function readFileCallback(err, content) {
 		if (err) {
 			return callback(err);
 		}
@@ -16,7 +16,10 @@ module.exports = exports = function (filePath, options, callback) {
 		content = content.toString();
 
 		if (options.templateInjections) {
-			content = applyInjections({data: content}, options.templateInjections);
+			content = applyInjections(
+				{ data: content },
+				options.templateInjections
+			);
 		}
 
 		// this is an extremely simple template engine

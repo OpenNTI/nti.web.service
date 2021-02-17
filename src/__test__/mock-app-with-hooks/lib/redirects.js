@@ -8,18 +8,17 @@ expose potential problems for the service so we can produce errors for tests.
 const path = require('path');
 
 //eslint-disable-next-line
-const {encodeForURI, decodeFromURI} = require('@nti/lib-ntiids');
+const { encodeForURI, decodeFromURI } = require('@nti/lib-ntiids');
 
 const SEGMENT_HANDLERS = {
-
 	redeem: (catalogId, segments) =>
 		path.join('catalog', 'redeem', catalogId, segments[1]),
 
-	forcredit: (catalogId) =>
+	forcredit: catalogId =>
 		// catalog/enroll/apply/NTI-CourseInfo-Summer2015_LSTD_1153_Block_C/
 		path.join('catalog', 'enroll', 'apply', catalogId, '/'),
 
-	[null]: (catalogId)=> path.join('catalog', 'item', catalogId)
+	[null]: catalogId => path.join('catalog', 'item', catalogId),
 };
 
 const HANDLERS = {
@@ -27,13 +26,11 @@ const HANDLERS = {
 	handleInvitationRedirects: /invitations\/accept/i,
 	handleLibraryRedirects: /^library/i,
 	//the path may not always start with /app/ but it will always be have one path segment in front.
-	handleLibraryPathRedirects: /^\/[^/]+\/library/i
+	handleLibraryPathRedirects: /^\/[^/]+\/library/i,
 };
 
-
 exports = module.exports = {
-
-	register (express, config) {
+	register(express, config) {
 		this.basepath = config.basepath;
 
 		express.use((req, res, next) => {
@@ -55,8 +52,7 @@ exports = module.exports = {
 		});
 	},
 
-
-	handleInvitationRedirects (query, res, next) {
+	handleInvitationRedirects(query, res, next) {
 		/*
 		 *	from:
 		 *	library/courses/available/invitations/accept/<token>
@@ -76,7 +72,7 @@ exports = module.exports = {
 		next();
 	},
 
-	handleLibraryPathRedirects (query, res, next) {
+	handleLibraryPathRedirects(query, res, next) {
 		/* From:
 		 * /app/library/courses/available/NTI-CourseInfo-iLed_iLed_001/...
 		 *
@@ -95,7 +91,7 @@ exports = module.exports = {
 		next();
 	},
 
-	handleLibraryRedirects (query, res, next) {
+	handleLibraryRedirects(query, res, next) {
 		let url = query;
 		let catalog = /library\/availablecourses\/([^/]*)\/?(.*)/;
 
@@ -121,9 +117,7 @@ exports = module.exports = {
 		next();
 	},
 
-
-	handleObjectRedirects (query, res, next) {
-
+	handleObjectRedirects(query, res, next) {
 		/* From:
 		 *	/app/id/unknown-OID-0x021cae18:5573657273:V0wWNR9EBJd
 		 *	object/ntiid/tag:nextthought.com,2011-10:unknown-OID-0x021cae18:5573657273:V0wWNR9EBJd
@@ -132,25 +126,27 @@ exports = module.exports = {
 		 * 	<basepath>/object/unknown-OID-0x021cae18:5573657273:V0wWNR9EBJd
 		 */
 
-
 		let object = /(?:(?:id|ntiid)\/)([^/]*)\/?(.*)/;
 		let match = decodeURIComponent(query).match(object);
 
 		if (match) {
 			let [, ntiid] = match;
 
-			let url = path.join(this.basepath, 'object', encodeForURI(decodeFromURI(ntiid)));
+			let url = path.join(
+				this.basepath,
+				'object',
+				encodeForURI(decodeFromURI(ntiid))
+			);
 
 			res.redirect(url);
 			return;
 		}
 
 		next();
-	}
+	},
 };
 
-
-function translatePath (catalogId, trailingPath) {
+function translatePath(catalogId, trailingPath) {
 	let segments = (trailingPath || '').split('/');
 
 	let handler = SEGMENT_HANDLERS[segments[0] || null];
@@ -158,14 +154,11 @@ function translatePath (catalogId, trailingPath) {
 	return handler.call(null, catalogId, segments);
 }
 
-
-function translateCatalogId (input) {
-	let catalogId = input
-		.replace(/-/g, '+')
-		.replace(/_/g, '/');
+function translateCatalogId(input) {
+	let catalogId = input.replace(/-/g, '+').replace(/_/g, '/');
 
 	catalogId = Buffer.from(catalogId, 'base64').toString('utf8');
-	catalogId = catalogId.replace(/^!@/, '');//strip off the WebApp's 'salt'
+	catalogId = catalogId.replace(/^!@/, ''); //strip off the WebApp's 'salt'
 	catalogId = encodeForURI(catalogId);
 
 	return catalogId;

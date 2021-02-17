@@ -4,9 +4,7 @@ jest.mock('fs');
 
 const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
-
 describe('lib/restart', () => {
-
 	beforeEach(() => {
 		jest.resetModules();
 		const logger = require('../logger');
@@ -23,18 +21,18 @@ describe('lib/restart', () => {
 		jest.resetModules();
 	});
 
-	test ('exports a restart function', () => {
-		const {restart: fn} = require('../restart');
+	test('exports a restart function', () => {
+		const { restart: fn } = require('../restart');
 
 		expect(fn).toEqual(expect.any(Function));
 		expect(fn.length).toEqual(0);
 	});
 
-	test ('restart() sends WORKER_WANTS_TO_RESTART_THE_POOL', () => {
+	test('restart() sends WORKER_WANTS_TO_RESTART_THE_POOL', () => {
 		const stubby = jest.fn();
 		const send = (process.send = stubby);
 
-		const {restart} = require('../restart');
+		const { restart } = require('../restart');
 
 		restart();
 
@@ -43,14 +41,17 @@ describe('lib/restart', () => {
 		}
 
 		expect(send).toHaveBeenCalledTimes(1);
-		expect(send).toHaveBeenCalledWith({topic: 'default', cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL'});
+		expect(send).toHaveBeenCalledWith({
+			topic: 'default',
+			cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL',
+		});
 	});
 
-	test ('askToRestartOnce() sends WORKER_WANTS_TO_RESTART_THE_POOL only once', () => {
+	test('askToRestartOnce() sends WORKER_WANTS_TO_RESTART_THE_POOL only once', () => {
 		const stubby = jest.fn();
 		const send = (process.send = stubby);
 
-		const {askToRestartOnce} = require('../restart');
+		const { askToRestartOnce } = require('../restart');
 
 		askToRestartOnce();
 
@@ -61,10 +62,13 @@ describe('lib/restart', () => {
 		}
 
 		expect(send).toHaveBeenCalledTimes(1);
-		expect(send).toHaveBeenCalledWith({topic: 'default', cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL'});
+		expect(send).toHaveBeenCalledWith({
+			topic: 'default',
+			cmd: 'WORKER_WANTS_TO_RESTART_THE_POOL',
+		});
 	});
 
-	test ('restartOnModification() calls askToRestartOnce', () => {
+	test('restartOnModification() calls askToRestartOnce', () => {
 		const fs = require('fs');
 		const restart = require('../restart');
 		stub(restart, 'askToRestartOnce');
@@ -77,7 +81,10 @@ describe('lib/restart', () => {
 
 		expect(restart.restartOnModification('foo')).toBeFalsy();
 		expect(fs.watch).toHaveBeenCalledTimes(1);
-		expect(fs.watch).toHaveBeenCalledWith('foo', {persistent: false}, expect.any(Function));
+		expect(fs.watch).toHaveBeenCalledWith(
+			'foo',
+			{ persistent: false },
+			expect.any(Function)
+		);
 	});
-
 });

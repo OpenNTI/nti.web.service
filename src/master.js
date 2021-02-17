@@ -89,7 +89,9 @@ function init(config) {
 		service: pkg.version, //tell apps what version we are
 	};
 
-	Sentry.init({ dsn: config.sentry?.dsn || '__DSN__' });
+	if (config.sentry) {
+		Sentry.init(config.sentry);
+	}
 
 	setConfig(config);
 

@@ -1,6 +1,7 @@
 /*eslint-env jest*/
 'use strict';
 jest.mock('fs');
+jest.mock('@sentry/node');
 
 const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
@@ -84,7 +85,7 @@ describe('Worker', () => {
 		const server = { listen };
 		const createServer = jest.fn(() => server);
 		const proxy = jest.fn(() => ({ createServer }));
-		const app = { set() {}, engine() {} };
+		const app = { use() {}, set() {}, engine() {} };
 		const express = jest.fn(() => app);
 		const port = 12345;
 		const config = { port };
@@ -128,7 +129,7 @@ describe('Worker', () => {
 		const server = { listen };
 		const createServer = jest.fn(() => server);
 		const proxy = jest.fn(() => ({ createServer }));
-		const app = { set() {}, engine() {} };
+		const app = { use() {}, set() {}, engine() {} };
 		const express = jest.fn(() => app);
 		const port = 12345;
 		const config = { protocol: 'proxy', port };
@@ -170,7 +171,7 @@ describe('Worker', () => {
 		const listen = jest.fn();
 		const server = { listen };
 		const createServer = jest.fn(() => server);
-		const app = { set() {}, engine() {} };
+		const app = { use() {}, set() {}, engine() {} };
 		const express = jest.fn(() => app);
 		const port = 12345;
 		const config = { protocol: 'https', port };
@@ -215,7 +216,7 @@ describe('Worker', () => {
 		const server = { listen };
 		const createServer = jest.fn(() => server);
 		const proxy = jest.fn();
-		const app = { set() {}, engine() {} };
+		const app = { use() {}, set() {}, engine() {} };
 		const express = jest.fn(() => app);
 		const port = 12345;
 		const config = { port, address: 'abc' };

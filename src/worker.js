@@ -5,6 +5,7 @@ const https = require('https');
 const path = require('path');
 
 const express = require('express');
+const Sentry = require('@sentry/node');
 const { proxy: createProxy } = require('findhit-proxywrap');
 
 const pkg = require('../package.json');
@@ -70,13 +71,19 @@ async function getApp(config) {
 	const app = express();
 	app.engine('html', htmlTemplates);
 
+	Sentry.init({ dsn: config.sentry?.dsn || '__DSN__' });
+	app.use(Sentry.Handlers.requestHandler());
+
 	app.set('trust proxy', true);
 	app.set('views', path.resolve(__dirname, 'templates'));
 	app.set('view engine', 'html');
 
 	await setupApplication(app, config, restart);
 
+	app.use(ignoreAborted);
+
 	//Errors
+	app.use(Sentry.Handlers.errorHandler());
 	setupErrorHandler(app, config);
 	return app;
 }
@@ -133,4 +140,16 @@ async function messageHandler(msg) {
 		logger.error('Could not handle message. %o', getErrorMessage(e), msg);
 		return;
 	}
+}
+
+function ignoreAborted(err, req, res, next) {
+	if (err === 'aborted' || ((err || {}).error || {}).type === 'aborted') {
+		if (res.headersSent) {
+			return;
+		}
+
+		return res.status(204).end();
+	}
+
+	next(err);
 }

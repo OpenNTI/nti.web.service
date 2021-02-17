@@ -1,5 +1,6 @@
 /* eslint-env jest */
 'use strict';
+jest.mock('@sentry/node');
 const request = require('supertest');
 const DataserverInterFace = require('@nti/lib-interfaces');
 

@@ -3,6 +3,8 @@ require('memored');
 const cluster = require('cluster');
 const fs = require('fs');
 
+const Sentry = require('@sentry/node');
+
 const pkg = require('../package.json');
 
 const {
@@ -86,6 +88,8 @@ function init(config) {
 		...(config.versions || {}),
 		service: pkg.version, //tell apps what version we are
 	};
+
+	Sentry.init({ dsn: config.sentry?.dsn || '__DSN__' });
 
 	setConfig(config);
 

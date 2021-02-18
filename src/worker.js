@@ -85,6 +85,8 @@ async function getApp(config) {
 				...config.sentry,
 			});
 			app.use(Sentry.Handlers.requestHandler());
+			// TracingHandler creates a trace for every incoming request
+			app.use(Sentry.Handlers.tracingHandler());
 		} catch (e) {
 			delete config.sentry;
 			logger.error(e.stack || e.message || e);

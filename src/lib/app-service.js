@@ -56,6 +56,9 @@ function contextualize(root, app) {
 	contextWrapper.set('views', app.get('views'));
 	contextWrapper.set('view engine', app.get('view engine'));
 	contextWrapper.set('etag', false);
+	for (const [type, engine] of Object.entries(app.engines)) {
+		contextWrapper.engine(type, engine);
+	}
 	app.use(root, contextWrapper);
 	return contextWrapper;
 }

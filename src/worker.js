@@ -74,7 +74,7 @@ async function getApp(config) {
 	if (config.sentry) {
 		try {
 			const sentryConf = {
-				tracesSampleRate: 0.2,
+				tracesSampleRate: 0.1,
 				...config.sentry,
 			};
 

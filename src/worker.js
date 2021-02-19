@@ -70,7 +70,6 @@ function start() {
 async function getApp(config) {
 	//WWW Server
 	const app = express();
-	app.engine('html', htmlTemplates);
 
 	if (config.sentry) {
 		try {
@@ -93,6 +92,7 @@ async function getApp(config) {
 		}
 	}
 
+	app.engine('html', htmlTemplates);
 	app.set('trust proxy', true);
 	app.set('views', path.resolve(__dirname, 'templates'));
 	app.set('view engine', 'html');
@@ -101,8 +101,12 @@ async function getApp(config) {
 
 	//Errors
 	if (config.sentry) {
-		app.use(ignoreAborted);
-		app.use(Sentry.Handlers.errorHandler());
+		app.use(
+			Sentry.Handlers.errorHandler({
+				shouldHandleError: err =>
+					err !== 'aborted' && err?.error?.type !== 'aborted',
+			})
+		);
 	}
 	setupErrorHandler(app, config);
 	return app;
@@ -160,16 +164,4 @@ async function messageHandler(msg) {
 		logger.error('Could not handle message. %o', getErrorMessage(e), msg);
 		return;
 	}
-}
-
-function ignoreAborted(err, req, res, next) {
-	if (err === 'aborted' || ((err || {}).error || {}).type === 'aborted') {
-		if (res.headersSent) {
-			return;
-		}
-
-		return res.status(204).end();
-	}
-
-	next(err);
 }

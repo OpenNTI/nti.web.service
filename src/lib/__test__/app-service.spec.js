@@ -65,7 +65,7 @@ describe('lib/app-service', () => {
 					set: { value: jest.fn() },
 					get: { value: jest.fn() },
 				}),
-			{ static: staticMock }
+			{ static: staticMock, engines: {} }
 		);
 
 		server = Object.freeze(expressMock());

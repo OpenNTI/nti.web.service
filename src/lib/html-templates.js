@@ -4,7 +4,7 @@ const fs = require('fs');
 const { applyInjections } = require('./page-renderer/utils');
 
 const configValues = /<(!\[CDATA)?\[cfg:([^\]]*)\]\]?>/gim;
-const fillInValues = (cfg, orginal, _, prop) =>
+const fillInValues = (cfg, original, _, prop) =>
 	cfg[prop] === null ? '' : cfg[prop] || `MissingConfigValue[${prop}]`;
 
 module.exports = exports = function (filePath, options, callback) {

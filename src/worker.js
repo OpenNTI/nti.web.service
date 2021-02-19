@@ -104,7 +104,8 @@ async function getApp(config) {
 		app.use(
 			Sentry.Handlers.errorHandler({
 				shouldHandleError: err =>
-					err !== 'aborted' && err?.error?.type !== 'aborted',
+					err !== 'aborted' &&
+					((err || {}).error || {}).type !== 'aborted',
 			})
 		);
 	}

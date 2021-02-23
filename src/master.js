@@ -87,6 +87,20 @@ function init(config) {
 		service: pkg.version, //tell apps what version we are
 	};
 
+	if (config.sentry) {
+		const projectName = pkg.name.replace(/^@nti\//, '');
+		const projectRelease = `${projectName}@${pkg.version.replace(
+			/-alpha.*$/,
+			'-alpha'
+		)}`;
+		config.sentry = {
+			project: projectName,
+			release: projectRelease,
+			tracesSampleRate: 0.1,
+			...config.sentry,
+		};
+	}
+
 	// if (config.sentry) {
 	// 	const Sentry = require('@sentry/node');
 	// 	Sentry.init(config.sentry);

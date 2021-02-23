@@ -73,11 +73,6 @@ async function getApp(config) {
 
 	if (config.sentry) {
 		try {
-			const sentryConf = {
-				tracesSampleRate: 0.1,
-				...config.sentry,
-			};
-
 			const ignored = RegExp.prototype.test.bind(/_ops\/ping/i);
 
 			Sentry.init({
@@ -87,7 +82,7 @@ async function getApp(config) {
 					// enable Express.js middleware tracing
 					new Tracing.Integrations.Express({ app }),
 				],
-				...sentryConf,
+				...config.sentry,
 				tracesSampler({ request }) {
 					if (ignored(request.url)) {
 						// Drop this transaction, by setting its sample rate to 0%
@@ -95,7 +90,7 @@ async function getApp(config) {
 					}
 
 					// Default sample rate for all others (replaces tracesSampleRate)
-					return sentryConf.tracesSampleRate;
+					return config.sentry.tracesSampleRate;
 				},
 			});
 			app.use(Sentry.Handlers.requestHandler());

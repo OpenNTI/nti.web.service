@@ -173,7 +173,8 @@ module.exports = exports = class SessionManager {
 
 			if (
 				reason instanceof Error &&
-				!reason.NoContineLink &&
+				!reason.NoContinueLink &&
+				!reason.NoContineLink && // handle old typo spelling
 				!/No continue link/i.test(reason.message)
 			) {
 				return next(reason);

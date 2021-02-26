@@ -96,6 +96,9 @@ async function getApp(config) {
 			app.use(Sentry.Handlers.requestHandler());
 			// TracingHandler creates a trace for every incoming request
 			app.use(Sentry.Handlers.tracingHandler());
+			// Do not forward these to the client
+			delete config.sentry.project;
+			delete config.sentry.release;
 		} catch (e) {
 			delete config.sentry;
 			logger.error(e.stack || e.message || e);

@@ -28,7 +28,7 @@
     "@nti/lib-commons": "^2.14.0",
     "@nti/lib-interfaces": "^1.136.0",
     "@nti/lib-scripts": "^2.24.4",
-    "@nti/util-logger": "^1.0.0",
+    "@nti/util-logger": "NextThought/nti.util.logger",
     "@sentry/node": "^6.1.0",
     "@sentry/tracing": "^6.1.0",
     "abort-controller": "^3.0.0",

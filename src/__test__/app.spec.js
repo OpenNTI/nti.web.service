@@ -2,6 +2,7 @@
 'use strict';
 jest.mock('@sentry/node');
 const request = require('supertest');
+
 const DataserverInterFace = require('@nti/lib-interfaces');
 
 const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));

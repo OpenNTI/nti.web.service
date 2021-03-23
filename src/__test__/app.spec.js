@@ -28,8 +28,6 @@ const interfaceImplementation = {
 				};
 			},
 
-			setLogoutURL() {},
-
 			getAppUsername() {
 				return username;
 			},

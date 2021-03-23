@@ -95,15 +95,13 @@ describe('lib/session', () => {
 			getLink: jest.fn(x => (x === 'logon.logout' ? 'lala' : void x)),
 		};
 		const ping = jest.fn(() => Promise.resolve(pong));
-		const doc = { setLogoutURL: jest.fn() };
+		const doc = {};
 		const getServiceDocument = jest.fn(() => Promise.resolve(doc));
 		const context = { [SERVER_REF]: { getServiceDocument, ping } };
 		const session = new Session();
 
 		return session.getServiceDocument(context).then(resolved => {
 			expect(doc).toEqual(resolved);
-			expect(doc.setLogoutURL).toHaveBeenCalledTimes(1);
-			expect(doc.setLogoutURL).toHaveBeenCalledWith('lala');
 
 			expect(ping).toHaveBeenCalledTimes(1);
 			expect(ping).toHaveBeenCalledWith(void 0, context);

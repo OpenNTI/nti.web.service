@@ -27,19 +27,7 @@ module.exports = exports = class SessionManager {
 			server
 				.ping(void 0, context) // server.getServiceDocument() pings as well...
 				// if we didn't need the logon.logout url, we could omit this step here.
-				.then(pong =>
-					server
-						.getServiceDocument(context)
-						//This seems dirty and out of place...
-						.then(
-							service => (
-								service.setLogoutURL(
-									pong.getLink('logon.logout')
-								),
-								service
-							)
-						)
-				)
+				.then(pong => server.getServiceDocument(context))
 		);
 	}
 

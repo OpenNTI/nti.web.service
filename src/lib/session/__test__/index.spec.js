@@ -107,9 +107,6 @@ describe('lib/session', () => {
 			expect(ping).toHaveBeenCalledWith(void 0, context);
 			expect(getServiceDocument).toHaveBeenCalledTimes(1);
 			expect(getServiceDocument).toHaveBeenCalledWith(context);
-
-			expect(pong.getLink).toHaveBeenCalledTimes(1);
-			expect(pong.getLink).toHaveBeenCalledWith('logon.logout');
 		});
 	});
 

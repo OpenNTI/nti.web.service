@@ -1,6 +1,4 @@
 'use strict';
-const { ServiceStash } = require('@nti/lib-interfaces');
-
 const { SERVER_REF } = require('../constants');
 const Logger = require('../logger');
 
@@ -21,17 +19,12 @@ module.exports = exports = class SessionManager {
 		});
 	}
 
-	getServiceDocument(context) {
+	async getServiceDocument(context) {
 		const { [SERVER_REF]: server } = context;
-		return (
-			server
-				.ping(void 0, context) // server.getServiceDocument() pings as well...
-				// if we didn't need the logon.logout url, we could omit this step here.
-				.then(pong => server.getServiceDocument(context))
-		);
+		return await server.getServiceDocument(context);
 	}
 
-	setupIntitalData(context) {
+	async setupInitialData(context) {
 		const { [SERVER_REF]: server } = context;
 		const url = context.originalUrl || context.url;
 		logger.debug(
@@ -40,14 +33,10 @@ module.exports = exports = class SessionManager {
 			url,
 			context.username
 		);
-		return server
-			.getServiceDocument(context)
-			.then(
-				service => (
-					(context[ServiceStash] = service),
-					this.sessionSetup && this.sessionSetup(service)
-				)
-			);
+
+		const service = await server.getServiceDocument(context);
+
+		await this.sessionSetup?.(service);
 	}
 
 	middleware(basepath, req, res, next) {
@@ -115,7 +104,7 @@ module.exports = exports = class SessionManager {
 		return this.getUser(req)
 			.then(user => (req.username = user))
 			.then(() => logger.debug('SESSION [VALID] %s %s', req.method, url))
-			.then(() => !req.dead && this.setupIntitalData(req))
+			.then(() => !req.dead && this.setupInitialData(req))
 			.then(finish)
 			.catch(this.maybeRedirect(basepath, scope, start, req, res, next))
 			.catch(er => {

@@ -5,8 +5,6 @@ const path = require('path');
 const yargs = require('yargs');
 const uuid = require('uuid');
 
-const { ServiceStash } = require('@nti/lib-interfaces');
-
 const { SERVER_REF } = require('./constants');
 const getApplication = require('./app-loader');
 const logger = require('./logger');
@@ -353,6 +351,7 @@ function serviceRef(service, cfg) {
 }
 
 async function clientConfig(baseConfig, username, appId, context) {
+	const { ServiceStash } = await import('@nti/lib-interfaces');
 	//unsafe to send to client raw... lets reduce it to essentials
 	const app = (baseConfig.apps || []).find(x => x.appId === appId) || {};
 	const { pong = {}, protocol = 'http', hostname = '-' } = context;
@@ -445,7 +444,8 @@ async function clientConfig(baseConfig, username, appId, context) {
 	};
 }
 
-function nodeConfigAsClientConfig(cfg, appId, context) {
+async function nodeConfigAsClientConfig(cfg, appId, context) {
+	const { ServiceStash } = await import('@nti/lib-interfaces');
 	const { pong = {} } = context;
 	const app =
 		(cfg.apps || []).reduce(

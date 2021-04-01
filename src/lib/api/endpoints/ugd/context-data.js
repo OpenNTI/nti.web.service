@@ -1,22 +1,32 @@
 'use strict';
-const { Models } = require('@nti/lib-interfaces');
-const { PageInfo } = Models.content;
 
 class GetContextData {
-	constructor(config) {}
+	async getPageInfoModel() {
+		if (!this.PageInfo) {
+			const {
+				Models: {
+					content: { PageInfo },
+				},
+			} = await import('@nti/lib-interfaces');
+			this.PageInfo = PageInfo;
+		}
+		return this.PageInfo;
+	}
 
-	handle(req, res, error) {
+	async handle(req, res, error) {
 		const { ntiidObject, ntiService } = req;
 
-		const container = ntiidObject.getContainerID();
+		try {
+			const PageInfo = await this.getPageInfoModel();
+			const container = ntiidObject.getContainerID();
 
-		ntiService
-			.getObject(container)
-			.then(obj =>
-				obj instanceof PageInfo ? this.getContext(req, obj) : obj
-			)
-			.then(o => res.json(o))
-			.catch(error);
+			let obj = await ntiService.getObject(container);
+			if (obj instanceof PageInfo) obj = await this.getContext(req, obj);
+
+			await res.json(obj);
+		} catch (e) {
+			error(e);
+		}
 	}
 
 	getContext(req, pageInfo) {

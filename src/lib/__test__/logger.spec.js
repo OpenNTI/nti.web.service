@@ -22,12 +22,20 @@ describe('lib/logger (middleware)', () => {
 			return 'morgan-middleware';
 		};
 
-		LoggerFactory = { get: jest.fn(() => loggerBackend) };
+		LoggerFactory = Object.assign(
+			jest.fn(
+				x => loggerBackend[/:(debug|error|info|warn)$/.exec(x)?.[1]]
+			),
+			{
+				load: jest.fn(),
+				enable: jest.fn(),
+			}
+		);
 
 		jest.doMock('cluster', () => ({ isMaster: true }));
 		jest.doMock('morgan', () => morganConstructor);
 		jest.doMock('response-time', () => responseTimeConstructor);
-		jest.doMock('@nti/util-logger', () => ({ default: LoggerFactory }));
+		jest.doMock('debug', () => LoggerFactory);
 	});
 
 	afterEach(() => {
@@ -44,21 +52,23 @@ describe('lib/logger (middleware)', () => {
 		expect(logger).toHaveProperty('debug', expect.any(Function));
 	});
 
-	test('Should use an @nti/util-logger backend and identify master', () => {
+	test('Should use debug backend and identify master', () => {
 		require('../logger');
-		expect(LoggerFactory.get).toHaveBeenCalled();
-		expect(LoggerFactory.get).toHaveBeenCalledWith('NodeService:master');
+		expect(LoggerFactory).toHaveBeenCalled();
+		expect(LoggerFactory).toHaveBeenCalledWith(
+			expect.stringContaining('NodeService:master')
+		);
 	});
 
-	test('Should use an @nti/util-logger backend and identify worker', () => {
+	test('Should use debug backend and identify worker', () => {
 		jest.doMock('cluster', () => ({
 			isMaster: false,
 			worker: { id: 'foobar' },
 		}));
 		require('../logger');
 
-		expect(LoggerFactory.get).toHaveBeenCalledWith(
-			'NodeService:worker:foobar'
+		expect(LoggerFactory).toHaveBeenCalledWith(
+			expect.stringContaining('NodeService:worker:foobar')
 		);
 	});
 
@@ -66,8 +76,8 @@ describe('lib/logger (middleware)', () => {
 		const { get } = require('../logger');
 
 		const logger = get('SomeTest');
-		expect(LoggerFactory.get).toHaveBeenCalledWith(
-			'NodeService:master:SomeTest'
+		expect(LoggerFactory).toHaveBeenCalledWith(
+			expect.stringContaining('NodeService:master:SomeTest')
 		);
 		expect(logger).toHaveProperty('info', expect.any(Function));
 		expect(logger).toHaveProperty('error', expect.any(Function));

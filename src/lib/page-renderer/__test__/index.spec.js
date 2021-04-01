@@ -22,12 +22,12 @@ describe('lib/page-renderer (index)', () => {
 		jest.resetModules();
 	});
 
-	test('getRenderer', () => {
+	test('getRenderer', async () => {
 		const fn = require('../index').getRenderer;
 		expect(fn).toEqual(expect.any(Function));
 		expect(fn.length).toEqual(3);
 
-		const render = fn('/test/');
+		const render = await fn('/test/');
 		expect(render).toEqual(expect.any(Function));
 	});
 
@@ -43,7 +43,7 @@ describe('lib/page-renderer (index)', () => {
 		expect(fn).toEqual(expect.any(Function));
 		expect(fn.length).toEqual(3);
 
-		const render = fn('/test/');
+		const render = await fn('/test/');
 		const result = await render('/');
 		expect(result).toEqual('Bad Template');
 	});
@@ -71,7 +71,7 @@ describe('lib/page-renderer (index)', () => {
 			`.trim()
 			);
 
-			const render = fn('/test/');
+			const render = await fn('/test/');
 			const result = await render(
 				'/',
 				{},
@@ -99,7 +99,7 @@ describe('lib/page-renderer (index)', () => {
 			`.trim()
 			);
 
-			const render = fn('/test/');
+			const render = await fn('/test/');
 			const result = await render(
 				'/',
 				{},

@@ -7,8 +7,6 @@ const express = require('express');
 const requestLanguage = require('express-request-language');
 const staticFiles = require('serve-static');
 
-const { default: dataserver } = require('@nti/lib-interfaces');
-
 const getApplication = require('./app-loader');
 const registerEndPoints = require('./api');
 const { SERVER_REF, DATACACHE } = require('./constants');
@@ -72,7 +70,9 @@ function forceError() {
 	throw new Error('This is an error. Neato.');
 }
 
-function setupInterface(config) {
+async function setupInterface(config) {
+	const { default: dataserver } = await import('@nti/lib-interfaces');
+
 	return (req, res, next) => {
 		const {
 			protocol,
@@ -146,11 +146,13 @@ async function setupClient(client, { config, server, restartRequest }) {
 	logger.info('mount-point: %s', basepath);
 
 	// Tag the server interface reference on the request so we can use it in lower middlewares...
-	clientRoute.use(self.setupInterface(config));
+	clientRoute.use(await self.setupInterface(config));
 
 	try {
-		const registration = await Promise.resolve(
-			register(clientRoute, flatConfig, restartRequest)
+		const registration = await register(
+			clientRoute,
+			flatConfig,
+			restartRequest
 		);
 		const {
 			assets,

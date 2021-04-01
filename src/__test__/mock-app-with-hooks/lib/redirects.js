@@ -7,9 +7,6 @@ expose potential problems for the service so we can produce errors for tests.
 'use strict';
 const path = require('path');
 
-//eslint-disable-next-line
-const { encodeForURI, decodeFromURI } = require('@nti/lib-ntiids');
-
 const SEGMENT_HANDLERS = {
 	redeem: (catalogId, segments) =>
 		path.join('catalog', 'redeem', catalogId, segments[1]),
@@ -91,7 +88,7 @@ exports = module.exports = {
 		next();
 	},
 
-	handleLibraryRedirects(query, res, next) {
+	async handleLibraryRedirects(query, res, next) {
 		let url = query;
 		let catalog = /library\/availablecourses\/([^/]*)\/?(.*)/;
 
@@ -105,7 +102,7 @@ exports = module.exports = {
 		// [full match, catalog item id (encoded), trailing path]
 		let parts = url.match(catalog);
 		if (parts) {
-			let catalogId = translateCatalogId(parts[1]);
+			let catalogId = await translateCatalogId(parts[1]);
 			let trailingPath = translatePath(catalogId, parts[2]) || '';
 
 			url = path.join(this.basepath, trailingPath);
@@ -117,7 +114,8 @@ exports = module.exports = {
 		next();
 	},
 
-	handleObjectRedirects(query, res, next) {
+	async handleObjectRedirects(query, res, next) {
+		const { encodeForURI, decodeFromURI } = await import('@nti/lib-ntiids');
 		/* From:
 		 *	/app/id/unknown-OID-0x021cae18:5573657273:V0wWNR9EBJd
 		 *	object/ntiid/tag:nextthought.com,2011-10:unknown-OID-0x021cae18:5573657273:V0wWNR9EBJd
@@ -154,7 +152,8 @@ function translatePath(catalogId, trailingPath) {
 	return handler.call(null, catalogId, segments);
 }
 
-function translateCatalogId(input) {
+async function translateCatalogId(input) {
+	const { encodeForURI } = await import('@nti/lib-ntiids');
 	let catalogId = input.replace(/-/g, '+').replace(/_/g, '/');
 
 	catalogId = Buffer.from(catalogId, 'base64').toString('utf8');

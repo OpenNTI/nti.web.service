@@ -4,15 +4,9 @@ const util = require('util');
 
 const memored = require('memored');
 
-const { Models, Service } = require('@nti/lib-interfaces');
-const {
-	URL: { appendQueryParams },
-} = require('@nti/lib-commons');
+const { SERVER_REF } = require('internal/constants');
+const logger = require('internal/logger').get('videos:youtube');
 
-const { SERVER_REF } = require('../../../constants');
-const logger = require('../../../logger').get('videos:youtube');
-
-const { MediaSourceFactory, MetaDataResolver } = Models.media;
 const getSourceURL = id => 'https://www.youtube.com/embed/${id}';
 
 const read = util.promisify(memored.read.bind(memored));
@@ -71,6 +65,16 @@ exports.default = function register(api, config) {
 	}
 
 	async function resolve(key, id, req) {
+		const {
+			Models: {
+				media: { MediaSourceFactory, MetaDataResolver },
+			},
+			Service,
+		} = await import('@nti/lib-interfaces');
+		const {
+			URL: { appendQueryParams },
+		} = await import('@nti/lib-commons');
+
 		const { [SERVER_REF]: server } = req;
 		const DUMMY_SERVICE = {
 			isService: Service,
@@ -79,6 +83,7 @@ exports.default = function register(api, config) {
 			getServer: () => server,
 			getSiteName: () => 'default',
 		};
+
 		// const service = await server.getServiceDocument(req);
 		const source = await MediaSourceFactory.from(
 			DUMMY_SERVICE,

@@ -182,7 +182,10 @@ describe('Worker', () => {
 
 		jest.doMock('https', () => ({ createServer }));
 		jest.doMock('express', () => express);
-		jest.doMock('@nti/dev-ssl-config', () => ({ getHTTPS: () => https }));
+		jest.doMock('@nti/dev-ssl-config', () => ({
+			__esModule: true,
+			getHTTPS: () => https,
+		}));
 
 		jest.doMock('../lib/app-service', () => ({ setupApplication }));
 		jest.doMock('../lib/error-handler', () => ({ setupErrorHandler }));

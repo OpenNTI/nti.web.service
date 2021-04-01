@@ -20,7 +20,7 @@ describe('lib/renderer', () => {
 		stub(logger, 'warn');
 
 		clientConfig = jest.fn(() => ({}));
-		nodeConfigAsClientConfig = jest.fn(() => ({}));
+		nodeConfigAsClientConfig = jest.fn(async () => ({}));
 
 		jest.doMock('../config', () => ({
 			clientConfig,

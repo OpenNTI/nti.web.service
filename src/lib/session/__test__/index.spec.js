@@ -91,61 +91,42 @@ describe('lib/session', () => {
 
 	test('Session::getServiceDocument() - resolve the service document through a ping/handshake. Stash the logout-url.', () => {
 		const Session = require('../index');
-		const pong = {
-			getLink: jest.fn(x => (x === 'logon.logout' ? 'lala' : void x)),
-		};
-		const ping = jest.fn(() => Promise.resolve(pong));
 		const doc = {};
 		const getServiceDocument = jest.fn(() => Promise.resolve(doc));
-		const context = { [SERVER_REF]: { getServiceDocument, ping } };
+		const context = { [SERVER_REF]: { getServiceDocument } };
 		const session = new Session();
 
 		return session.getServiceDocument(context).then(resolved => {
 			expect(doc).toEqual(resolved);
 
-			expect(ping).toHaveBeenCalledTimes(1);
-			expect(ping).toHaveBeenCalledWith(void 0, context);
 			expect(getServiceDocument).toHaveBeenCalledTimes(1);
 			expect(getServiceDocument).toHaveBeenCalledWith(context);
 		});
 	});
 
-	test('Session::setupIntitalData() - get the service document, stash it on the context, call sessionSetup callback', () => {
+	test('Session::setupInitialData() - get the service document, stash it on the context, call sessionSetup callback', () => {
 		const Session = require('../index');
 		const setup = jest.fn();
-		const handler = {
-			set: jest.fn((x, y) => y === ServiceStash || void y),
-		};
+
 		const service = {};
 		const getServiceDocument = jest.fn(() => Promise.resolve(service));
-		const context = new Proxy(
-			{ [SERVER_REF]: { getServiceDocument }, url: '...' },
-			handler
-		);
+		const context = { [SERVER_REF]: { getServiceDocument }, url: '...' };
 		const session = new Session(setup);
 
-		return session.setupIntitalData(context).then(() => {
+		return session.setupInitialData(context).then(() => {
 			expect(getServiceDocument).toHaveBeenCalledTimes(1);
 			expect(getServiceDocument).toHaveBeenCalledWith(context);
 
 			expect(setup).toHaveBeenCalledTimes(1);
 			expect(setup).toHaveBeenCalledWith(service);
-
-			expect(handler.set).toHaveBeenCalledTimes(1);
-			expect(handler.set).toHaveBeenCalledWith(
-				expect.any(Object),
-				ServiceStash,
-				service,
-				expect.any(Object)
-			);
 		});
 	});
 
-	test('Session::middleware() - gets the user, assigns it to the request context, and setups up intital data', () => {
+	test('Session::middleware() - gets the user, assigns it to the request context, and setups up initial data', () => {
 		const Session = require('../index');
 		const session = new Session();
 		stub(session, 'getUser', () => Promise.resolve('testuser'));
-		stub(session, 'setupIntitalData');
+		stub(session, 'setupInitialData');
 		//Continue the rejections...we will test this function by itself.
 		stub(session, 'maybeRedirect', () => e => Promise.reject(e));
 
@@ -183,8 +164,8 @@ describe('lib/session', () => {
 
 			expect(req.username).toEqual('testuser');
 
-			expect(session.setupIntitalData).toHaveBeenCalledTimes(1);
-			expect(session.setupIntitalData).toHaveBeenCalledWith(req);
+			expect(session.setupInitialData).toHaveBeenCalledTimes(1);
+			expect(session.setupInitialData).toHaveBeenCalledWith(req);
 
 			expect(next).toHaveBeenCalledTimes(1);
 			expect(next).toHaveBeenCalledWith();
@@ -226,7 +207,7 @@ describe('lib/session', () => {
 			'getUser',
 			() => (req['____forceClose'](), Promise.resolve('testuser'))
 		);
-		stub(session, 'setupIntitalData');
+		stub(session, 'setupInitialData');
 		//Continue the rejections...we will test this function by itself.
 		stub(session, 'maybeRedirect', () => e => Promise.reject(e));
 
@@ -236,7 +217,7 @@ describe('lib/session', () => {
 
 			expect(req.username).toEqual('testuser');
 
-			expect(session.setupIntitalData).not.toHaveBeenCalled();
+			expect(session.setupInitialData).not.toHaveBeenCalled();
 
 			expect(next).toHaveBeenCalledTimes(1);
 			expect(next).toHaveBeenCalledWith('aborted');
@@ -270,7 +251,7 @@ describe('lib/session', () => {
 		};
 
 		stub(session, 'getUser', () => Promise.reject('Test'));
-		stub(session, 'setupIntitalData');
+		stub(session, 'setupInitialData');
 		//Continue the rejections...we will test this function by itself.
 		stub(session, 'maybeRedirect', () => e => Promise.reject(e));
 
@@ -278,14 +259,14 @@ describe('lib/session', () => {
 			expect(session.getUser).toHaveBeenCalledTimes(1);
 			expect(session.getUser).toHaveBeenCalledWith(req);
 
-			expect(session.setupIntitalData).not.toHaveBeenCalled();
+			expect(session.setupInitialData).not.toHaveBeenCalled();
 
 			expect(next).toHaveBeenCalledTimes(1);
 			expect(next).toHaveBeenCalledWith('Test');
 		});
 	});
 
-	test('Session::middleware() - error case: setupIntitalData rejects', () => {
+	test('Session::middleware() - error case: setupInitialData rejects', () => {
 		const Session = require('../index');
 		const session = new Session();
 
@@ -316,7 +297,7 @@ describe('lib/session', () => {
 		};
 
 		stub(session, 'getUser', () => Promise.resolve('testuser'));
-		stub(session, 'setupIntitalData', () => Promise.reject('Ooops'));
+		stub(session, 'setupInitialData', () => Promise.reject('Ooops'));
 		//Continue the rejections...we will test this function by itself.
 		stub(session, 'maybeRedirect', () => e => Promise.reject(e));
 
@@ -326,8 +307,8 @@ describe('lib/session', () => {
 
 			expect(req.username).toEqual('testuser');
 
-			expect(session.setupIntitalData).toHaveBeenCalledTimes(1);
-			expect(session.setupIntitalData).toHaveBeenCalledWith(req);
+			expect(session.setupInitialData).toHaveBeenCalledTimes(1);
+			expect(session.setupInitialData).toHaveBeenCalledWith(req);
 
 			expect(next).toHaveBeenCalledTimes(1);
 			expect(next).toHaveBeenCalledWith('Ooops');
@@ -363,7 +344,7 @@ describe('lib/session', () => {
 		};
 
 		stub(session, 'getUser', () => Promise.resolve('testuser'));
-		stub(session, 'setupIntitalData');
+		stub(session, 'setupInitialData');
 		//Continue the rejections...we will test this function by itself.
 		stub(session, 'maybeRedirect', () => e => Promise.reject(e));
 
@@ -373,8 +354,8 @@ describe('lib/session', () => {
 
 			expect(req.username).toEqual('testuser');
 
-			expect(session.setupIntitalData).toHaveBeenCalledTimes(1);
-			expect(session.setupIntitalData).toHaveBeenCalledWith(req);
+			expect(session.setupInitialData).toHaveBeenCalledTimes(1);
+			expect(session.setupInitialData).toHaveBeenCalledWith(req);
 
 			expect(next).toHaveBeenCalledTimes(1);
 			expect(next).toHaveBeenCalledWith();

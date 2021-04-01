@@ -1,10 +1,6 @@
 /*eslint strict: 0*/
 'use strict';
 
-const {
-	URL: { join: urlJoin },
-} = require('@nti/lib-commons');
-
 const { getTemplate } = require('./utils');
 
 Object.assign(exports, {
@@ -46,8 +42,6 @@ const shouldPrefix = (val, base) =>
 	!isFavicon(val);
 
 const attributesToFix = /(manifest|src|href)="(.*?)"/gim;
-const fixAttributes = (base, original, attr, val) =>
-	`${attr}="${shouldPrefix(val, base) ? urlJoin(base, val) : val}"`;
 
 const configValues = /<(!\[CDATA)?\[cfg:([^\]]*)\]\]?>/gim;
 const fillInValues = (cfg, original, _, prop) => {
@@ -62,10 +56,15 @@ const fillInValues = (cfg, original, _, prop) => {
 	return filterFn(value);
 };
 
-function getRenderer(assets, renderContent, devmode) {
+async function getRenderer(assets, renderContent, devmode) {
 	if (!renderContent) {
 		renderContent = ({ html }) => html;
 	}
+
+	const urlJoin = (await import('@nti/lib-commons')).URL.join;
+
+	const fixAttributes = (base, original, attr, val) =>
+		`${attr}="${shouldPrefix(val, base) ? urlJoin(base, val) : val}"`;
 
 	/**
 	 * @method render

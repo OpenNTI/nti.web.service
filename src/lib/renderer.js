@@ -11,16 +11,15 @@ Object.assign(exports, {
 function getPageRenderer(
 	{ appId, basepath, assets, devmode } = {},
 	config,
-	render,
+	_render,
 	renderContent
 ) {
-	if (!render) {
-		render = getRenderer(assets, renderContent, devmode);
-	}
-
 	return async function renderPage(req, res, next) {
+		const render =
+			_render || (await getRenderer(assets, renderContent, devmode));
+
 		const { [DATACACHE]: datacache } = req;
-		logger.debug('Rendering Inital View: %s %s', req.url, req.username);
+		logger.debug('Rendering Initial View: %s %s', req.url, req.username);
 		let isErrorPage = false;
 
 		const pageRenderSetErrorCode = code => (isErrorPage = code || true);
@@ -31,7 +30,7 @@ function getPageRenderer(
 				render(
 					basepath,
 					req,
-					nodeConfigAsClientConfig(config, appId, req),
+					await nodeConfigAsClientConfig(config, appId, req),
 					pageRenderSetErrorCode
 				),
 

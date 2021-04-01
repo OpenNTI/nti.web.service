@@ -1,9 +1,7 @@
 'use strict';
-//TOS_NOT_ACCEPTED = content.initial_tos_page
-const { TOS_NOT_ACCEPTED, getLink } = require('@nti/lib-interfaces');
 
-const { SERVER_REF } = require('../../constants');
-const logger = require('../../logger').get('api:user-agreement');
+const { SERVER_REF } = require('internal/constants');
+const logger = require('internal/logger').get('api:user-agreement');
 
 const tagPattern = tag =>
 	new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)</' + tag + '>', 'ig');
@@ -52,6 +50,8 @@ function getServeUserAgreement(config) {
 }
 
 async function resolveUrl(request, config, server) {
+	//TOS_NOT_ACCEPTED = content.initial_tos_page
+	const { TOS_NOT_ACCEPTED, getLink } = await import('@nti/lib-interfaces');
 	const { ['user-agreement']: fallbackUrl } = config || {};
 	const SERVER_CONTEXT = request;
 	const { host } = request.headers;

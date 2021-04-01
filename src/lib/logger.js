@@ -3,16 +3,30 @@ const { isMaster, worker } = require('cluster');
 
 const morgan = require('morgan');
 const responseTime = require('response-time');
+const debug = require('debug');
 
-const { default: Logger } = require('@nti/util-logger');
+const get = name => ({
+	info: debug(name + ':info'),
+	error: debug(name + ':error'),
+	warn: debug(name + ':warn'),
+	debug: debug(name + ':debug'),
+	trace: debug(name + ':trace'),
+});
+
+const pattern = debug.load();
+if (!pattern) {
+	debug.enable(
+		pattern || ['info', 'error', 'warn'].map(x => `*:${x}`).join(',')
+	);
+}
 
 const BASE_NAME =
 	'NodeService:' + (isMaster ? 'master' : 'worker:' + worker.id);
-const logger = Logger.get(BASE_NAME);
+const logger = get(BASE_NAME);
 
 module.exports = Object.assign(morgan, {
 	get(name) {
-		return Logger.get(BASE_NAME + ':' + name);
+		return get(BASE_NAME + ':' + name);
 	},
 
 	attachToExpress: expressApp => {

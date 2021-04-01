@@ -1,9 +1,8 @@
 /* eslint-env jest */
 'use strict';
 jest.mock('@sentry/node');
+jest.mock('debug');
 const request = require('supertest');
-
-const DataserverInterFace = require('@nti/lib-interfaces');
 
 const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
@@ -65,31 +64,33 @@ const interfaceImplementation = {
 	},
 };
 
-const mockInterface = {
-	...DataserverInterFace,
-	default(cfg) {
-		return {
-			...DataserverInterFace.default(cfg),
-			interface: interfaceImplementation,
-		};
-	},
-};
-
 describe('Test End-to-End', () => {
 	let logger;
 
-	beforeEach(() => {
+	beforeEach(async () => {
 		jest.resetModules();
+		const DataserverInterFace = await import('@nti/lib-interfaces');
+		jest.doMock('@nti/lib-interfaces', () => ({
+			__esModule: true,
+			...DataserverInterFace,
+			default(cfg) {
+				return {
+					...DataserverInterFace.default(cfg),
+					interface: interfaceImplementation,
+				};
+			},
+		}));
+
+		jest.doMock('../lib/logger', () => ({
+			get: () => logger,
+			attachToExpress: jest.fn(),
+			debug: jest.fn(),
+			error: jest.fn(),
+			info: jest.fn(),
+			warn: jest.fn(),
+		}));
+
 		logger = require('../lib/logger');
-
-		stub(logger, 'get', () => logger);
-		stub(logger, 'attachToExpress');
-		stub(logger, 'debug');
-		stub(logger, 'error');
-		stub(logger, 'info');
-		stub(logger, 'warn');
-
-		jest.doMock('@nti/lib-interfaces', () => mockInterface);
 	});
 
 	afterEach(() => {

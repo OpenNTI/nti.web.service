@@ -786,7 +786,7 @@ describe('lib/config', () => {
 		});
 	});
 
-	test('nodeConfigAsClientConfig(): fakes clientConfig with full server-side config (for serverside rendering)', () => {
+	test('nodeConfigAsClientConfig(): fakes clientConfig with full server-side config (for serverside rendering)', async () => {
 		const { nodeConfigAsClientConfig } = require('../config');
 		const context = {
 			username: 'foobar',
@@ -807,7 +807,7 @@ describe('lib/config', () => {
 			stuffAndThings: 'foobar',
 		};
 
-		const res = nodeConfigAsClientConfig(config, 'abc', context);
+		const res = await nodeConfigAsClientConfig(config, 'abc', context);
 
 		expect(res).toBeTruthy();
 		expect(res.html).toBe('');
@@ -828,7 +828,7 @@ describe('lib/config', () => {
 		).not.toThrow();
 
 		try {
-			await out.config.nodeService;
+			await (await out).config.nodeService;
 			throw new Error(
 				'Unexpected Promise fulfillment. It should have failed.'
 			);

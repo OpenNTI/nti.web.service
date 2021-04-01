@@ -82,6 +82,7 @@ describe('lib/app-service', () => {
 		jest.doMock('express', () => expressMock);
 		jest.doMock('serve-static', () => staticMock);
 		jest.doMock('@nti/lib-interfaces', () => ({
+			__esModule: true,
 			default: setupDataserver,
 		}));
 		jest.doMock('../accepts-filters', () => ({
@@ -378,7 +379,7 @@ describe('lib/app-service', () => {
 		const service = require('../app-service');
 		const clientApp = expressMock();
 		stub(service, 'contextualize', () => clientApp);
-		stub(service, 'setupInterface', () => tagger);
+		stub(service, 'setupInterface', async () => tagger);
 
 		//the freeze ensures attempts at modifying it will explode.
 		const clientConfig = Object.freeze({
@@ -517,7 +518,7 @@ describe('lib/app-service', () => {
 		const service = require('../app-service');
 		const clientApp = expressMock();
 		stub(service, 'contextualize', () => clientApp);
-		stub(service, 'setupInterface', () => tagger);
+		stub(service, 'setupInterface', async () => tagger);
 
 		//the freeze ensures attempts at modifying it will explode.
 		const clientConfig = Object.freeze({

@@ -4,8 +4,8 @@ const {
 	promises: { stat, readFile },
 } = require('fs');
 
-const logger = require('../logger').get('page-renderer-utils');
-const { getStackOrMessage } = require('../utils');
+const logger = require('internal/logger').get('page-renderer-utils');
+const { getStackOrMessage } = require('internal/utils');
 
 function getCached(key) {
 	const cache = getCached.cache || (getCached.cache = {});

@@ -23,6 +23,9 @@
   },
   "author": "nextthought",
   "license": "UNLICENSED",
+  "dependencies": {
+    "internal": "./src/lib"
+  },
   "devDependencies": {
     "@nti/dev-ssl-config": "^2.24.0",
     "@nti/lib-commons": "NextThought/nti.lib.commons",
@@ -38,7 +41,6 @@
     "express": "^4.9.5",
     "express-request-language": "^1.1.10",
     "findhit-proxywrap": "^0.3.11",
-    "internal": "./src/lib",
     "invariant": "^2.1.0",
     "memored": "^1.1.1",
     "mime-types": "^2.1.27",

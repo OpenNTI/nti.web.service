@@ -132,7 +132,6 @@ async function createServer(protocol, app) {
 		http: () => http.createServer(app),
 		https: async () => {
 			try {
-				// eslint-disable-next-line import/no-extraneous-dependencies
 				const { default: d, getHTTPS = d.getHTTPS } = await import(
 					'@nti/dev-ssl-config'
 				);

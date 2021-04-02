@@ -5,7 +5,7 @@ const { SERVER_REF } = require('../../constants');
 const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
 
 describe('lib/session', () => {
-	let logger, ServiceStash;
+	let logger;
 
 	beforeEach(() => {
 		jest.resetModules();
@@ -17,8 +17,6 @@ describe('lib/session', () => {
 		stub(logger, 'error');
 		stub(logger, 'info');
 		stub(logger, 'warn');
-
-		ServiceStash = require('@nti/lib-interfaces').ServiceStash;
 	});
 
 	afterEach(() => {

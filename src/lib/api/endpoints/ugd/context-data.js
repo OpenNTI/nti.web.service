@@ -21,7 +21,9 @@ class GetContextData {
 			const container = ntiidObject.getContainerID();
 
 			let obj = await ntiService.getObject(container);
-			if (obj instanceof PageInfo) obj = await this.getContext(req, obj);
+			if (obj instanceof PageInfo) {
+				obj = await this.getContext(req, obj);
+			}
 
 			await res.json(obj);
 		} catch (e) {

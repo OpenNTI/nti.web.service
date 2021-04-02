@@ -1,58 +1,65 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v[0-9]+.**'
+    push:
+        tags:
+            - 'v[0-9]+.**'
 
 env:
-  CI: true
+    CI: true
 
 jobs:
-  Build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: install SSH key
-        uses: webfactory/ssh-agent@v0.4.1
-        with:
-          ssh-private-key: ${{ secrets.ACTIONS_REPO_ACCESS }}
+    Build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: install SSH key
+              uses: webfactory/ssh-agent@v0.4.1
+              with:
+                  ssh-private-key: ${{ secrets.ACTIONS_REPO_ACCESS }}
 
-      - name: clone
-        uses: actions/checkout@v2
+            - name: clone
+              uses: actions/checkout@v2
 
-      - name: setup nodejs
-        uses: actions/setup-node@v2
-        with:
-          node-version: '15'
+            - name: setup nodejs
+              uses: actions/setup-node@v2
+              with:
+                  node-version: '15'
 
-      - name: configure npm
-        env:
-          NPM_REGISTRY: ${{ secrets.NPM_REGISTRY }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          npm config set loglevel error
-          npm config set progress false
-          npm config set '@nti:registry' "$NPM_REGISTRY"
-          npm config set "${NPM_REGISTRY/https:/}/:_authToken" "$NPM_TOKEN"
-          npm install --global npm
+            - uses: actions/cache@v2
+              with:
+                  path: ~/.npm
+                  key: ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-node-
 
-      - name: Generate release build
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-        run: npx -y @nti/ci-scripts release
+            - name: configure npm
+              env:
+                  NPM_REGISTRY: ${{ secrets.NPM_REGISTRY }}
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+              run: |
+                  npm config set loglevel error
+                  npm config set progress false
+                  npm config set '@nti:registry' "$NPM_REGISTRY"
+                  npm config set "${NPM_REGISTRY/https:/}/:_authToken" "$NPM_TOKEN"
+                  npm install --global npm
 
-      - name: notify of failure
-        if: failure()
-        env:
-          LINK: ${{ format('<https://github.com/{0}/actions|{0}@{1} failed>', github.repository, github.ref) }}
-        run: |
-          MESSAGE="{\"text\": \"#### :stop_sign: $LINK\" }"
-          curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}
+            - name: Generate release build
+              env:
+                  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+              run: npx -y @nti/ci-scripts release
 
-      - name: notify of new release
-        if: success()
-        env:
-          LINK: ${{ format('<https://github.com/{0}/actions|{0} has a new build> {1}', github.repository, github.ref) }}
-        run: |
-          MESSAGE="{\"text\": \"#### :white_check_mark: $LINK\", \"channel\":\"Jenkins\" }"
-          curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}
+            - name: notify of failure
+              if: failure()
+              env:
+                  LINK: ${{ format('<https://github.com/{0}/actions|{0}@{1} failed>', github.repository, github.ref) }}
+              run: |
+                  MESSAGE="{\"text\": \"#### :stop_sign: $LINK\" }"
+                  curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}
+
+            - name: notify of new release
+              if: success()
+              env:
+                  LINK: ${{ format('<https://github.com/{0}/actions|{0} has a new build> {1}', github.repository, github.ref) }}
+              run: |
+                  MESSAGE="{\"text\": \"#### :white_check_mark: $LINK\", \"channel\":\"Jenkins\" }"
+                  curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}

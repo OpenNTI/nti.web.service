@@ -1,7 +1,7 @@
 'use strict';
 
-const { SERVER_REF } = require('internal/constants');
-const logger = require('internal/logger').get('api:user-agreement');
+const { SERVER_REF } = require('../../constants');
+const logger = require('../../logger').get('api:user-agreement');
 
 const tagPattern = tag =>
 	new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)</' + tag + '>', 'ig');

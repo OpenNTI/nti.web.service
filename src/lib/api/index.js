@@ -1,6 +1,6 @@
 'use strict';
-const { SERVER_REF } = require('internal/constants');
-const logger = require('internal/logger');
+const { SERVER_REF } = require('../constants');
+const logger = require('../logger');
 
 const endpoints = require('./endpoints');
 

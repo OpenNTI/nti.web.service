@@ -4,8 +4,8 @@ const util = require('util');
 
 const memored = require('memored');
 
-const { SERVER_REF } = require('internal/constants');
-const logger = require('internal/logger').get('videos:youtube');
+const { SERVER_REF } = require('../../../constants');
+const logger = require('../../../logger').get('videos:youtube');
 
 const getSourceURL = id => 'https://www.youtube.com/embed/${id}';
 

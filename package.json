@@ -23,9 +23,6 @@
   },
   "author": "nextthought",
   "license": "UNLICENSED",
-  "dependencies": {
-    "internal": "./src/lib"
-  },
   "devDependencies": {
     "@nti/dev-ssl-config": "^2.24.0",
     "@nti/lib-commons": "NextThought/nti.lib.commons",

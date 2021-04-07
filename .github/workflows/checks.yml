@@ -66,8 +66,9 @@ jobs:
 
             - name: install dependencies
               run: |
-                  (test ! -f package-lock.json && npm i --no-progress --no-audit) || echo 'Lock found, skipping npm i'
-                  (test -f package-lock.json && npm ci --no-progress --no-audit) || echo 'No lock, skipping npm ci'
+                  COMMAND='install'
+                  if [ -f package-lock.json ]; then COMMAND="ci"; fi;
+                  npm $COMMAND --package-lock --no-progress --no-audit
 
             - name: test
               run: npm test

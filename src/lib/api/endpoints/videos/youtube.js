@@ -15,7 +15,7 @@ exports.default = function register(api, config) {
 	api.get(/^\/youtube/, async (req, res, next) => {
 		const key = Buffer.from(JSON.stringify(req.query)).toString('base64');
 		const { id } = req.query;
-		logger.log('%s Resolving Video data for %s', key, id);
+		logger.info('%s Resolving Video data for %s', key, id);
 
 		try {
 			let r = (await getCached(key)) || (await resolve(key, id, req));
@@ -96,7 +96,7 @@ exports.default = function register(api, config) {
 			req.query
 		);
 
-		logger.log('%s Requesting %s...', key, uri);
+		logger.info('%s Requesting %s...', key, uri);
 		return await fetch(uri, {
 			headers: {
 				Referer:

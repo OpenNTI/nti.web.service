@@ -10,7 +10,8 @@
     "check": "lib-scripts check",
     "clean": "lib-scripts clean",
     "fix": "lib-scripts fix",
-    "release": "lib-scripts release",
+    "release": "npx @nti/release",
+    "snapshot": "npx @nti/snapshot",
     "start": "DEBUG=NodeService:* node ./src --config ./config/env.json.example --protocol http",
     "test": "lib-scripts test"
   },

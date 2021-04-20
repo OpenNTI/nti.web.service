@@ -1,85 +1,231 @@
 name: Project Health
 
 on:
-    schedule:
-        # every monday morning at 7:00am (central)
-        # https://crontab.guru/#0_13_*_*_1
-        - cron: '0 13 * * 1'
+  schedule:
+    # every monday morning at 7:00am (central)
+    # https://crontab.guru/#0_13_*_*_1
+    - cron: '0 13 * * 1'
 
-    push:
-        branches:
-            - master
-            - 'maint-*'
-        paths:
-            - 'src/**.jsx?'
-            - 'src/**.mjs'
-            - 'src/**.cjs'
-            - 'src/**.snap'
-            - 'src/**.json'
+  push:
+    branches:
+      - master
+      - 'maint-*'
+    paths:
+      - 'src/**.jsx?'
+      - 'src/**.mjs'
+      - 'src/**.cjs'
+      - 'src/**.snap'
+      - 'src/**.json'
 
-    pull_request:
-        branches:
-            - master
+  pull_request:
+    branches:
+      - master
+
+  repository_dispatch:
+    types: [snapshot]
 
 env:
-    CI: true
+  CI: true
 
 jobs:
-    Verify:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Cancel Previous Runs
-              uses: styfle/cancel-workflow-action@0.5.0
-              with:
-                  access_token: ${{ github.token }}
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.data.outputs.sha }}
+      snapshot: ${{ steps.data.outputs.snapshot }}
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.5.0
+        with:
+          access_token: ${{ github.token }}
 
-            - name: install SSH key
-              uses: webfactory/ssh-agent@v0.4.1
-              with:
-                  ssh-private-key: ${{ secrets.ACTIONS_REPO_ACCESS }}
+      - name: clone
+        uses: actions/checkout@v2
 
-            - name: clone
-              uses: actions/checkout@v2
+      - name: setup nodejs
+        uses: actions/setup-node@v2
+        with:
+          node-version: '15'
 
-            - name: setup nodejs
-              uses: actions/setup-node@v2
-              with:
-                  node-version: '15'
+      - name: 'Gather Data'
+        id: data
+        run: |
+          # Data Gathering
+          if cat package.json | grep -E "(app-scripts |@nti\/)snapshot" &> /dev/null; then
+            echo "::set-output name=snapshot::true";
+          fi;
+          echo "::set-output name=sha::$(git rev-list HEAD | head -1)"
 
-            - uses: actions/cache@v2
-              with:
-                  path: ~/.npm
-                  key: ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}
-                  restore-keys: |
-                      ${{ runner.os }}-node-
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
-            - name: configure npm
-              env:
-                  NPM_REGISTRY: ${{ secrets.NPM_REGISTRY }}
-                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-              run: |
-                  npm config set loglevel error
-                  npm config set progress false
-                  npm config set '@nti:registry' "$NPM_REGISTRY"
-                  npm config set "${NPM_REGISTRY/https:/}/:_authToken" "$NPM_TOKEN"
-                  git config --global url."git@github.com:".insteadOf "https://github.com/"
+      - uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{steps.data.outputs.sha}}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-${{steps.data.outputs.sha}}
 
-            - name: install dependencies
-              run: |
-                  COMMAND='install'
-                  if [ -f package-lock.json ]; then COMMAND="ci"; fi;
-                  npm $COMMAND --package-lock --no-progress --no-audit
+      - name: install SSH key
+        uses: webfactory/ssh-agent@v0.4.1
+        with:
+          ssh-private-key: ${{ secrets.ACTIONS_REPO_ACCESS }}
 
-            - name: test
-              run: npm test
+      - name: configure npm
+        env:
+          NPM_REGISTRY: ${{ secrets.NPM_REGISTRY }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm config set loglevel error
+          npm config set progress false
+          npm config set '@nti:registry' "$NPM_REGISTRY"
+          npm config set "${NPM_REGISTRY/https:/}/:_authToken" "$NPM_TOKEN"
+          git config --global url."git@github.com:".insteadOf "https://github.com/"
 
-            - name: lint
-              run: npm run check --if-present
+      - name: prepare install
+        run: |
+          npx @nti/ci-scripts prepare
+          if [ "snapshot" == "${{github.event.action}}" ]; then
+            rm -rf node_modules
+          fi;
 
-            - name: notify of failure
-              if: ${{ failure() && github.event_name != 'pull_request' }}
-              env:
-                  LINK: ${{ format('<https://github.com/{0}/actions|{0} failed>', github.repository) }}
-              run: |
-                  MESSAGE="{\"text\": \"\n#### :stop_sign: $LINK :eyes:\" }"
-                  curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}
+      - name: install dependencies
+        run: |
+          COMMAND='install'
+          if [ -f package-lock.json ]; then COMMAND="ci"; fi;
+          if [ ! -d node_modules ]; then
+            npm $COMMAND --package-lock --no-progress --no-audit;
+          fi;
+
+  lint:
+    needs: setup
+    runs-on: ubuntu-latest
+    if: github.event.action != 'snapshot'
+    steps:
+      - name: clone
+        uses: actions/checkout@v2
+
+      - name: setup nodejs
+        uses: actions/setup-node@v2
+        with:
+          node-version: '15'
+
+      - uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{needs.setup.outputs.sha}}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-${{needs.setup.outputs.sha}}
+
+      - name: lint
+        run: npm run check --if-present
+
+      - name: notify of failure
+        if: ${{ failure() && github.event_name != 'pull_request' }}
+        env:
+          LINK: ${{ format('<https://github.com/{0}/actions|{0} lint failure>', github.repository) }}
+        run: |
+          MESSAGE="{\"text\": \"\n#### :stop_sign: $LINK :eyes:\" }"
+          curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}
+
+  test:
+    needs: setup
+    runs-on: ubuntu-latest
+    if: github.event.action != 'snapshot'
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.5.0
+        with:
+          access_token: ${{ github.token }}
+
+      - name: clone
+        uses: actions/checkout@v2
+
+      - name: setup nodejs
+        uses: actions/setup-node@v2
+        with:
+          node-version: '15'
+
+      - uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{needs.setup.outputs.sha}}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-${{needs.setup.outputs.sha}}
+
+      - name: test
+        run: npm test
+
+      - name: notify of failure
+        if: ${{ failure() && github.event_name != 'pull_request' }}
+        env:
+          LINK: ${{ format('<https://github.com/{0}/actions|{0} tests failed>', github.repository) }}
+        run: |
+          MESSAGE="{\"text\": \"\n#### :stop_sign: $LINK :eyes:\" }"
+          curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}
+
+  snapshot:
+    needs: setup
+    runs-on: ubuntu-latest
+    if: needs.setup.outputs.snapshot == 'true' && github.event_name != 'pull_request'
+
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.5.0
+        with:
+          access_token: ${{ github.token }}
+
+      - name: clone
+        uses: actions/checkout@v2
+
+      - name: setup nodejs
+        uses: actions/setup-node@v2
+        with:
+          node-version: '15'
+
+      - name: install SSH key
+        uses: webfactory/ssh-agent@v0.4.1
+        with:
+          ssh-private-key: ${{ secrets.ACTIONS_REPO_ACCESS }}
+
+      - name: configure npm
+        env:
+          NPM_REGISTRY: ${{ secrets.NPM_REGISTRY }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm config set loglevel error
+          npm config set progress false
+          npm config set '@nti:registry' "$NPM_REGISTRY"
+          npm config set "${NPM_REGISTRY/https:/}/:_authToken" "$NPM_TOKEN"
+          git config --global url."git@github.com:".insteadOf "https://github.com/"
+
+      - uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{needs.setup.outputs.sha}}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-${{needs.setup.outputs.sha}}
+
+      - name: publish
+        run: npx @nti/ci-scripts publish
+
+      - name: notify of failure
+        if: failure()
+        env:
+          LINK: ${{ format('<https://github.com/{0}/actions|{1} snapshot failed>', github.repository, steps.build.outputs.SNAPSHOT_ID) }}
+        run: |
+          MESSAGE="{\"text\": \"#### :stop_sign: $LINK\" }"
+          curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}
+
+      - name: notify of new snap
+        if: success()
+        env:
+          LINK: ${{ format('<https://github.com/{0}/actions|New snapshot {1}>', github.repository, steps.build.outputs.SNAPSHOT_ID) }}
+        run: |
+          MESSAGE="{\"text\": \"#### :white_check_mark: $LINK\", \"channel\":\"Jenkins\" }"
+          curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}
+          [ "" != "${{secrets.WEB_SNAPSHOT_URL}}" ] && curl -X POST ${{secrets.WEB_SNAPSHOT_URL}} || true

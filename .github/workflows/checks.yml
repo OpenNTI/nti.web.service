@@ -33,6 +33,8 @@ jobs:
     outputs:
       sha: ${{ steps.data.outputs.sha }}
       snapshot: ${{ steps.data.outputs.snapshot }}
+      snapshot_id: ${{steps.prepare.outputs.SNAPSHOT_ID}}
+      version: ${{steps.prepare.outputs.version}}
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.5.0
@@ -65,10 +67,10 @@ jobs:
 
       - uses: actions/cache@v2
         with:
-          path: node_modules
+          path: |
+            node_modules
+            package.json
           key: ${{ runner.os }}-node-modules-${{steps.data.outputs.sha}}
-          restore-keys: |
-            ${{ runner.os }}-node-modules-${{steps.data.outputs.sha}}
 
       - name: install SSH key
         uses: webfactory/ssh-agent@v0.4.1
@@ -87,6 +89,7 @@ jobs:
           git config --global url."git@github.com:".insteadOf "https://github.com/"
 
       - name: prepare install
+        id: prepare
         run: |
           npx @nti/ci-scripts prepare
           if [ "snapshot" == "${{github.event.action}}" ]; then
@@ -116,10 +119,10 @@ jobs:
 
       - uses: actions/cache@v2
         with:
-          path: node_modules
+          path: |
+            node_modules
+            package.json
           key: ${{ runner.os }}-node-modules-${{needs.setup.outputs.sha}}
-          restore-keys: |
-            ${{ runner.os }}-node-modules-${{needs.setup.outputs.sha}}
 
       - name: lint
         run: npm run check --if-present
@@ -152,10 +155,10 @@ jobs:
 
       - uses: actions/cache@v2
         with:
-          path: node_modules
+          path: |
+            node_modules
+            package.json
           key: ${{ runner.os }}-node-modules-${{needs.setup.outputs.sha}}
-          restore-keys: |
-            ${{ runner.os }}-node-modules-${{needs.setup.outputs.sha}}
 
       - name: test
         run: npm test
@@ -205,10 +208,10 @@ jobs:
 
       - uses: actions/cache@v2
         with:
-          path: node_modules
+          path: |
+            node_modules
+            package.json
           key: ${{ runner.os }}-node-modules-${{needs.setup.outputs.sha}}
-          restore-keys: |
-            ${{ runner.os }}-node-modules-${{needs.setup.outputs.sha}}
 
       - name: publish
         run: npx @nti/ci-scripts publish
@@ -216,7 +219,7 @@ jobs:
       - name: notify of failure
         if: failure()
         env:
-          LINK: ${{ format('<https://github.com/{0}/actions|{1} snapshot failed>', github.repository, steps.build.outputs.SNAPSHOT_ID) }}
+          LINK: ${{ format('<https://github.com/{0}/actions|{1} snapshot failed>', github.repository, needs.setup.outputs.snapshot_id) }}
         run: |
           MESSAGE="{\"text\": \"#### :stop_sign: $LINK\" }"
           curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}
@@ -224,7 +227,7 @@ jobs:
       - name: notify of new snap
         if: success()
         env:
-          LINK: ${{ format('<https://github.com/{0}/actions|New snapshot {1}>', github.repository, steps.build.outputs.SNAPSHOT_ID) }}
+          LINK: ${{ format('<https://github.com/{0}/actions|New snapshot {1}>', github.repository, needs.setup.outputs.snapshot_id) }}
         run: |
           MESSAGE="{\"text\": \"#### :white_check_mark: $LINK\", \"channel\":\"Jenkins\" }"
           curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}

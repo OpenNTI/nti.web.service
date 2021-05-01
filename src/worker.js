@@ -65,6 +65,13 @@ function start() {
 	);
 	process.on('message', self.messageHandler);
 	process.on('SIGHUP', restart);
+	process.on('unhandledRejection', (reason, p) => {
+		logger.error(
+			'Unhandled Rejection at: Promise %O reason: %O',
+			p,
+			reason
+		);
+	});
 }
 
 async function getApp(config) {

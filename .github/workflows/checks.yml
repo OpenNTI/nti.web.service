@@ -55,8 +55,11 @@ jobs:
         run: |
           # Data Gathering
           echo "::set-output name=time::$(/bin/date -u "+%FT%T")"
-          if cat package.json | grep -E "(app-scripts |@nti\/)snapshot" &> /dev/null; then
-            echo "::set-output name=snapshot::true";
+          if [ `git rev-parse --abbrev-ref HEAD` = "master" ]; then
+            # nesting if blocks for readability
+            if cat package.json | grep -E "(app-scripts |@nti\/)snapshot" &> /dev/null; then
+              echo "::set-output name=snapshot::true";
+            fi
           fi;
           echo "::set-output name=sha::$(git rev-list HEAD | head -1)"
 

@@ -48,7 +48,7 @@ jobs:
       - name: setup nodejs
         uses: actions/setup-node@v2
         with:
-          node-version: '15'
+          node-version: '16'
 
       - name: 'Gather Data'
         id: data
@@ -120,7 +120,7 @@ jobs:
       - name: setup nodejs
         uses: actions/setup-node@v2
         with:
-          node-version: '15'
+          node-version: '16'
 
       - uses: actions/cache@v2
         with:
@@ -156,7 +156,7 @@ jobs:
       - name: setup nodejs
         uses: actions/setup-node@v2
         with:
-          node-version: '15'
+          node-version: '16'
 
       - uses: actions/cache@v2
         with:
@@ -193,7 +193,7 @@ jobs:
       - name: setup nodejs
         uses: actions/setup-node@v2
         with:
-          node-version: '15'
+          node-version: '16'
 
       - name: install SSH key
         uses: webfactory/ssh-agent@v0.4.1

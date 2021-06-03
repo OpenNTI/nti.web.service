@@ -2,9 +2,18 @@
 'use strict';
 jest.mock('@sentry/node');
 jest.mock('debug');
-const request = require('supertest');
+jest.mock('../lib/logger', () => ({
+	get() {
+		return this;
+	},
+	attachToExpress: jest.fn(),
+	debug: jest.fn(),
+	error: jest.fn(),
+	info: jest.fn(),
+	warn: jest.fn(),
+}));
 
-const stub = (a, b, c) => jest.spyOn(a, b).mockImplementation(c || (() => {}));
+const request = require('supertest');
 
 const commonConfigs = {
 	server: 'mock:/dataserver2/',
@@ -64,33 +73,23 @@ const interfaceImplementation = {
 	},
 };
 
+jest.mock('@nti/lib-interfaces', () => ({
+	__esModule: true,
+	default(cfg) {
+		return {
+			interface: interfaceImplementation,
+		};
+	},
+}));
+
 describe('Test End-to-End', () => {
+	jest.setTimeout(10000);
 	let logger;
 
-	beforeEach(async () => {
-		jest.resetModules();
-		const DataserverInterFace = await import('@nti/lib-interfaces');
-		jest.doMock('@nti/lib-interfaces', () => ({
-			__esModule: true,
-			...DataserverInterFace,
-			default(cfg) {
-				return {
-					...DataserverInterFace.default(cfg),
-					interface: interfaceImplementation,
-				};
-			},
-		}));
-
-		jest.doMock('../lib/logger', () => ({
-			get: () => logger,
-			attachToExpress: jest.fn(),
-			debug: jest.fn(),
-			error: jest.fn(),
-			info: jest.fn(),
-			warn: jest.fn(),
-		}));
-
+	beforeEach(() => {
+		jest.restoreAllMocks();
 		logger = require('../lib/logger');
+		jest.spyOn(console, 'log').mockImplementation(() => {});
 	});
 
 	afterEach(() => {
@@ -263,8 +262,9 @@ describe('Test End-to-End', () => {
 			//This isn't testing the authentication itself, just the behavior of "authenticated" or not...
 			.set('Authentication', 'foobar')
 			.set('X-Forwarded-Host', 'example.com:0')
-			.set('Host', 'example.com:0')
-			.expect(200);
+			.set('Host', 'example.com:0');
+
+		expect(res.status).toBe(200);
 
 		expect(res.text).not.toEqual(expect.stringContaining('example.com'));
 	});
@@ -297,13 +297,13 @@ describe('Test End-to-End', () => {
 		expect(res.text).toEqual(
 			expect.stringContaining('"MissingConfigValue[missing]"')
 		);
-		//Rerooting should not effect absolute urls:
+		//Re-rooting should not effect absolute urls:
 		expect(res.text).toEqual(
 			expect.stringContaining(
 				'<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react.js"></script>'
 			)
 		);
-		//Rerooted Urls:
+		//Re-rooted Urls:
 		expect(res.text).not.toEqual(
 			expect.stringContaining('"/resources/images/favicon.ico"')
 		);
@@ -496,11 +496,11 @@ describe('Test End-to-End', () => {
 	defineRedirectTests('foo');
 	defineRedirectTests('tos');
 
-	test('Test Hooks: Invalid Hook', async done => {
+	test('Test Hooks: Invalid Hook', async () => {
 		const Logger = logger.get('SessionManager');
 		const Session = require('../lib/session');
 
-		stub(Logger, 'error');
+		jest.spyOn(Logger, 'error').mockImplementation(() => {});
 		jest.spyOn(Session.prototype, 'middleware');
 
 		const { getApp } = require('../worker');
@@ -514,20 +514,20 @@ describe('Test End-to-End', () => {
 			],
 		};
 
-		request(await getApp(config))
+		await request(await getApp(config))
 			.get('/test/?breakme=now')
 			.set('Cookie', 'language=en')
-			.end(e => {
-				setTimeout(() => {
-					expect(Session.prototype.middleware).toHaveBeenCalled();
-					expect(Logger.error).toHaveBeenCalledWith(
-						'Headers have already been sent. did next() get called after a redirect()/send()/end()? %s %s',
-						expect.any(String),
-						expect.any(String)
-					);
-					done(e);
-				}, 100);
-			});
+			.expect(200);
+
+		await waitFor(() =>
+			expect(Session.prototype.middleware).toHaveBeenCalled()
+		);
+
+		expect(Logger.error).toHaveBeenCalledWith(
+			'Headers have already been sent. did next() get called after a redirect()/send()/end()? %s %s',
+			expect.any(String),
+			expect.any(String)
+		);
 	});
 
 	function defineRedirectTests(user) {
@@ -682,3 +682,20 @@ describe('Test End-to-End', () => {
 		});
 	}
 });
+
+async function waitFor(callback) {
+	const start = Date.now();
+
+	for (;;) {
+		try {
+			return await callback();
+		} catch (e) {
+			await new Promise(t => setTimeout(t, 10));
+
+			const diff = start - Date.now();
+			if (diff > 5000) {
+				throw e;
+			}
+		}
+	}
+}

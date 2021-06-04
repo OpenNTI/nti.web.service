@@ -83,6 +83,7 @@ jest.mock('@nti/lib-interfaces', () => ({
 }));
 
 describe('Test End-to-End', () => {
+	// I don't know why this is needed for GitHub actions get get past this file... but, oh well.
 	jest.setTimeout(10000);
 	let logger;
 

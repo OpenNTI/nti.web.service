@@ -84,10 +84,12 @@ jest.mock('@nti/lib-interfaces', () => ({
 
 describe('Test End-to-End', () => {
 	// I don't know why this is needed for GitHub actions get get past this file... but, oh well.
-	jest.setTimeout(10000);
+	jest.setTimeout(15000);
 	let logger;
 
 	beforeEach(() => {
+		// maybe on GitHub Actions a test is leaking fake timers?
+		jest.useRealTimers();
 		jest.restoreAllMocks();
 		logger = require('../lib/logger');
 		jest.spyOn(console, 'log').mockImplementation(() => {});

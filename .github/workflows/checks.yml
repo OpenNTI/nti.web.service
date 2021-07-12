@@ -109,6 +109,14 @@ jobs:
             npm $COMMAND --package-lock --no-progress --no-audit;
           fi;
 
+      - name: notify if failure
+        if: ${{ failure() && github.event_name != 'pull_request' }}
+        env:
+          LINK: ${{ format('<https://github.com/{0}/actions|{0}>', github.repository) }}
+        run: |
+          MESSAGE="{\"text\": \":stop_sign: preflight failure for $LINK, registry down?\" }"
+          curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}
+
   lint:
     needs: setup
     runs-on: ubuntu-latest
@@ -132,12 +140,12 @@ jobs:
       - name: lint
         run: npm run check --if-present
 
-      - name: notify of failure
+      - name: notify if failure
         if: ${{ failure() && github.event_name != 'pull_request' }}
         env:
-          LINK: ${{ format('<https://github.com/{0}/actions|{0} lint failure>', github.repository) }}
+          LINK: ${{ format('<https://github.com/{0}/actions|{0}>', github.repository) }}
         run: |
-          MESSAGE="{\"text\": \"\n#### :stop_sign: $LINK :eyes:\" }"
+          MESSAGE="{\"text\": \":stop_sign: :eyes: lint failure in $LINK\" }"
           curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}
 
   test:
@@ -168,12 +176,12 @@ jobs:
       - name: test
         run: npm test
 
-      - name: notify of failure
+      - name: notify if failure
         if: ${{ failure() && github.event_name != 'pull_request' }}
         env:
-          LINK: ${{ format('<https://github.com/{0}/actions|{0} tests failed>', github.repository) }}
+          LINK: ${{ format('<https://github.com/{0}/actions|{0}>', github.repository) }}
         run: |
-          MESSAGE="{\"text\": \"\n#### :stop_sign: $LINK :eyes:\" }"
+          MESSAGE="{\"text\": \":stop_sign: :eyes: tests failed in $LINK\" }"
           curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}
 
   snapshot:
@@ -221,19 +229,19 @@ jobs:
       - name: publish
         run: npx @nti/ci-scripts publish
 
-      - name: notify of failure
+      - name: notify if failure
         if: failure()
         env:
           LINK: ${{ format('<https://github.com/{0}/actions|{1} snapshot failed>', github.repository, needs.setup.outputs.snapshot_id) }}
         run: |
-          MESSAGE="{\"text\": \"#### :stop_sign: $LINK\" }"
+          MESSAGE="{\"text\": \":stop_sign: $LINK\" }"
           curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}
 
-      - name: notify of new snap
+      - name: notify if new snap
         if: success()
         env:
           LINK: ${{ format('<https://github.com/{0}/actions|New snapshot {1}>', github.repository, needs.setup.outputs.snapshot_id) }}
         run: |
-          MESSAGE="{\"text\": \"#### :white_check_mark: $LINK\", \"channel\":\"Jenkins\" }"
+          MESSAGE="{\"text\": \":white_check_mark: $LINK\", \"channel\":\"Jenkins\" }"
           curl -i -X POST -H 'Content-Type: application/json' -d "$MESSAGE" ${{secrets.MM_HOOK}}
           [ "" != "${{secrets.WEB_SNAPSHOT_URL}}" ] && curl -X POST ${{secrets.WEB_SNAPSHOT_URL}} || true

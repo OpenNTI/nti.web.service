@@ -149,11 +149,6 @@ async function setupClient(client, { config, server, restartRequest }) {
 	clientRoute.use(await self.setupInterface(config));
 
 	try {
-		const registration = await register(
-			clientRoute,
-			flatConfig,
-			restartRequest
-		);
 		const {
 			assets,
 			devmode,
@@ -161,7 +156,11 @@ async function setupClient(client, { config, server, restartRequest }) {
 			render,
 			renderContent,
 			sessionSetup,
-		} = registration;
+		} = await register(clientRoute, flatConfig, restartRequest);
+
+		if (devmode) {
+			send({ cmd: 'NOTIFY_DEVMODE' });
+		}
 
 		//add the assets path to the client object (keep it out of the config)
 		client = { ...client, assets, devmode };
@@ -225,11 +224,6 @@ async function setupClient(client, { config, server, restartRequest }) {
 			'*',
 			getPageRenderer(client, config, render, renderContent)
 		);
-
-		if (devmode) {
-			send({ cmd: 'NOTIFY_DEVMODE' });
-			devmode.start();
-		}
 	} catch (e) {
 		logger.error(e.stack);
 		process.exit(1);

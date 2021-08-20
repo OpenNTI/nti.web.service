@@ -505,7 +505,7 @@ describe('lib/app-service', () => {
 		const ONE_HOUR = '1 hour';
 		const mockReg = {
 			assets: 'mock/assets/path',
-			devmode: { start: jest.fn() },
+			devmode: {},
 			render: jest.fn(),
 			sessionSetup: jest.fn(),
 		};
@@ -638,6 +638,5 @@ describe('lib/app-service', () => {
 		expect(process.send).toHaveBeenCalledWith(
 			expect.objectContaining({ cmd: 'NOTIFY_DEVMODE' })
 		);
-		expect(mockReg.devmode.start).toHaveBeenCalledTimes(1);
 	});
 });

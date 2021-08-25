@@ -16,6 +16,7 @@ on:
       - 'src/**.cjs'
       - 'src/**.snap'
       - 'src/**.json'
+      - 'package.json'
 
   pull_request:
     branches:

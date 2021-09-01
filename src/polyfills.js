@@ -1,15 +1,13 @@
-import fetch from 'node-fetch';
-import 'regenerator-runtime';
+'use strict';
+const g = globalThis;
+import('node-fetch').then(({ default: fetch }) => (g.fetch = fetch));
+
+require('regenerator-runtime');
 
 /* istanbul ignore next */
 (() => {
 	//iife for istanbul ignore next
 	//add polyfills and shims
-	const g = globalThis;
-
-	if (!g.fetch) {
-		g.fetch = fetch;
-	}
 
 	g.atob = x => Buffer.from(x, 'base64').toString('binary');
 	g.btoa = x =>

@@ -5,8 +5,7 @@
 module.exports.resolve = x => require.resolve(x);
 
 function run() {
-	require('./polyfills');
-
+	import('./polyfills.mjs');
 	const cluster = require('cluster');
 
 	const { start: startMaster } = require('./master');

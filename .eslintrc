@@ -2,21 +2,27 @@
 	"extends": "@nti/eslint-config-lib-scripts",
 	"parser": "espree",
 	"parserOptions": {
-		"ecmaVersion": 2020,
+		"ecmaVersion": 2021,
 		"sourceType": "script",
 		"ecmaFeatures": {
 			"impliedStrict": false
 		}
 	},
+	"overrides": [
+		{
+			"files": "*.mjs",
+			"parserOptions": {
+				"sourceType": "module"
+			}
+		}
+	],
 	"globals": {
+		"globalThis": true,
 		"fetch": true,
 		"self": "off"
 	},
 	"rules": {
-		"strict": [
-			"error",
-			"global"
-		],
+		"strict": ["error", "global"],
 		"import/no-commonjs": 0,
 		"no-restricted-globals": 0
 	}

@@ -6,4 +6,4 @@ This is a templated file found in our central [configuration project](https://gi
 
 I highly recommend installing the [WikiLens](https://marketplace.visualstudio.com/items?itemName=lostintangent.wikilens) VSCode extention. With it you can index all the markdown within the workspace, and link/jump and reference document anywhere in the system. (This document and all other readme.md files will be redundant, so add readme.md to WikiLen's ignore list)
 
-![Build Status](./workflows/Project%20Health/badge.svg)
+![Build Status](../../workflows/Project%20Health/badge.svg)

@@ -61,7 +61,7 @@ async function getRenderer(assets, renderContent, devmode) {
 		renderContent = ({ html }) => html;
 	}
 
-	const urlJoin = (await import('@nti/lib-commons')).URL.join;
+	const urlJoin = (await import('@nti/lib-commons')).url.join;
 
 	const fixAttributes = (base, original, attr, val) =>
 		`${attr}="${shouldPrefix(val, base) ? urlJoin(base, val) : val}"`;

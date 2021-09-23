@@ -72,7 +72,7 @@ exports.default = function register(api, config) {
 			Service,
 		} = await import('@nti/lib-interfaces');
 		const {
-			URL: { appendQueryParams },
+			url: { appendQueryParams },
 		} = await import('@nti/lib-commons');
 
 		const { [SERVER_REF]: server } = req;

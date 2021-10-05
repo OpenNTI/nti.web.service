@@ -140,10 +140,12 @@ function handleFetchResponse(response, context, isInternal = () => false) {
 function processAndRespond(response) {
 	return raw => {
 		const filtered = raw
+			.replace(/<!DOCTYPE[^>]*>/i, '')
 			.replace(tagPattern('script'), '')
-			.replace(tagPattern('style'), '');
+			.replace(tagPattern('style'), '')
+			.replace(tagPattern('head'), '');
 
-		const body = BODY_REGEX.exec(filtered);
+		const body = BODY_REGEX.exec(filtered) || [null, filtered];
 		const styles = [];
 
 		const stylePattern = tagPattern('style');

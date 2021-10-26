@@ -9,6 +9,7 @@ exports.default = function registerVideoDataProviders(
 	routeFactory
 ) {
 	const videos = routeFactory(/^\/videos/i, api);
+	videos.use(api.ServiceMiddleWare);
 
 	for (let handler of HANDLERS) {
 		handler(videos, config);

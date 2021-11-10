@@ -396,9 +396,6 @@ describe('lib/config', () => {
 				{ appId: 'abc', fluf: 'yes' },
 				{ appId: 'xyz', fluf: 'no' },
 			],
-			keys: {
-				googleapi: {},
-			},
 			stuffAndThings: 'foobar',
 		};
 
@@ -532,9 +529,6 @@ describe('lib/config', () => {
 					{ appId: 'abc', fluf: 'yes' },
 					{ appId: 'xyz', fluf: 'no' },
 				],
-				keys: {
-					googleapi: {},
-				},
 				stuffAndThings: 'foobar',
 			};
 		};
@@ -828,7 +822,9 @@ describe('lib/config', () => {
 		).not.toThrow();
 
 		try {
-			await (await out).config.nodeService;
+			await (
+				await out
+			).config.nodeService;
 			throw new Error(
 				'Unexpected Promise fulfillment. It should have failed.'
 			);

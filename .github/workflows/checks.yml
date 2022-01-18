@@ -1,11 +1,7 @@
 name: Project Health
 
 on:
-  schedule:
-    # every monday morning at 7:00am (central)
-    # https://crontab.guru/#0_13_*_*_1
-    - cron: '0 13 * * 1'
-
+  #testing
   push:
     branches:
       - master
